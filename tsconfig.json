@@ -7,12 +7,21 @@
     "strict": true,
     "moduleResolution": "Node",
     "allowSyntheticDefaultImports": true,
-
     "experimentalDecorators": true,
     "emitDecoratorMetadata": false,
-
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@db": ["db"],
+      "@db/*": ["db/*"],
+      "@utils/*": ["utils/*"],
+    }
   },
-  "exclude": ["build", "node_modules"]
+  "exclude": [
+    "build",
+    "node_modules",
+    "drizzle.config.ts",
+    "eslint.config.ts",
+  ]
 }

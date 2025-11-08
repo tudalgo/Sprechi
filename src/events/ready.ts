@@ -5,21 +5,22 @@ import { Events, Guild } from "discord.js"
 import db, { guilds } from "../db"
 import { eq } from "drizzle-orm"
 import { exit } from "process"
+import logger from "@utils/logger"
 
 @Discord()
 export class ReadyEvent {
   @Once({ event: Events.ClientReady })
   async onReady([client]: [Client]): Promise<void> {
-    console.log("The bot is ready!")
+    logger.info("The bot is ready!")
     const migrated = await this.migrateDb()
     if (migrated) {
-      console.log("Database migrated successfully.")
+      logger.info("Database migrated successfully.")
     } else {
-      console.log("Database migration failed.")
+      logger.info("Database migration failed.")
       exit(1)
     }
     await this.checkAndAddAllGuilds(client)
-    console.log(`Successfully checked and synced guilds for ${client.user!.tag}`)
+    logger.info(`Successfully checked and synced guilds for ${client.user!.tag}`)
   }
 
   private async migrateDb(): Promise<boolean> {
@@ -27,18 +28,18 @@ export class ReadyEvent {
       const migrationsPath = path.resolve(
         "src/db/migrations",
       )
-      console.log(`Attempting to run migrations from: ${migrationsPath}`)
+      logger.info(`Attempting to run migrations from: ${migrationsPath}`)
       await migrate(db, { migrationsFolder: migrationsPath })
       return true
     } catch (error) {
-      console.error(error)
+      logger.error(error)
       return false
     }
   }
 
   private async checkAndAddAllGuilds(client: Client): Promise<void> {
     const guildsCache = client.guilds.cache
-    console.log(`Bot is in ${guildsCache.size} guilds. Checking database...`)
+    logger.info(`Bot is in ${guildsCache.size} guilds. Checking database...`)
 
     for (const [_, guild] of guildsCache) {
       await this.addGuildIfMissing(guild)
@@ -49,7 +50,7 @@ export class ReadyEvent {
     const exists = await this.checkIfGuildExists(guild)
     if (!exists) {
       await this.addGuild(guild)
-      console.log(`[New Guild] Added ${guild.name} to the database.`)
+      logger.info(`[New Guild] Added ${guild.name} to the database.`)
     }
   }
 

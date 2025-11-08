@@ -1,9 +1,10 @@
 import { Discord, On, type ArgsOf } from "discordx"
+import logger from "@utils/logger"
 
 @Discord()
 export class Example {
   @On()
   messageCreate([message]: ArgsOf<"messageCreate">): void {
-    console.log(message.author.username, "said:", message.content)
+    logger.info(message.author.username, "said:", message.content)
   }
 }

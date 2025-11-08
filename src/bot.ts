@@ -1,5 +1,6 @@
 import { IntentsBitField, type Interaction, type Message } from "discord.js"
 import { Client } from "discordx"
+import logger from "@utils/logger"
 
 export const bot = new Client({
   // To use only guild command
@@ -39,7 +40,7 @@ bot.once("clientReady", () => {
   //    ...bot.guilds.cache.map((g) => g.id)
   //  );
 
-  console.log("Bot started")
+  logger.log("Bot started")
 })
 
 bot.on("interactionCreate", (interaction: Interaction) => {

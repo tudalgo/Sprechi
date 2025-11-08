@@ -1,6 +1,6 @@
 import { ApplicationCommandOptionType, Colors, CommandInteraction, EmbedBuilder, MessageFlags } from "discord.js"
 import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
-import db, { queues } from "../../../db"
+import db, { queues } from "@db"
 
 @Discord()
 @SlashGroup({

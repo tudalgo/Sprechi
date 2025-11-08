@@ -2,10 +2,19 @@ import { defineConfig } from "eslint/config"
 import stylistic from "@stylistic/eslint-plugin"
 import js from "@eslint/js"
 import tseslint from "typescript-eslint"
+import pluginImport from "eslint-plugin-import"
 import globals from "globals"
 
 export default defineConfig([
   {
+    settings: {
+      "import/resolver": {
+        typescript: {
+          project: "./tsconfig.json",
+          alwaysTryTypes: true,
+        },
+      },
+    },
     files: ["**/*.ts"],
     languageOptions: {
       ecmaVersion: "latest",
@@ -18,6 +27,7 @@ export default defineConfig([
       js,
       tseslint,
       stylistic,
+      import: pluginImport,
     },
     extends: [
       js.configs.recommended,
@@ -25,8 +35,10 @@ export default defineConfig([
       stylistic.configs.recommended,
     ],
     rules: {
+      "import/no-unresolved": "error",
       "no-unused-vars": "off",
       "no-undef": "warn",
+      "no-console": "error",
       "@stylistic/indent": ["error", 2],
       "@stylistic/quotes": ["error", "double"],
       "@stylistic/semi": ["error", "never"],
