@@ -6,6 +6,7 @@ import { DIService, MetadataStorage } from "discordx"
 
 import { bot } from "./bot.js"
 import logger from "@utils/logger.js"
+import { migrateDb } from "migrate.js"
 
 const envFilePath = path.resolve(dirname(import.meta.url), "../.env.dev")
 logger.info(`Loading environment variables from: ${envFilePath}`)
@@ -63,6 +64,8 @@ async function Reload() {
  * Initialize
  */
 async function run() {
+  await migrateDb()
+
   const watcher = chokidar.watch(importPattern)
 
   // Load commands

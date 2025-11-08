@@ -1,8 +1,9 @@
 import { dirname, importx } from "@discordx/importer"
-
 import { bot } from "./bot.js"
+import { migrateDb } from "migrate.js"
 
 async function run() {
+  await migrateDb()
   // The following syntax should be used in the commonjs environment
   //
   // await importx(__dirname + "/{events,commands}/**/*.{ts,js}");

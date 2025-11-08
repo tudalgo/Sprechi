@@ -10,7 +10,6 @@ export default defineConfig([
     settings: {
       "import/resolver": {
         typescript: {
-          project: "./tsconfig.json",
           alwaysTryTypes: true,
         },
       },

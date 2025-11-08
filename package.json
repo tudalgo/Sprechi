@@ -7,7 +7,7 @@
   "main": "build/main.js",
   "scripts": {
     "build": "tsc",
-    "dev": "tsx src/dev.ts",
+    "dev": "CONSOLA_LEVEL=debug tsx src/dev.ts",
     "start": "node build/main.js",
     "db:generate": "drizzle-kit generate",
     "lint": "eslint . --ext .ts",
