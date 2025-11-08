@@ -1,22 +1,21 @@
-import { ApplicationCommandOptionType, Colors, CommandInteraction, EmbedBuilder, MessageFlags } from "discord.js"
+import {
+  ApplicationCommandOptionType,
+  Colors,
+  CommandInteraction,
+  EmbedBuilder,
+  MessageFlags,
+} from "discord.js"
 import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
-import db, { queues } from "@db"
+import { QueueManager } from "@managers/QueueManager"
+import logger from "@utils/logger"
 
 @Discord()
-@SlashGroup({
-  name: "admin",
-  description: "Admin commands",
-})
-@SlashGroup({
-  name: "queue",
-  description: "Queue management commands",
-  root: "admin",
-})
+@SlashGroup({ name: "admin", description: "Admin commands" })
+@SlashGroup({ name: "queue", description: "Queue management commands", root: "admin" })
 export class AdminQueueCreate {
-  @Slash({
-    name: "create",
-    description: "Create a new queue",
-  })
+  private queueManager = new QueueManager()
+
+  @Slash({ name: "create", description: "Create a new queue" })
   @SlashGroup("queue", "admin")
   async create(
     @SlashOption({
@@ -43,32 +42,55 @@ export class AdminQueueCreate {
       return
     }
 
-    // TODO: log queue creation
+    const guildId = interaction.guild.id
+
     try {
-      const newQueue = await db.insert(queues).values({
-        guildId: interaction.guild.id,
-        name: name,
-        description: description,
-      }).returning()
-      // TODO: log queue creation end
+      const existing = await this.queueManager.getQueueByName(guildId, name)
+      if (existing) {
+        await interaction.reply({
+          embeds: [this.queueAlreadyExistsEmbed(name)],
+          flags: MessageFlags.Ephemeral,
+        })
+        return
+      }
+
+      const newQueue = await this.queueManager.createQueue({
+        guildId,
+        name,
+        description,
+      })
+
       await interaction.reply({
-        embeds: [this.createQueueEmbed(newQueue[0].name, newQueue[0].description)],
+        embeds: [this.queueCreatedEmbed(newQueue.name, newQueue.description)],
         flags: MessageFlags.Ephemeral,
       })
     } catch (error) {
+      logger.error("Error creating queue:", error)
       await interaction.reply({
-        content: `Failed to create queue: ${error}`,
+        embeds: [this.queueCreateFailedEmbed(name)],
         flags: MessageFlags.Ephemeral,
       })
-      return
     }
   }
 
-  private createQueueEmbed(queueName: string, description: string): EmbedBuilder {
-    const embed = new EmbedBuilder()
-      .setTitle("Queue Created")
-      .setDescription(`Queue "${queueName}" with description "${description}" created.`)
+  private queueCreatedEmbed(queueName: string, description: string): EmbedBuilder {
+    return new EmbedBuilder()
+      .setTitle(":white_check_mark: Queue Created")
+      .setDescription(`**${queueName}**\n${description}`)
       .setColor(Colors.Green)
-    return embed
+  }
+
+  private queueAlreadyExistsEmbed(queueName: string): EmbedBuilder {
+    return new EmbedBuilder()
+      .setTitle(":x: Queue Already Exists")
+      .setDescription(`A queue named **${queueName}** already exists in this server.`)
+      .setColor(Colors.Red)
+  }
+
+  private queueCreateFailedEmbed(queueName: string): EmbedBuilder {
+    return new EmbedBuilder()
+      .setTitle(":x: Queue Creation Failed")
+      .setDescription(`Failed to create the queue **${queueName}**.`)
+      .setColor(Colors.Red)
   }
 }
