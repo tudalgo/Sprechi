@@ -1,6 +1,6 @@
 # files
 .vscode
-.env
+.env*
 .env.local
 package-lock.json
 yarn.lock

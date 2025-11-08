@@ -1,8 +1,16 @@
+import * as dotenv from "dotenv";
+import * as path from "path";
 import { dirname, resolve } from "@discordx/importer";
 import chokidar from "chokidar";
 import { DIService, MetadataStorage } from "discordx";
 
 import { bot } from "./bot.js";
+
+const envFilePath = path.resolve(dirname(import.meta.url), "../.env.dev");
+console.log(`Loading environment variables from: ${envFilePath}`);
+dotenv.config({
+  path: envFilePath,
+});
 
 // The following syntax should be used in the commonjs environment
 // const importPattern =  __dirname + "/{events,commands}/**/*.{ts,js}"

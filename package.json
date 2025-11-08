@@ -8,18 +8,24 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsx src/dev.ts",
-    "start": "node build/main.js"
+    "start": "node build/main.js",
+    "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
     "@discordx/importer": "^1.3.3",
-    "discord.js": "^14.22.1",
-    "discordx": "^11.13.2"
+    "discord.js": "^14.24.2",
+    "discordx": "^11.13.2",
+    "dotenv": "^17.2.3",
+    "drizzle-orm": "^0.44.7",
+    "pg": "^8.16.3"
   },
   "devDependencies": {
-    "@types/node": "^24.4.0",
+    "@types/node": "^24.10.0",
+    "@types/pg": "^8.15.6",
     "chokidar": "^4.0.3",
+    "drizzle-kit": "^0.31.6",
     "prettier": "^3.6.2",
-    "tsx": "^4.20.5",
+    "tsx": "^4.20.6",
     "typescript": "5.9.2"
   },
   "engines": {

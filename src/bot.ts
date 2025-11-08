@@ -24,7 +24,7 @@ export const bot = new Client({
   },
 });
 
-bot.once("ready", () => {
+bot.once("clientReady", () => {
   // Make sure all guilds are cached
   // await bot.guilds.fetch();
 
