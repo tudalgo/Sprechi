@@ -1,6 +1,6 @@
-import { dirname, importx } from "@discordx/importer";
+import { dirname, importx } from "@discordx/importer"
 
-import { bot } from "./bot.js";
+import { bot } from "./bot.js"
 
 async function run() {
   // The following syntax should be used in the commonjs environment
@@ -8,15 +8,15 @@ async function run() {
   // await importx(__dirname + "/{events,commands}/**/*.{ts,js}");
 
   // The following syntax should be used in the ECMAScript environment
-  await importx(`${dirname(import.meta.url)}/{events,commands}/**/*.{ts,js}`);
+  await importx(`${dirname(import.meta.url)}/{events,commands}/**/*.{ts,js}`)
 
   // Let's start the bot
   if (!process.env.BOT_TOKEN) {
-    throw Error("Could not find BOT_TOKEN in your environment");
+    throw Error("Could not find BOT_TOKEN in your environment")
   }
 
   // Log in with your bot token
-  await bot.login(process.env.BOT_TOKEN);
+  await bot.login(process.env.BOT_TOKEN)
 }
 
-void run();
+void run()

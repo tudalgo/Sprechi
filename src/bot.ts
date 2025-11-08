@@ -1,5 +1,5 @@
-import { IntentsBitField, type Interaction, type Message } from "discord.js";
-import { Client } from "discordx";
+import { IntentsBitField, type Interaction, type Message } from "discord.js"
+import { Client } from "discordx"
 
 export const bot = new Client({
   // To use only guild command
@@ -22,14 +22,14 @@ export const bot = new Client({
   simpleCommand: {
     prefix: "!",
   },
-});
+})
 
 bot.once("clientReady", () => {
   // Make sure all guilds are cached
   // await bot.guilds.fetch();
 
   // Synchronize applications commands with Discord
-  void bot.initApplicationCommands();
+  void bot.initApplicationCommands()
 
   // To clear all guild commands, uncomment this line,
   // This is useful when moving from guild commands to global commands
@@ -39,13 +39,13 @@ bot.once("clientReady", () => {
   //    ...bot.guilds.cache.map((g) => g.id)
   //  );
 
-  console.log("Bot started");
-});
+  console.log("Bot started")
+})
 
 bot.on("interactionCreate", (interaction: Interaction) => {
-  bot.executeInteraction(interaction);
-});
+  bot.executeInteraction(interaction)
+})
 
 bot.on("messageCreate", (message: Message) => {
-  void bot.executeCommand(message);
-});
+  void bot.executeCommand(message)
+})
