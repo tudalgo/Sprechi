@@ -10,6 +10,7 @@
     "dev": "CONSOLA_LEVEL=debug tsx src/dev.ts",
     "start": "node build/main.js",
     "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/apply-migration.ts",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix"
   },
