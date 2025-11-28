@@ -15,6 +15,13 @@
       "when": 1764338869896,
       "tag": "0001_silky_warstar",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1764344349376,
+      "tag": "0002_kind_johnny_blaze",
+      "breakpoints": true
     }
   ]
 }
