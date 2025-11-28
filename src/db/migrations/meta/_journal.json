@@ -8,6 +8,13 @@
       "when": 1762620933054,
       "tag": "0000_slow_lady_bullseye",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1764338869896,
+      "tag": "0001_silky_warstar",
+      "breakpoints": true
     }
   ]
 }

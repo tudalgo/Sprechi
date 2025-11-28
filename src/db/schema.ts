@@ -6,6 +6,7 @@ import {
   timestamp,
   index,
   uniqueIndex,
+  boolean,
 } from "drizzle-orm/pg-core"
 
 // Guilds Table
@@ -28,9 +29,21 @@ export const queues = pgTable("queues", {
   guildId: text("guild_id").references(() => guilds.id, { onDelete: "cascade" }).notNull(),
   name: text("name").notNull(),
   description: text("description").notNull(),
+  isLocked: boolean("is_locked").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, table => [
   index("queues_guild_id_idx").on(table.guildId),
   uniqueIndex("queues_guild_name_idx").on(table.guildId, table.name),
+])
+
+export const queueMembers = pgTable("queue_members", {
+  id: uuid("id").primaryKey().defaultRandom().notNull(),
+  queueId: uuid("queue_id").references(() => queues.id, { onDelete: "cascade" }).notNull(),
+  userId: text("user_id").notNull(),
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+  leftAt: timestamp("left_at"),
+}, table => [
+  uniqueIndex("queue_members_queue_user_idx").on(table.queueId, table.userId),
+  index("queue_members_queue_id_idx").on(table.queueId),
 ])
