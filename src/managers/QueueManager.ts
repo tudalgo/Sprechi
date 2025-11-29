@@ -167,7 +167,7 @@ export class QueueManager {
       .where(and(
         eq(queues.guildId, guildId),
         eq(sessions.tutorId, tutorId),
-        isNull(sessions.endTime)
+        isNull(sessions.endTime),
       ))
 
     return session ?? null
@@ -204,8 +204,8 @@ export class QueueManager {
           new EmbedBuilder()
             .setTitle("You have been picked!")
             .setDescription(`You have been picked by <@${tutorId}> for a tutoring session.\nPlease join the voice channel: [${channelName}](${inviteLink})`)
-            .setColor(Colors.Green)
-        ]
+            .setColor(Colors.Green),
+        ],
       })
     } catch (error) {
       logger.error(`Failed to DM user ${userId} after being picked:`, error)
@@ -268,7 +268,7 @@ export class QueueManager {
       .where(and(
         eq(queues.guildId, guildId),
         eq(sessions.tutorId, tutorId),
-        isNull(sessions.endTime)
+        isNull(sessions.endTime),
       ))
 
     if (activeSession) {
@@ -327,7 +327,7 @@ export class QueueManager {
       .where(and(
         eq(queues.guildId, guildId),
         eq(queueMembers.userId, userId),
-        isNull(queueMembers.leftAt)
+        isNull(queueMembers.leftAt),
       ))
 
     return member?.queue ?? null
@@ -363,7 +363,7 @@ export class QueueManager {
           .setDescription(message)
           .addFields(
             { name: "Members in Queue", value: String(memberCount?.count ?? 0), inline: true },
-            { name: "Active Sessions", value: String(sessionCount?.count ?? 0), inline: true }
+            { name: "Active Sessions", value: String(sessionCount?.count ?? 0), inline: true },
           )
           .setColor(Colors.Blue)
           .setTimestamp()
