@@ -62,3 +62,16 @@ export const sessions = pgTable("sessions", {
   index("sessions_queue_id_idx").on(table.queueId),
   index("sessions_tutor_id_idx").on(table.tutorId),
 ])
+
+export const sessionStudents = pgTable("session_students", {
+  id: uuid("id").primaryKey().defaultRandom().notNull(),
+  sessionId: uuid("session_id").references(() => sessions.id, { onDelete: "cascade" }).notNull(),
+  studentId: text("student_id").notNull(),
+  channelId: text("channel_id"),
+  startTime: timestamp("start_time").defaultNow().notNull(),
+  endTime: timestamp("end_time"),
+}, table => [
+  index("session_students_session_id_idx").on(table.sessionId),
+  index("session_students_student_id_idx").on(table.studentId),
+  index("session_students_channel_id_idx").on(table.channelId),
+])

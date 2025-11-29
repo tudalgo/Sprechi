@@ -13,10 +13,24 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": "./src",
     "paths": {
-      "@db": ["db"],
-      "@db/*": ["db/*"],
-      "@utils/*": ["utils/*"],
-      "@managers/*": ["managers/*"],
+      "@db": [
+        "db"
+      ],
+      "@db/*": [
+        "db/*"
+      ],
+      "@utils/*": [
+        "utils/*"
+      ],
+      "@managers/*": [
+        "managers/*"
+      ],
+      "@errors/*": [
+        "errors/*"
+      ],
+      "@/*": [
+        "*"
+      ],
     }
   },
   "exclude": [

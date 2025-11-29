@@ -22,6 +22,20 @@
       "when": 1764344349376,
       "tag": "0002_kind_johnny_blaze",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1764346153148,
+      "tag": "0003_long_black_cat",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1764425489551,
+      "tag": "0004_natural_roulette",
+      "breakpoints": true
     }
   ]
 }

@@ -1,5 +1,5 @@
 import db from "@db"
-import { queues, queueMembers, sessions } from "@db/schema"
+import { queues, queueMembers, sessions, sessionStudents } from "@db/schema"
 import logger from "@utils/logger"
 import { eq, and, sql, isNull } from "drizzle-orm"
 import {
@@ -111,7 +111,7 @@ export class QueueManager {
     await this.logToChannel(queue, `User <@${userId}> joined the queue.`)
   }
 
-  async leaveQueue(guildId: string, queueName: string, userId: string) {
+  async leaveQueue(guildId: string, queueName: string, userId: string, silent: boolean = false) {
     const queue = await this.getQueueByName(guildId, queueName)
     if (!queue) {
       throw new QueueNotFoundError(queueName)
@@ -129,7 +129,9 @@ export class QueueManager {
       .set({ leftAt: new Date() })
       .where(eq(queueMembers.id, member.id))
 
-    await this.logToChannel(queue, `User <@${userId}> left the queue (grace period started).`)
+    if (!silent) {
+      await this.logToChannel(queue, `User <@${userId}> left the queue (grace period started).`)
+    }
 
     // Schedule cleanup
     setTimeout(async () => {
@@ -142,13 +144,72 @@ export class QueueManager {
           const diff = new Date().getTime() - new Date(currentMember.leftAt).getTime()
           if (diff >= 60000) {
             await db.delete(queueMembers).where(eq(queueMembers.id, member.id))
-            // We might want to log that they are fully removed, but user only asked for join/leave
+
+            // Log removal if silent was true (meaning they left the channel)
+            if (silent) {
+              await this.logToChannel(queue, `User <@${userId}> left the queue.`)
+            }
           }
         }
       } catch (error) {
         logger.error("Error in queue leave cleanup:", error)
       }
     }, 60000)
+  }
+
+  async getActiveSession(guildId: string, tutorId: string) {
+    const [session] = await db.select({
+      session: sessions,
+      queue: queues,
+    })
+      .from(sessions)
+      .innerJoin(queues, eq(sessions.queueId, queues.id))
+      .where(and(
+        eq(queues.guildId, guildId),
+        eq(sessions.tutorId, tutorId),
+        isNull(sessions.endTime)
+      ))
+
+    return session ?? null
+  }
+
+  async pickStudent(guildId: string, queueName: string, userId: string, sessionId: string, tutorId: string, channelId: string, channelName: string) {
+    const queue = await this.getQueueByName(guildId, queueName)
+    if (!queue) {
+      throw new QueueNotFoundError(queueName)
+    }
+
+    // Remove from queue immediately (no grace period)
+    await db.delete(queueMembers)
+      .where(and(eq(queueMembers.queueId, queue.id), eq(queueMembers.userId, userId)))
+
+    // Create session student record
+    await db.insert(sessionStudents).values({
+      sessionId,
+      studentId: userId,
+      channelId,
+    })
+
+    await this.logToChannel(queue, `User <@${userId}> was picked by <@${tutorId}>.`)
+
+    // DM Student
+    try {
+      const { bot } = await import("../bot")
+      const { EmbedBuilder, Colors } = await import("discord.js")
+      const inviteLink = `https://discord.com/channels/${guildId}/${channelId}`
+
+      const user = await bot.users.fetch(userId)
+      await user.send({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle("You have been picked!")
+            .setDescription(`You have been picked by <@${tutorId}> for a tutoring session.\nPlease join the voice channel: [${channelName}](${inviteLink})`)
+            .setColor(Colors.Green)
+        ]
+      })
+    } catch (error) {
+      logger.error(`Failed to DM user ${userId} after being picked:`, error)
+    }
   }
 
   async toggleLock(guildId: string, queueName: string, lock: boolean) {
@@ -222,19 +283,17 @@ export class QueueManager {
     await this.logToChannel(queue, `Tutor <@${tutorId}> started a session.`)
   }
 
-  async endSession(guildId: string, queueName: string, tutorId: string) {
-    const queue = await this.getQueueByName(guildId, queueName)
-    if (!queue) {
-      throw new QueueNotFoundError(queueName)
+  async endSession(guildId: string, tutorId: string) {
+    const activeSession = await this.getActiveSession(guildId, tutorId)
+    if (!activeSession) {
+      throw new QueueError("You do not have an active session.")
     }
+
+    const { session, queue } = activeSession
 
     const result = await db.update(sessions)
       .set({ endTime: new Date() })
-      .where(and(
-        eq(sessions.queueId, queue.id),
-        eq(sessions.tutorId, tutorId),
-        isNull(sessions.endTime)
-      ))
+      .where(eq(sessions.id, session.id))
       .returning()
 
     if (result.length > 0) {
