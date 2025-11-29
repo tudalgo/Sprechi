@@ -61,7 +61,7 @@ export class QueueLeave {
         ],
         flags: MessageFlags.Ephemeral,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       let errorMessage = "Failed to leave queue."
       if (error instanceof QueueNotFoundError) {
         errorMessage = `Queue **${name}** not found.`

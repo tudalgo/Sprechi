@@ -48,9 +48,10 @@ export class TutorQueue {
         embeds: [embed],
         flags: MessageFlags.Ephemeral,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "An error occurred."
       await interaction.reply({
-        content: error.message || "An error occurred.",
+        content: message,
         flags: MessageFlags.Ephemeral,
       })
     }
@@ -108,7 +109,6 @@ export class TutorQueue {
         session.id,
         tutorId,
         channel.id,
-        channelName,
       )
 
       await interaction.editReply({
@@ -119,8 +119,9 @@ export class TutorQueue {
             .setColor(Colors.Green),
         ],
       })
-    } catch (error: any) {
-      await interaction.editReply(error.message || "An error occurred.")
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "An error occurred."
+      await interaction.editReply(message)
     }
   }
 }

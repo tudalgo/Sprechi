@@ -25,7 +25,7 @@ export class VoiceStateUpdate {
         if (queue) {
           await this.queueManager.joinQueue(guildId, queue.name, userId)
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         // If they are already in the queue, we can ignore it or log it
         if (!(error instanceof AlreadyInQueueError)) {
           logger.error(`Failed to auto-join queue for user ${userId}:`, error)

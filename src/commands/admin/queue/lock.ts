@@ -51,9 +51,9 @@ export class AdminQueueLock {
         ],
         flags: MessageFlags.Ephemeral,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       let errorMessage = "Failed to update queue lock state."
-      if (error.message === "Queue not found") {
+      if (error instanceof Error && error.message === "Queue not found") {
         errorMessage = `Queue **${name}** not found.`
       }
 

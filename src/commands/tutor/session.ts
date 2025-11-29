@@ -55,7 +55,7 @@ export class TutorSession {
         ],
         flags: MessageFlags.Ephemeral,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       let errorMessage = "Failed to start session."
       if (error instanceof QueueNotFoundError) {
         errorMessage = `Queue **${name}** not found.`
@@ -100,12 +100,13 @@ export class TutorSession {
         ],
         flags: MessageFlags.Ephemeral,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to end session."
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
             .setTitle("Error")
-            .setDescription(error.message || "Failed to end session.")
+            .setDescription(message)
             .setColor(Colors.Red),
         ],
         flags: MessageFlags.Ephemeral,
@@ -154,12 +155,13 @@ export class TutorSession {
         ],
         flags: MessageFlags.Ephemeral,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to get session info."
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
             .setTitle("Error")
-            .setDescription(error.message || "Failed to get session info.")
+            .setDescription(message)
             .setColor(Colors.Red),
         ],
         flags: MessageFlags.Ephemeral,

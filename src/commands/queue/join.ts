@@ -51,7 +51,7 @@ export class QueueJoin {
         ],
         flags: MessageFlags.Ephemeral,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       let errorMessage = "Failed to join queue."
       if (error instanceof QueueNotFoundError) {
         errorMessage = `Queue **${name}** not found.`

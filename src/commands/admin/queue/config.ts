@@ -5,6 +5,8 @@ import {
   Colors,
   MessageFlags,
   ChannelType,
+  VoiceChannel,
+  TextChannel,
 } from "discord.js"
 import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
@@ -31,7 +33,7 @@ export class AdminQueueConfig {
       type: ApplicationCommandOptionType.Channel,
       channelTypes: [ChannelType.GuildVoice],
     })
-    channel: any,
+    channel: VoiceChannel,
     interaction: CommandInteraction,
   ): Promise<void> {
     if (!interaction.guild) {
@@ -54,7 +56,7 @@ export class AdminQueueConfig {
         ],
         flags: MessageFlags.Ephemeral,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       let errorMessage = "Failed to set waiting room."
       if (error instanceof QueueNotFoundError) {
         errorMessage = `Queue **${name}** not found.`
@@ -88,7 +90,7 @@ export class AdminQueueConfig {
       type: ApplicationCommandOptionType.Channel,
       channelTypes: [ChannelType.GuildText],
     })
-    channel: any,
+    channel: TextChannel,
     interaction: CommandInteraction,
   ): Promise<void> {
     if (!interaction.guild) {
@@ -111,7 +113,7 @@ export class AdminQueueConfig {
         ],
         flags: MessageFlags.Ephemeral,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       let errorMessage = "Failed to set log channel."
       if (error instanceof QueueNotFoundError) {
         errorMessage = `Queue **${name}** not found.`

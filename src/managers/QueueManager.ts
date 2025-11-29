@@ -10,6 +10,8 @@ import {
   SessionAlreadyActiveError,
   QueueError,
 } from "../errors/QueueErrors"
+import { bot } from "../bot"
+import { EmbedBuilder, Colors, ChannelType } from "discord.js"
 
 export interface QueueData {
   guildId: string
@@ -173,7 +175,7 @@ export class QueueManager {
     return session ?? null
   }
 
-  async pickStudent(guildId: string, queueName: string, userId: string, sessionId: string, tutorId: string, channelId: string, channelName: string) {
+  async pickStudent(guildId: string, queueName: string, userId: string, sessionId: string, tutorId: string, channelId: string) {
     const queue = await this.getQueueByName(guildId, queueName)
     if (!queue) {
       throw new QueueNotFoundError(queueName)
@@ -194,16 +196,12 @@ export class QueueManager {
 
     // DM Student
     try {
-      const { bot } = await import("../bot")
-      const { EmbedBuilder, Colors } = await import("discord.js")
-      const inviteLink = `https://discord.com/channels/${guildId}/${channelId}`
-
       const user = await bot.users.fetch(userId)
       await user.send({
         embeds: [
           new EmbedBuilder()
             .setTitle("You have been picked!")
-            .setDescription(`You have been picked by <@${tutorId}> for a tutoring session.\nPlease join the voice channel: [${channelName}](${inviteLink})`)
+            .setDescription(`You have been picked by <@${tutorId}> for a tutoring session.\nPlease join the voice channel: <#${channelId}>`)
             .setColor(Colors.Green),
         ],
       })
@@ -344,9 +342,7 @@ export class QueueManager {
     if (!queue.logChannelId) return
 
     try {
-      const { bot } = await import("../bot")
       const channel = await bot.channels.fetch(queue.logChannelId)
-      const { EmbedBuilder, Colors, ChannelType } = await import("discord.js")
 
       if (channel && channel.type === ChannelType.GuildText) {
         // Get stats
