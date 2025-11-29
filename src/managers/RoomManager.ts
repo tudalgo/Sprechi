@@ -9,11 +9,20 @@ import logger from "@utils/logger"
 export class RoomManager {
   async createEphemeralChannel(
     guild: Guild,
-    name: string,
+    baseName: string,
     userIds: string[],
     categoryId?: string,
   ): Promise<VoiceChannel | null> {
     try {
+      let name = baseName
+      let counter = 1
+
+      // Ensure unique name
+      while (guild.channels.cache.some(c => c.name === name)) {
+        name = `${baseName}-${counter}`
+        counter++
+      }
+
       const channel = await guild.channels.create({
         name,
         type: ChannelType.GuildVoice,

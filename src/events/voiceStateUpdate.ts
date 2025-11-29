@@ -1,7 +1,7 @@
 import { ArgsOf, Discord, On } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import logger from "@utils/logger"
-import { AlreadyInQueueError } from "../errors/QueueErrors"
+import { AlreadyInQueueError, NotInQueueError } from "../errors/QueueErrors"
 import db from "@db"
 import { sessionStudents } from "@db/schema"
 import { eq, and, isNull } from "drizzle-orm"
@@ -69,7 +69,9 @@ export class VoiceStateUpdate {
         }
       } catch (error) {
         // Ignore errors if they weren't in queue
-        logger.error(`Failed to auto-leave queue for user ${userId}:`, error)
+        if (!(error instanceof NotInQueueError)) {
+          logger.error(`Failed to auto-leave queue for user ${userId}:`, error)
+        }
       }
     }
   }

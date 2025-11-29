@@ -1,0 +1,141 @@
+import { ButtonInteraction, EmbedBuilder, Colors, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js"
+import { Discord, ButtonComponent } from "discordx"
+import { QueueManager } from "@managers/QueueManager"
+import { QueueNotFoundError, NotInQueueError } from "@errors/QueueErrors"
+
+@Discord()
+export class QueueButtons {
+  private queueManager = new QueueManager()
+
+  @ButtonComponent({ id: /^queue_refresh_(.+)$/ })
+  async refresh(interaction: ButtonInteraction): Promise<void> {
+    const queueId = interaction.customId.match(/^queue_refresh_(.+)$/)?.[1]
+    if (!queueId) return
+
+    await interaction.deferUpdate()
+
+    try {
+      // Fetch queue to get details
+      const queue = await this.queueManager.getQueueById(queueId)
+
+      if (!queue) {
+        await interaction.followUp({
+          content: "Queue not found.",
+          flags: MessageFlags.Ephemeral,
+        })
+        return
+      }
+
+      const member = await this.queueManager.getQueueMember(queue.id, interaction.user.id)
+      if (!member) {
+        await interaction.followUp({
+          content: "You are not in this queue anymore.",
+          flags: MessageFlags.Ephemeral,
+        })
+        return
+      }
+
+      const position = await this.queueManager.getQueuePosition(queue.id, interaction.user.id)
+
+      // Calculate wait time
+      const joinedAt = new Date(member.joinedAt)
+      const now = new Date()
+      const diffMs = now.getTime() - joinedAt.getTime()
+      const minutes = Math.floor(diffMs / 60000)
+      const seconds = Math.floor((diffMs % 60000) / 1000)
+
+      const embed = new EmbedBuilder()
+        .setTitle(`Joined Queue: ${queue.name}`)
+        .setDescription(`You have joined the queue **${queue.name}**.\n\n**Position:** ${position}\n**Wait Time:** ${minutes} min ${seconds} sec`)
+        .setColor(Colors.Green)
+        .setTimestamp()
+
+      await interaction.editReply({ embeds: [embed] })
+    } catch (error) {
+      // Ignore errors
+    }
+  }
+
+  @ButtonComponent({ id: /^queue_leave_(.+)$/ })
+  async leave(interaction: ButtonInteraction): Promise<void> {
+    const queueId = interaction.customId.match(/^queue_leave_(.+)$/)?.[1]
+    if (!queueId) return
+
+    await interaction.deferUpdate()
+
+    try {
+      const queue = await this.queueManager.getQueueById(queueId)
+      if (!queue) {
+        await interaction.followUp({
+          content: "Queue not found.",
+          flags: MessageFlags.Ephemeral,
+        })
+        return
+      }
+
+      // Use queue.guildId because interaction.guildId is null in DMs
+      await this.queueManager.leaveQueue(queue.guildId, queue.name, interaction.user.id)
+
+      const embed = new EmbedBuilder()
+        .setTitle("Left Queue")
+        .setDescription(`You have left the queue **${queue.name}**.`)
+        .setColor(Colors.Yellow)
+        .setTimestamp()
+
+      await interaction.editReply({
+        content: "",
+        embeds: [embed],
+        components: []
+      })
+    } catch (error) {
+      if (error instanceof NotInQueueError) {
+        await interaction.followUp({
+          content: "You are not in the queue.",
+          flags: MessageFlags.Ephemeral,
+        })
+      } else {
+        console.error(error)
+      }
+    }
+  }
+
+  @ButtonComponent({ id: /^queue_rejoin_(.+)$/ })
+  async rejoin(interaction: ButtonInteraction): Promise<void> {
+    const queueId = interaction.customId.match(/^queue_rejoin_(.+)$/)?.[1]
+    if (!queueId) return
+
+    await interaction.deferUpdate()
+
+    try {
+      const queue = await this.queueManager.getQueueById(queueId)
+      if (!queue) {
+        await interaction.followUp({
+          content: "Queue not found.",
+          flags: MessageFlags.Ephemeral,
+        })
+        return
+      }
+
+      // Use queue.guildId because interaction.guildId is null in DMs
+      await this.queueManager.joinQueue(queue.guildId, queue.name, interaction.user.id)
+
+      const embed = new EmbedBuilder()
+        .setTitle("Rejoined Queue")
+        .setDescription(`You have rejoined the queue **${queue.name}**.`)
+        .setColor(Colors.Green)
+        .setTimestamp()
+
+      await interaction.editReply({
+        content: "",
+        embeds: [embed],
+        components: []
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to rejoin queue."
+      await interaction.followUp({
+        content: message,
+        flags: MessageFlags.Ephemeral,
+      })
+    }
+  }
+}

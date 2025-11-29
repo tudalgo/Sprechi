@@ -12,50 +12,9 @@ import { QueueError } from "@errors/QueueErrors"
 @Discord()
 @SlashGroup({ name: "tutor", description: "Tutor commands" })
 @SlashGroup({ name: "queue", description: "Queue management", root: "tutor" })
-export class TutorQueue {
+export class TutorQueueNext {
   private queueManager = new QueueManager()
   private roomManager = new RoomManager()
-
-  @Slash({ name: "list", description: "List members in the active session's queue" })
-  @SlashGroup("queue", "tutor")
-  async list(interaction: CommandInteraction): Promise<void> {
-    if (!interaction.guild) return
-
-    try {
-      const activeSession = await this.queueManager.getActiveSession(interaction.guild.id, interaction.user.id)
-      if (!activeSession) {
-        throw new QueueError("You do not have an active session.")
-      }
-
-      const { queue } = activeSession
-      const members = await this.queueManager.getQueueMembers(interaction.guild.id, queue.name)
-
-      if (members.length === 0) {
-        await interaction.reply({
-          content: `The queue **${queue.name}** is empty.`,
-          flags: MessageFlags.Ephemeral,
-        })
-        return
-      }
-
-      const embed = new EmbedBuilder()
-        .setTitle(`Queue: ${queue.name}`)
-        .setDescription(members.map((m, i) => `${i + 1}. <@${m.userId}>`).join("\n"))
-        .setColor(Colors.Blue)
-        .setFooter({ text: `Total: ${members.length}` })
-
-      await interaction.reply({
-        embeds: [embed],
-        flags: MessageFlags.Ephemeral,
-      })
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "An error occurred."
-      await interaction.reply({
-        content: message,
-        flags: MessageFlags.Ephemeral,
-      })
-    }
-  }
 
   @Slash({ name: "next", description: "Pick the next student from the queue" })
   @SlashGroup("queue", "tutor")
@@ -82,13 +41,26 @@ export class TutorQueue {
       const studentId = nextMember.userId
       const tutorId = interaction.user.id
 
+      // Get waiting room category
+      let categoryId: string | undefined
+      if (queue.waitingRoomId) {
+        try {
+          const waitingChannel = await interaction.guild.channels.fetch(queue.waitingRoomId)
+          if (waitingChannel && waitingChannel.parentId) {
+            categoryId = waitingChannel.parentId
+          }
+        } catch (error) {
+          // Ignore if waiting room not found
+        }
+      }
+
       // Create ephemeral channel
       const channelName = `Session-${interaction.user.username}`
       const channel = await this.roomManager.createEphemeralChannel(
         interaction.guild,
         channelName,
         [tutorId, studentId],
-        // We could pass a category ID here if configured
+        categoryId,
       )
 
       if (!channel) {

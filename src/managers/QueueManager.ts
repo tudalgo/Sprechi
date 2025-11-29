@@ -11,7 +11,7 @@ import {
   QueueError,
 } from "../errors/QueueErrors"
 import { bot } from "../bot"
-import { EmbedBuilder, Colors, ChannelType } from "discord.js"
+import { EmbedBuilder, Colors, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js"
 
 export interface QueueData {
   guildId: string
@@ -98,6 +98,7 @@ export class QueueManager {
           .where(eq(queueMembers.id, existingMember.id))
 
         await this.logToChannel(queue, `User <@${userId}> rejoined the queue (restored position).`)
+        await this.sendJoinDm(queue, userId)
         return
       } else {
         // Grace period expired, treat as new join
@@ -111,6 +112,49 @@ export class QueueManager {
     })
 
     await this.logToChannel(queue, `User <@${userId}> joined the queue.`)
+    await this.sendJoinDm(queue, userId)
+  }
+
+  private async sendJoinDm(queue: typeof queues.$inferSelect, userId: string) {
+    try {
+      const user = await bot.users.fetch(userId)
+      const position = await this.getQueuePosition(queue.id, userId)
+
+      // Calculate wait time
+      const member = await this.getQueueMember(queue.id, userId)
+      let waitText = "0 min 0 sec"
+
+      if (member) {
+        const joinedAt = new Date(member.joinedAt)
+        const now = new Date()
+        const diffMs = now.getTime() - joinedAt.getTime()
+        const minutes = Math.floor(diffMs / 60000)
+        const seconds = Math.floor((diffMs % 60000) / 1000)
+        waitText = `${minutes} min ${seconds} sec`
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle(`Joined Queue: ${queue.name}`)
+        .setDescription(`You have joined the queue **${queue.name}**.\n\n**Position:** ${position}\n**Wait Time:** ${waitText}`)
+        .setColor(Colors.Green)
+        .setTimestamp()
+
+      const row = new ActionRowBuilder<ButtonBuilder>()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId(`queue_refresh_${queue.id}`)
+            .setLabel("Refresh Status")
+            .setStyle(ButtonStyle.Primary),
+          new ButtonBuilder()
+            .setCustomId(`queue_leave_${queue.id}`)
+            .setLabel("Leave Queue")
+            .setStyle(ButtonStyle.Danger)
+        )
+
+      await user.send({ embeds: [embed], components: [row] })
+    } catch (error) {
+      logger.error(`Failed to DM user ${userId} after joining queue:`, error)
+    }
   }
 
   async leaveQueue(guildId: string, queueName: string, userId: string, silent: boolean = false) {
@@ -133,6 +177,41 @@ export class QueueManager {
 
     if (!silent) {
       await this.logToChannel(queue, `User <@${userId}> left the queue (grace period started).`)
+    }
+
+    // Remove from waiting room voice channel
+    if (queue.waitingRoomId) {
+      try {
+        const guild = await bot.guilds.fetch(guildId)
+        const member = await guild.members.fetch(userId)
+        if (member.voice.channelId === queue.waitingRoomId) {
+          await member.voice.disconnect("Left the queue")
+        }
+      } catch (error) {
+        logger.error(`Failed to disconnect user ${userId} from waiting room:`, error)
+      }
+    }
+
+    // DM User with Rejoin button
+    try {
+      const user = await bot.users.fetch(userId)
+      const embed = new EmbedBuilder()
+        .setTitle("Left Queue")
+        .setDescription(`You have left the queue **${queue.name}**.\n\nYou have **1 minute** to rejoin without losing your spot.`)
+        .setColor(Colors.Yellow)
+        .setTimestamp()
+
+      const row = new ActionRowBuilder<ButtonBuilder>()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId(`queue_rejoin_${queue.id}`)
+            .setLabel("Rejoin Queue")
+            .setStyle(ButtonStyle.Success)
+        )
+
+      await user.send({ embeds: [embed], components: [row] })
+    } catch (error) {
+      logger.error(`Failed to DM user ${userId} after leaving queue:`, error)
     }
 
     // Schedule cleanup
@@ -369,5 +448,28 @@ export class QueueManager {
     } catch (error) {
       logger.error(`Failed to log to channel ${queue.logChannelId}:`, error)
     }
+  }
+
+  async getQueuePosition(queueId: string, userId: string): Promise<number> {
+    const members = await db.select()
+      .from(queueMembers)
+      .where(and(eq(queueMembers.queueId, queueId), isNull(queueMembers.leftAt)))
+      .orderBy(queueMembers.joinedAt)
+
+    return members.findIndex(m => m.userId === userId) + 1
+  }
+
+  async getQueueById(queueId: string) {
+    const [queue] = await db.select()
+      .from(queues)
+      .where(eq(queues.id, queueId))
+    return queue ?? null
+  }
+
+  async getQueueMember(queueId: string, userId: string) {
+    const [member] = await db.select()
+      .from(queueMembers)
+      .where(and(eq(queueMembers.queueId, queueId), eq(queueMembers.userId, userId), isNull(queueMembers.leftAt)))
+    return member ?? null
   }
 }
