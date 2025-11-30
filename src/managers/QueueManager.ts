@@ -11,7 +11,8 @@ import {
   QueueError,
 } from "../errors/QueueErrors"
 import { bot } from "../bot"
-import { EmbedBuilder, Colors, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle } from "discord.js"
+import { EmbedBuilder, Colors, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, CommandInteraction } from "discord.js"
+import { RoomManager } from "./RoomManager"
 
 export interface QueueData {
   guildId: string
@@ -162,7 +163,7 @@ export class QueueManager {
     }
   }
 
-  async leaveQueue(guildId: string, queueName: string, userId: string, silent: boolean = false) {
+  async leaveQueue(guildId: string, queueName: string, userId: string) {
     const queue = await this.getQueueByName(guildId, queueName)
     if (!queue) {
       throw new QueueNotFoundError(queueName)
@@ -180,10 +181,8 @@ export class QueueManager {
       .set({ leftAt: new Date() })
       .where(eq(queueMembers.id, member.id))
 
-    if (!silent) {
-      await this.logToChannel(queue, `User <@${userId}> left the queue (grace period started).`)
-    }
-    logger.info(`[Leave Queue] User ${userId} left queue "${queue.name}" (${queue.id}) in guild ${guildId}. Silent: ${silent}`)
+    await this.logToChannel(queue, `User <@${userId}> left the queue (grace period started).`)
+    logger.info(`[Leave Queue] User ${userId} left queue "${queue.name}" (${queue.id}) in guild ${guildId}`)
 
     // Remove from waiting room voice channel
     if (queue.waitingRoomId) {
@@ -232,10 +231,7 @@ export class QueueManager {
           if (diff >= 60000) {
             await db.delete(queueMembers).where(eq(queueMembers.id, member.id))
 
-            // Log removal if silent was true (meaning they left the channel)
-            if (silent) {
-              await this.logToChannel(queue, `User <@${userId}> left the queue.`)
-            }
+            await this.logToChannel(queue, `User <@${userId}> left the queue.`)
           }
         }
       } catch (error) {
@@ -308,14 +304,83 @@ export class QueueManager {
     logger.info(`[Toggle Lock] Queue "${queueName}" in guild ${guildId} is now ${lock ? "locked" : "unlocked"}.`)
   }
 
-  async getQueueMembers(guildId: string, queueName: string) {
+  async getQueueMembers(guildId: string, queueName: string, limit?: number) {
     const queue = await this.getQueueByName(guildId, queueName)
     if (!queue) return []
 
-    return db.select()
+    let base = db.select()
       .from(queueMembers)
       .where(and(eq(queueMembers.queueId, queue.id), isNull(queueMembers.leftAt)))
-      .orderBy(queueMembers.joinedAt)
+      .orderBy(queueMembers.joinedAt);
+
+    const query = limit ? base.limit(limit) : base;
+
+    return query
+  }
+
+  async processStudentPick(
+    interaction: CommandInteraction,
+    roomManager: RoomManager,
+    queue: { name: string; waitingRoomId: string | null },
+    session: { id: string },
+    studentId: string,
+    tutorId: string
+  ) {
+    // Get waiting room category
+    let categoryId: string | undefined
+    if (queue.waitingRoomId) {
+      try {
+        const waitingChannel = await interaction.guild?.channels.fetch(queue.waitingRoomId)
+        if (waitingChannel && waitingChannel.parentId) {
+          categoryId = waitingChannel.parentId
+        }
+      } catch (error) {
+        // Ignore if waiting room not found
+      }
+    }
+
+    // Create ephemeral channel
+    const channelName = `Session-${interaction.user.username}`
+    const channel = await roomManager.createEphemeralChannel(
+      interaction.guild!,
+      channelName,
+      [tutorId, studentId],
+      categoryId,
+    )
+
+    if (!channel) {
+      throw new QueueError("Failed to create session room.")
+    }
+
+    // Move tutor
+    try {
+      const tutorMember = await interaction.guild?.members.fetch(tutorId)
+      if (tutorMember?.voice.channel) {
+        await tutorMember.voice.setChannel(channel)
+      }
+    } catch (error) {
+      logger.warn(`Failed to move tutor ${tutorId} to channel ${channel.id}: ${error}`)
+    }
+
+    // Use pickStudent to remove from queue, record session student, log, and DM
+    await this.pickStudent(
+      interaction.guild!.id,
+      queue.name,
+      studentId,
+      session.id,
+      tutorId,
+      channel.id,
+    )
+
+    await interaction.editReply({
+      embeds: [
+        new EmbedBuilder()
+          .setTitle("Student Picked")
+          .setDescription(`Picked <@${studentId}>. Created room <#${channel.id}>.`)
+          .setColor(Colors.Green),
+      ],
+    })
+    logger.info(`Tutor ${interaction.user.tag} picked student ${studentId} from queue '${queue.name}'. Created room '${channelName}' (${channel.id})`)
   }
 
   async setWaitingRoom(guildId: string, queueName: string, channelId: string) {

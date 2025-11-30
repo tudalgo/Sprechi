@@ -3,8 +3,9 @@ import {
   EmbedBuilder,
   Colors,
   MessageFlags,
+  ApplicationCommandOptionType,
 } from "discord.js"
-import { Discord, Slash, SlashGroup } from "discordx"
+import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { QueueError } from "@errors/QueueErrors"
 import logger from "@utils/logger"
@@ -15,7 +16,16 @@ export class TutorQueueList {
   private queueManager = new QueueManager()
 
   @Slash({ name: "list", description: "List members in the active session's queue" })
-  async list(interaction: CommandInteraction): Promise<void> {
+  async list(
+    @SlashOption({
+      name: "max_entries",
+      description: "Maximum number of entries to list (default: 5)",
+      required: false,
+      type: ApplicationCommandOptionType.Integer,
+    })
+    maxEntries: number | undefined,
+    interaction: CommandInteraction
+  ): Promise<void> {
     logger.info(`Command 'tutor queue list' triggered by ${interaction.user.tag} (${interaction.user.id})`)
 
     if (!interaction.guild) return
@@ -27,14 +37,15 @@ export class TutorQueueList {
       }
 
       const { queue } = activeSession
-      const members = await this.queueManager.getQueueMembers(interaction.guild.id, queue.name)
+      const limit = maxEntries ?? 5
+      const members = await this.queueManager.getQueueMembers(interaction.guild.id, queue.name, limit)
 
       if (members.length === 0) {
         const embed = new EmbedBuilder()
           .setTitle(`Queue: ${queue.name}`)
           .setDescription("The queue is empty.")
           .setColor(Colors.Blue)
-          .setFooter({ text: `Total: ${members.length}` })
+          .setFooter({ text: "Total: 0" })
 
         await interaction.reply({
           embeds: [embed],
@@ -47,7 +58,7 @@ export class TutorQueueList {
         .setTitle(`Queue: ${queue.name}`)
         .setDescription(members.map((m, i) => `${i + 1}. <@${m.userId}>`).join("\n"))
         .setColor(Colors.Blue)
-        .setFooter({ text: `Total: ${members.length}` })
+        .setFooter({ text: `Showing top ${members.length} members` })
 
       await interaction.reply({
         embeds: [embed],

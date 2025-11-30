@@ -3,24 +3,33 @@ import {
   EmbedBuilder,
   Colors,
   MessageFlags,
+  ApplicationCommandOptionType,
+  User,
 } from "discord.js"
-import { Discord, Slash, SlashGroup } from "discordx"
+import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { RoomManager } from "@managers/RoomManager"
 import { QueueError } from "@errors/QueueErrors"
 import logger from "@utils/logger"
 
 @Discord()
-@SlashGroup({ name: "tutor", description: "Tutor commands" })
-@SlashGroup({ name: "queue", description: "Queue management", root: "tutor" })
-export class TutorQueueNext {
+@SlashGroup("queue", "tutor")
+export class TutorQueuePick {
   private queueManager = new QueueManager()
   private roomManager = new RoomManager()
 
-  @Slash({ name: "next", description: "Pick the next student from the queue" })
-  @SlashGroup("queue", "tutor")
-  async next(interaction: CommandInteraction): Promise<void> {
-    logger.info(`Command 'tutor queue next' triggered by ${interaction.user.tag} (${interaction.user.id})`)
+  @Slash({ name: "pick", description: "Pick a specific student from the queue" })
+  async pick(
+    @SlashOption({
+      name: "user",
+      description: "The user to pick",
+      required: true,
+      type: ApplicationCommandOptionType.User,
+    })
+    user: User,
+    interaction: CommandInteraction
+  ): Promise<void> {
+    logger.info(`Command 'tutor queue pick' triggered by ${interaction.user.tag} (${interaction.user.id})`)
 
     if (!interaction.guild) return
 
@@ -33,20 +42,14 @@ export class TutorQueueNext {
       }
 
       const { queue, session } = activeSession
-      const members = await this.queueManager.getQueueMembers(interaction.guild.id, queue.name)
 
-      if (members.length === 0) {
-        const embed = new EmbedBuilder()
-          .setTitle(`Queue: ${queue.name}`)
-          .setDescription("The queue is empty.")
-          .setColor(Colors.Blue)
-
-        await interaction.editReply({ embeds: [embed] })
-        return
+      // Check if user is in the queue
+      const member = await this.queueManager.getQueueMember(queue.id, user.id)
+      if (!member) {
+        throw new QueueError(`<@${user.id}> is not in the queue '${queue.name}'.`)
       }
 
-      const nextMember = members[0]
-      const studentId = nextMember.userId
+      const studentId = user.id
       const tutorId = interaction.user.id
 
       await this.queueManager.processStudentPick(
@@ -59,7 +62,7 @@ export class TutorQueueNext {
       )
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An error occurred."
-      logger.warn(`Failed to pick next student for tutor ${interaction.user.tag}: ${message}`)
+      logger.warn(`Failed to pick student ${user.id} for tutor ${interaction.user.tag}: ${message}`)
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()

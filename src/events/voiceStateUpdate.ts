@@ -46,7 +46,7 @@ export class VoiceStateUpdate {
         const queue = await this.queueManager.getQueueByWaitingRoom(guildId, channelId)
         if (queue) {
           // Silent leave (grace period starts, log only if they don't rejoin)
-          await this.queueManager.leaveQueue(guildId, queue.name, userId, true)
+          await this.queueManager.leaveQueue(guildId, queue.name, userId)
           logger.info(`User ${oldState.member?.user.tag} (${userId}) left waiting room of queue '${queue.name}' (grace period started)`)
         }
 
