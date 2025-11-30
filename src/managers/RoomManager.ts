@@ -51,6 +51,7 @@ export class RoomManager {
         }
       }
 
+      logger.info(`[Create Room] Created ephemeral channel "${name}" (${channel.id}) in guild ${guild.id} for users: ${userIds.join(", ")}`)
       return channel
     } catch (error) {
       logger.error("Failed to create ephemeral channel:", error)
@@ -61,6 +62,7 @@ export class RoomManager {
   async deleteChannel(channel: VoiceChannel) {
     try {
       await channel.delete()
+      logger.info(`[Delete Room] Deleted channel "${channel.name}" (${channel.id})`)
     } catch (error) {
       logger.error(`Failed to delete channel ${channel.id}:`, error)
     }

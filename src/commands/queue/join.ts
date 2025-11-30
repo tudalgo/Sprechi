@@ -13,6 +13,7 @@ import {
   AlreadyInQueueError,
   QueueError,
 } from "../../errors/QueueErrors"
+import logger from "@utils/logger"
 
 @Discord()
 @SlashGroup("queue")
@@ -30,6 +31,8 @@ export class QueueJoin {
     name: string | undefined,
     interaction: CommandInteraction,
   ): Promise<void> {
+    logger.info(`Command 'join queue' triggered by ${interaction.user.tag} (${interaction.user.id}) for queue '${name ?? "default"}'`)
+
     if (!interaction.guild) {
       await interaction.reply({
         content: "This command can only be used in a server.",
@@ -41,6 +44,8 @@ export class QueueJoin {
     try {
       const queue = await this.queueManager.resolveQueue(interaction.guild.id, name)
       await this.queueManager.joinQueue(interaction.guild.id, queue.name, interaction.user.id)
+
+      logger.info(`User ${interaction.user.tag} (${interaction.user.id}) joined queue '${queue.name}' in guild '${interaction.guild.name}' (${interaction.guild.id})`)
 
       await interaction.reply({
         embeds: [
@@ -55,12 +60,18 @@ export class QueueJoin {
       let errorMessage = "Failed to join queue."
       if (error instanceof QueueNotFoundError) {
         errorMessage = `Queue **${name}** not found.`
+        logger.warn(`Failed to join queue: Queue '${name}' not found in guild '${interaction.guild.id}'`)
       } else if (error instanceof QueueLockedError) {
         errorMessage = `Queue **${name}** is locked.`
+        logger.warn(`Failed to join queue: Queue '${name}' is locked in guild '${interaction.guild.id}'`)
       } else if (error instanceof AlreadyInQueueError) {
         errorMessage = `You are already in queue **${name}**.`
+        logger.warn(`Failed to join queue: User ${interaction.user.tag} already in queue '${name}' in guild '${interaction.guild.id}'`)
       } else if (error instanceof QueueError) {
         errorMessage = error.message
+        logger.warn(`Failed to join queue '${name}': ${error.message}`)
+      } else {
+        logger.error(`Error joining queue '${name}':`, error)
       }
 
       await interaction.reply({

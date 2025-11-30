@@ -7,6 +7,7 @@ import {
 import { Discord, Slash, SlashGroup } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { QueueError } from "@errors/QueueErrors"
+import logger from "@utils/logger"
 
 @Discord()
 @SlashGroup("queue", "tutor")
@@ -15,6 +16,8 @@ export class TutorQueueList {
 
   @Slash({ name: "list", description: "List members in the active session's queue" })
   async list(interaction: CommandInteraction): Promise<void> {
+    logger.info(`Command 'tutor queue list' triggered by ${interaction.user.tag} (${interaction.user.id})`)
+
     if (!interaction.guild) return
 
     try {
@@ -44,8 +47,10 @@ export class TutorQueueList {
         embeds: [embed],
         flags: MessageFlags.Ephemeral,
       })
+      logger.info(`Listed ${members.length} members for queue '${queue.name}' in active session of tutor ${interaction.user.tag}`)
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An error occurred."
+      logger.warn(`Failed to list queue members for tutor ${interaction.user.tag}: ${message}`)
       await interaction.reply({
         content: message,
         flags: MessageFlags.Ephemeral,

@@ -12,6 +12,7 @@ import {
   NotInQueueError,
   QueueError,
 } from "../../errors/QueueErrors"
+import logger from "@utils/logger"
 
 @Discord()
 @SlashGroup("queue")
@@ -29,6 +30,8 @@ export class QueueLeave {
     name: string | undefined,
     interaction: CommandInteraction,
   ): Promise<void> {
+    logger.info(`Command 'leave queue' triggered by ${interaction.user.tag} (${interaction.user.id}) for queue '${name ?? "auto-detect"}'`)
+
     if (!interaction.guild) {
       await interaction.reply({
         content: "This command can only be used in a server.",
@@ -52,6 +55,8 @@ export class QueueLeave {
 
       await this.queueManager.leaveQueue(interaction.guild.id, queueName!, interaction.user.id)
 
+      logger.info(`User ${interaction.user.tag} (${interaction.user.id}) left queue '${queueName}' in guild '${interaction.guild.name}' (${interaction.guild.id})`)
+
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
@@ -65,10 +70,15 @@ export class QueueLeave {
       let errorMessage = "Failed to leave queue."
       if (error instanceof QueueNotFoundError) {
         errorMessage = `Queue **${name}** not found.`
+        logger.warn(`Failed to leave queue: Queue '${name}' not found in guild '${interaction.guild.id}'`)
       } else if (error instanceof NotInQueueError) {
         errorMessage = `You are not in queue **${name ?? "any queue"}**.`
+        logger.warn(`Failed to leave queue: User ${interaction.user.tag} not in queue '${name ?? "any"}' in guild '${interaction.guild.id}'`)
       } else if (error instanceof QueueError) {
         errorMessage = error.message
+        logger.warn(`Failed to leave queue '${name}': ${error.message}`)
+      } else {
+        logger.error(`Error leaving queue '${name}':`, error)
       }
 
       await interaction.reply({

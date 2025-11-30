@@ -34,6 +34,8 @@ export class AdminQueueCreate {
     description: string,
     interaction: CommandInteraction,
   ): Promise<void> {
+    logger.info(`Command 'create queue' triggered by ${interaction.user.tag} (${interaction.user.id}) for queue '${name}'`)
+
     if (!interaction.guild) {
       await interaction.reply({
         content: "This command can only be used in a server.",
@@ -47,6 +49,7 @@ export class AdminQueueCreate {
     try {
       const existing = await this.queueManager.getQueueByName(guildId, name)
       if (existing) {
+        logger.warn(`Failed to create queue '${name}': Queue already exists in guild '${interaction.guild.id}'`)
         await interaction.reply({
           embeds: [this.queueAlreadyExistsEmbed(name)],
           flags: MessageFlags.Ephemeral,
@@ -59,6 +62,8 @@ export class AdminQueueCreate {
         name,
         description,
       })
+
+      logger.info(`Queue '${newQueue.name}' created in guild '${interaction.guild.name}' (${interaction.guild.id})`)
 
       await interaction.reply({
         embeds: [this.queueCreatedEmbed(newQueue.name, newQueue.description)],

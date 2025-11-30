@@ -24,6 +24,7 @@ export class VoiceStateUpdate {
         const queue = await this.queueManager.getQueueByWaitingRoom(guildId, channelId)
         if (queue) {
           await this.queueManager.joinQueue(guildId, queue.name, userId)
+          logger.info(`User ${newState.member?.user.tag} (${userId}) auto-joined queue '${queue.name}' by entering waiting room`)
         }
       } catch (error: unknown) {
         // If they are already in the queue, we can ignore it or log it
@@ -46,6 +47,7 @@ export class VoiceStateUpdate {
         if (queue) {
           // Silent leave (grace period starts, log only if they don't rejoin)
           await this.queueManager.leaveQueue(guildId, queue.name, userId, true)
+          logger.info(`User ${oldState.member?.user.tag} (${userId}) left waiting room of queue '${queue.name}' (grace period started)`)
         }
 
         // Check for ephemeral channel cleanup
@@ -59,6 +61,7 @@ export class VoiceStateUpdate {
             // Channel is empty, delete it and mark student session as ended
             try {
               await channel.delete()
+              logger.info(`Deleted empty ephemeral channel '${channel.name}' (${channel.id})`)
               await db.update(sessionStudents)
                 .set({ endTime: new Date() })
                 .where(eq(sessionStudents.id, sessionStudent.id))

@@ -63,6 +63,9 @@ export class QueueManager {
     const deleted = await db.delete(queues)
       .where(and(eq(queues.guildId, guildId), eq(queues.name, name)))
       .returning()
+    if (deleted.length > 0) {
+      logger.info(`[Delete Queue] Deleted queue "${name}" in guild ${guildId}.`)
+    }
     return deleted.length > 0
   }
 
@@ -99,6 +102,7 @@ export class QueueManager {
 
         await this.logToChannel(queue, `User <@${userId}> rejoined the queue (restored position).`)
         await this.sendJoinDm(queue, userId)
+        logger.info(`[Rejoin Queue] User ${userId} rejoined queue "${queue.name}" (${queue.id}) in guild ${guildId} (restored position).`)
         return
       } else {
         // Grace period expired, treat as new join
@@ -113,6 +117,7 @@ export class QueueManager {
 
     await this.logToChannel(queue, `User <@${userId}> joined the queue.`)
     await this.sendJoinDm(queue, userId)
+    logger.info(`[Join Queue] User ${userId} joined queue "${queue.name}" (${queue.id}) in guild ${guildId}.`)
   }
 
   private async sendJoinDm(queue: typeof queues.$inferSelect, userId: string) {
@@ -178,6 +183,7 @@ export class QueueManager {
     if (!silent) {
       await this.logToChannel(queue, `User <@${userId}> left the queue (grace period started).`)
     }
+    logger.info(`[Leave Queue] User ${userId} left queue "${queue.name}" (${queue.id}) in guild ${guildId}. Silent: ${silent}`)
 
     // Remove from waiting room voice channel
     if (queue.waitingRoomId) {
@@ -272,6 +278,7 @@ export class QueueManager {
     })
 
     await this.logToChannel(queue, `User <@${userId}> was picked by <@${tutorId}>.`)
+    logger.info(`[Pick Student] Tutor ${tutorId} picked student ${userId} from queue "${queue.name}" (${queue.id}). Session: ${sessionId}`)
 
     // DM Student
     try {
@@ -298,6 +305,7 @@ export class QueueManager {
     if (result.length === 0) {
       throw new QueueNotFoundError(queueName)
     }
+    logger.info(`[Toggle Lock] Queue "${queueName}" in guild ${guildId} is now ${lock ? "locked" : "unlocked"}.`)
   }
 
   async getQueueMembers(guildId: string, queueName: string) {
@@ -319,6 +327,7 @@ export class QueueManager {
     if (result.length === 0) {
       throw new QueueNotFoundError(queueName)
     }
+    logger.info(`[Set Waiting Room] Queue "${queueName}" in guild ${guildId} waiting room set to ${channelId}.`)
   }
 
   async setLogChannel(guildId: string, queueName: string, channelId: string) {
@@ -330,6 +339,7 @@ export class QueueManager {
     if (result.length === 0) {
       throw new QueueNotFoundError(queueName)
     }
+    logger.info(`[Set Log Channel] Queue "${queueName}" in guild ${guildId} log channel set to ${channelId}.`)
   }
 
   async createSession(guildId: string, queueName: string, tutorId: string) {
@@ -358,6 +368,7 @@ export class QueueManager {
     })
 
     await this.logToChannel(queue, `Tutor <@${tutorId}> started a session.`)
+    logger.info(`[Create Session] Tutor ${tutorId} started session on queue "${queueName}" in guild ${guildId}.`)
   }
 
   async endSession(guildId: string, tutorId: string) {
@@ -375,6 +386,7 @@ export class QueueManager {
 
     if (result.length > 0) {
       await this.logToChannel(queue, `Tutor <@${tutorId}> ended their session.`)
+      logger.info(`[End Session] Tutor ${tutorId} ended session in guild ${guildId}.`)
     }
   }
 

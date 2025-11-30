@@ -6,6 +6,7 @@ import {
 } from "discord.js"
 import { Discord, Slash, SlashGroup } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
+import logger from "@utils/logger"
 
 @Discord()
 @SlashGroup({ name: "tutor", description: "Tutor commands" })
@@ -16,6 +17,8 @@ export class TutorSessionEnd {
   @Slash({ name: "end", description: "End your tutoring session" })
   @SlashGroup("session", "tutor")
   async end(interaction: CommandInteraction): Promise<void> {
+    logger.info(`Command 'tutor session end' triggered by ${interaction.user.tag} (${interaction.user.id})`)
+
     if (!interaction.guild) {
       await interaction.reply({
         content: "This command can only be used in a server.",
@@ -36,8 +39,10 @@ export class TutorSessionEnd {
         ],
         flags: MessageFlags.Ephemeral,
       })
+      logger.info(`Tutor ${interaction.user.tag} ended their session in guild '${interaction.guild.name}' (${interaction.guild.id})`)
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to end session."
+      logger.warn(`Failed to end session for tutor ${interaction.user.tag}: ${message}`)
       await interaction.reply({
         embeds: [
           new EmbedBuilder()

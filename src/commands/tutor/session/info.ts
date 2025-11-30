@@ -10,6 +10,7 @@ import { QueueError } from "../../../errors/QueueErrors"
 import db from "@db"
 import { sessionStudents } from "@db/schema"
 import { eq, sql } from "drizzle-orm"
+import logger from "@utils/logger"
 
 @Discord()
 @SlashGroup("session", "tutor")
@@ -18,6 +19,8 @@ export class TutorSessionInfo {
 
   @Slash({ name: "info", description: "Get information about the current session" })
   async info(interaction: CommandInteraction): Promise<void> {
+    logger.info(`Command 'tutor session info' triggered by ${interaction.user.tag} (${interaction.user.id})`)
+
     if (!interaction.guild) {
       await interaction.reply({
         content: "This command can only be used in a server.",
@@ -56,8 +59,10 @@ export class TutorSessionInfo {
         ],
         flags: MessageFlags.Ephemeral,
       })
+      logger.info(`Displayed session info for tutor ${interaction.user.tag} in guild '${interaction.guild.name}' (${interaction.guild.id})`)
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to get session info."
+      logger.warn(`Failed to get session info for tutor ${interaction.user.tag}: ${message}`)
       await interaction.reply({
         embeds: [
           new EmbedBuilder()

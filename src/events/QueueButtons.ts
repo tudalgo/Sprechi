@@ -2,6 +2,7 @@ import { ButtonInteraction, EmbedBuilder, Colors, ActionRowBuilder, ButtonBuilde
 import { Discord, ButtonComponent } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { QueueNotFoundError, NotInQueueError } from "@errors/QueueErrors"
+import logger from "@utils/logger"
 
 @Discord()
 export class QueueButtons {
@@ -11,6 +12,8 @@ export class QueueButtons {
   async refresh(interaction: ButtonInteraction): Promise<void> {
     const queueId = interaction.customId.match(/^queue_refresh_(.+)$/)?.[1]
     if (!queueId) return
+
+    logger.info(`Button 'queue_refresh' clicked by ${interaction.user.tag} (${interaction.user.id}) for queueId '${queueId}'`)
 
     await interaction.deferUpdate()
 
@@ -52,7 +55,7 @@ export class QueueButtons {
 
       await interaction.editReply({ embeds: [embed] })
     } catch (error) {
-      // Ignore errors
+      logger.warn(`Error refreshing queue status for user ${interaction.user.tag}:`, error)
     }
   }
 
@@ -60,6 +63,8 @@ export class QueueButtons {
   async leave(interaction: ButtonInteraction): Promise<void> {
     const queueId = interaction.customId.match(/^queue_leave_(.+)$/)?.[1]
     if (!queueId) return
+
+    logger.info(`Button 'queue_leave' clicked by ${interaction.user.tag} (${interaction.user.id}) for queueId '${queueId}'`)
 
     await interaction.deferUpdate()
 
@@ -94,7 +99,7 @@ export class QueueButtons {
           flags: MessageFlags.Ephemeral,
         })
       } else {
-        console.error(error)
+        logger.error(`Error handling queue leave button for user ${interaction.user.tag}:`, error)
       }
     }
   }
@@ -103,6 +108,8 @@ export class QueueButtons {
   async rejoin(interaction: ButtonInteraction): Promise<void> {
     const queueId = interaction.customId.match(/^queue_rejoin_(.+)$/)?.[1]
     if (!queueId) return
+
+    logger.info(`Button 'queue_rejoin' clicked by ${interaction.user.tag} (${interaction.user.id}) for queueId '${queueId}'`)
 
     await interaction.deferUpdate()
 
@@ -132,6 +139,7 @@ export class QueueButtons {
       })
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to rejoin queue."
+      logger.warn(`Error handling queue rejoin button for user ${interaction.user.tag}: ${message}`)
       await interaction.followUp({
         content: message,
         flags: MessageFlags.Ephemeral,

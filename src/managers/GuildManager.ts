@@ -20,6 +20,7 @@ export class GuildManager {
         await this.addGuild(guild)
       }
     }
+    logger.info("Guild sync complete.")
   }
 
   async addGuild(guild: Guild): Promise<void> {
@@ -28,6 +29,6 @@ export class GuildManager {
       name: guild.name,
       memberCount: guild.memberCount,
     }).onConflictDoNothing()
-    logger.info(`[New Guild] Added ${guild.name} to the database.`)
+    logger.info(`[New Guild] Added ${guild.name} (${guild.id}) to the database.`)
   }
 }

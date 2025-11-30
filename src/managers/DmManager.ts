@@ -10,6 +10,7 @@ export class DmManager {
       } else {
         await user.send(content)
       }
+      logger.info(`Sent DM to user ${userId}`)
       return true
     } catch (error) {
       logger.error(`Failed to send DM to user ${userId}:`, error)

@@ -6,6 +6,7 @@ import {
 } from "discord.js"
 import { Discord, Slash, SlashGroup } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
+import logger from "@utils/logger"
 
 @Discord()
 @SlashGroup({ name: "queue", description: "Queue commands" })
@@ -15,6 +16,8 @@ export class QueueList {
   @Slash({ name: "list", description: "List all available queues" })
   @SlashGroup("queue")
   async list(interaction: CommandInteraction): Promise<void> {
+    logger.info(`Command 'list queues' triggered by ${interaction.user.tag} (${interaction.user.id})`)
+
     if (!interaction.guild) {
       await interaction.reply({
         content: "This command can only be used in a server.",
@@ -24,6 +27,7 @@ export class QueueList {
     }
 
     const queues = await this.queueManager.listQueues(interaction.guild.id)
+    logger.info(`Listed ${queues.length} queues for guild '${interaction.guild.name}' (${interaction.guild.id})`)
 
     if (queues.length === 0) {
       await interaction.reply({

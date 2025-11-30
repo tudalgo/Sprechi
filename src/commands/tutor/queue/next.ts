@@ -8,6 +8,7 @@ import { Discord, Slash, SlashGroup } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { RoomManager } from "@managers/RoomManager"
 import { QueueError } from "@errors/QueueErrors"
+import logger from "@utils/logger"
 
 @Discord()
 @SlashGroup({ name: "tutor", description: "Tutor commands" })
@@ -19,6 +20,8 @@ export class TutorQueueNext {
   @Slash({ name: "next", description: "Pick the next student from the queue" })
   @SlashGroup("queue", "tutor")
   async next(interaction: CommandInteraction): Promise<void> {
+    logger.info(`Command 'tutor queue next' triggered by ${interaction.user.tag} (${interaction.user.id})`)
+
     if (!interaction.guild) return
 
     await interaction.deferReply({ flags: MessageFlags.Ephemeral })
@@ -91,8 +94,10 @@ export class TutorQueueNext {
             .setColor(Colors.Green),
         ],
       })
+      logger.info(`Tutor ${interaction.user.tag} picked student ${studentId} from queue '${queue.name}'. Created room '${channelName}' (${channel.id})`)
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An error occurred."
+      logger.warn(`Failed to pick next student for tutor ${interaction.user.tag}: ${message}`)
       await interaction.editReply(message)
     }
   }

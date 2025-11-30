@@ -7,8 +7,9 @@ import { GuildManager } from "@managers/GuildManager"
 export class GuildCreateEvent {
   @On({ event: "guildCreate" })
   async onGuildJoin([guild]: [Guild]) {
-    logger.info(`Joined new guild: ${guild.name}`)
+    logger.info(`Joined new guild: ${guild.name} (${guild.id})`)
     const guildManager = new GuildManager()
     await guildManager.addGuild(guild)
+    logger.info(`Initialized guild settings for ${guild.name} (${guild.id})`)
   }
 }
