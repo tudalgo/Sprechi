@@ -36,7 +36,12 @@ export class TutorQueueNext {
       const members = await this.queueManager.getQueueMembers(interaction.guild.id, queue.name)
 
       if (members.length === 0) {
-        await interaction.editReply("The queue is empty.")
+        const embed = new EmbedBuilder()
+          .setTitle(`Queue: ${queue.name}`)
+          .setDescription("The queue is empty.")
+          .setColor(Colors.Blue)
+
+        await interaction.editReply({ embeds: [embed] })
         return
       }
 
@@ -98,7 +103,14 @@ export class TutorQueueNext {
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An error occurred."
       logger.warn(`Failed to pick next student for tutor ${interaction.user.tag}: ${message}`)
-      await interaction.editReply(message)
+      await interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle("Error")
+            .setDescription(message)
+            .setColor(Colors.Red),
+        ],
+      })
     }
   }
 }

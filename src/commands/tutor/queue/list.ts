@@ -30,8 +30,14 @@ export class TutorQueueList {
       const members = await this.queueManager.getQueueMembers(interaction.guild.id, queue.name)
 
       if (members.length === 0) {
+        const embed = new EmbedBuilder()
+          .setTitle(`Queue: ${queue.name}`)
+          .setDescription("The queue is empty.")
+          .setColor(Colors.Blue)
+          .setFooter({ text: `Total: ${members.length}` })
+
         await interaction.reply({
-          content: `The queue **${queue.name}** is empty.`,
+          embeds: [embed],
           flags: MessageFlags.Ephemeral,
         })
         return
@@ -52,7 +58,12 @@ export class TutorQueueList {
       const message = error instanceof Error ? error.message : "An error occurred."
       logger.warn(`Failed to list queue members for tutor ${interaction.user.tag}: ${message}`)
       await interaction.reply({
-        content: message,
+        embeds: [
+          new EmbedBuilder()
+            .setTitle("Error")
+            .setDescription(message)
+            .setColor(Colors.Red),
+        ],
         flags: MessageFlags.Ephemeral,
       })
     }
