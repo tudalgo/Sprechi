@@ -8,6 +8,7 @@ import {
 import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import logger from "@utils/logger"
+import { QueueNotFoundError } from "@errors/QueueErrors"
 
 @Discord()
 @SlashGroup("queue")
@@ -58,7 +59,7 @@ export class AdminQueueLock {
       })
     } catch (error: unknown) {
       let errorMessage = "Failed to update queue lock state."
-      if (error instanceof Error && error.message === "Queue not found") {
+      if (error instanceof QueueNotFoundError) {
         errorMessage = `Queue **${name}** not found.`
         logger.warn(`Failed to lock/unlock queue '${name}': Queue not found in guild '${interaction.guild.id}'`)
       } else {
