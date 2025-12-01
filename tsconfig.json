@@ -11,25 +11,28 @@
     "emitDecoratorMetadata": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "paths": {
       "@db": [
-        "db"
+        "src/db"
       ],
       "@db/*": [
-        "db/*"
+        "src/db/*"
       ],
       "@utils/*": [
-        "utils/*"
+        "src/utils/*"
       ],
       "@managers/*": [
-        "managers/*"
+        "src/managers/*"
       ],
       "@errors/*": [
-        "errors/*"
+        "src/errors/*"
+      ],
+      "@commands/*": [
+        "src/commands/*"
       ],
       "@/*": [
-        "*"
+        "src/*"
       ],
     }
   },
