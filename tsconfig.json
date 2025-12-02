@@ -31,6 +31,9 @@
       "@commands/*": [
         "src/commands/*"
       ],
+      "@events/*": [
+        "src/events/*"
+      ],
       "@/*": [
         "src/*"
       ],
