@@ -22,7 +22,9 @@
     "discordx": "^11.13.2",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "reflect-metadata": "^0.2.2",
+    "tsyringe": "^4.10.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

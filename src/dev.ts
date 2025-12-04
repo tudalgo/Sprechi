@@ -1,3 +1,4 @@
+import "reflect-metadata"
 import * as dotenv from "dotenv"
 import * as path from "path"
 import { dirname, resolve } from "@discordx/importer"
@@ -7,6 +8,11 @@ import { DIService, MetadataStorage } from "discordx"
 import { bot } from "@/bot"
 import logger from "@utils/logger"
 import { migrateDb } from "@/migrate"
+import { container } from "tsyringe"
+import { tsyringeDependencyRegistryEngine } from "discordx"
+
+// Enable DI
+DIService.engine = tsyringeDependencyRegistryEngine.setInjector(container)
 
 const envFilePath = path.resolve(dirname(import.meta.url), "../.env.dev")
 logger.info(`Loading environment variables from: ${envFilePath}`)

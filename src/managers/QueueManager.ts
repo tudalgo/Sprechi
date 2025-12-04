@@ -20,6 +20,9 @@ export interface QueueData {
   description: string
 }
 
+import { singleton } from "tsyringe"
+
+@singleton()
 export class QueueManager {
   async createQueue(data: QueueData & { isLocked?: boolean }) {
     const [newQueue] = await db.insert(queues)
@@ -292,18 +295,6 @@ export class QueueManager {
     }
   }
 
-  async toggleLock(guildId: string, queueName: string, lock: boolean) {
-    const result = await db.update(queues)
-      .set({ isLocked: lock })
-      .where(and(eq(queues.guildId, guildId), eq(queues.name, queueName)))
-      .returning()
-
-    if (result.length === 0) {
-      throw new QueueNotFoundError(queueName)
-    }
-    logger.info(`[Toggle Lock] Queue "${queueName}" in guild ${guildId} is now ${lock ? "locked" : "unlocked"}.`)
-  }
-
   async getQueueMembers(guildId: string, queueName: string, limit?: number) {
     const queue = await this.getQueueByName(guildId, queueName)
     if (!queue) {
@@ -550,5 +541,108 @@ export class QueueManager {
       .from(queueMembers)
       .where(and(eq(queueMembers.queueId, queueId), eq(queueMembers.userId, userId), isNull(queueMembers.leftAt)))
     return member ?? null
+  }
+  async getAllActiveSessions(guildId: string) {
+    const activeSessions = await db.select({
+      session: sessions,
+      queueName: queues.name,
+      studentCount: sql<number>`count(${sessionStudents.id})`,
+    })
+      .from(sessions)
+      .innerJoin(queues, eq(sessions.queueId, queues.id))
+      .leftJoin(sessionStudents, eq(sessions.id, sessionStudents.sessionId))
+      .where(and(
+        eq(queues.guildId, guildId),
+        isNull(sessions.endTime),
+      ))
+      .groupBy(sessions.id, queues.name)
+
+    return activeSessions.map(({ session, queueName, studentCount }) => ({
+      ...session,
+      queueName,
+      studentCount: Number(studentCount),
+    }))
+  }
+
+  async terminateSessionsByUser(guildId: string, userId: string) {
+    // Find active sessions for this user in this guild
+    const activeSessions = await db.select({
+      session: sessions,
+      queue: queues,
+    })
+      .from(sessions)
+      .innerJoin(queues, eq(sessions.queueId, queues.id))
+      .where(and(
+        eq(queues.guildId, guildId),
+        eq(sessions.tutorId, userId),
+        isNull(sessions.endTime),
+      ))
+
+    if (activeSessions.length === 0) {
+      return 0
+    }
+
+    // Terminate them
+    const sessionIds = activeSessions.map(s => s.session.id)
+    await db.update(sessions)
+      .set({ endTime: new Date() })
+      .where(sql`${sessions.id} IN ${sessionIds}`)
+
+    // Log for each session
+    for (const { session, queue } of activeSessions) {
+      await this.logToChannel(queue, `Session for <@${session.tutorId}> was forcefully terminated by admin.`)
+      logger.info(`[Terminate Session] Session ${session.id} for tutor ${session.tutorId} terminated by admin in guild ${guildId}.`)
+    }
+
+    return activeSessions.length
+  }
+
+  async terminateAllSessions(guildId: string) {
+    // Find all active sessions in this guild
+    const activeSessions = await db.select({
+      session: sessions,
+      queue: queues,
+    })
+      .from(sessions)
+      .innerJoin(queues, eq(sessions.queueId, queues.id))
+      .where(and(
+        eq(queues.guildId, guildId),
+        isNull(sessions.endTime),
+      ))
+
+    if (activeSessions.length === 0) {
+      return 0
+    }
+
+    // Terminate them
+    const sessionIds = activeSessions.map(s => s.session.id)
+    await db.update(sessions)
+      .set({ endTime: new Date() })
+      .where(sql`${sessions.id} IN ${sessionIds}`)
+
+    // Log for each session
+    for (const { session, queue } of activeSessions) {
+      await this.logToChannel(queue, `Session for <@${session.tutorId}> was forcefully terminated by admin (Terminate All).`)
+      logger.info(`[Terminate All Sessions] Session ${session.id} for tutor ${session.tutorId} terminated by admin in guild ${guildId}.`)
+    }
+
+    return activeSessions.length
+  }
+
+  async setQueueLockState(guildId: string, queueName: string, isLocked: boolean) {
+    const queue = await this.getQueueByName(guildId, queueName)
+    if (!queue) {
+      throw new QueueNotFoundError(queueName)
+    }
+
+    if (queue.isLocked === isLocked) {
+      throw new QueueError(`Queue "${queueName}" is already ${isLocked ? "locked" : "unlocked"}.`)
+    }
+
+    await db.update(queues)
+      .set({ isLocked })
+      .where(eq(queues.id, queue.id))
+
+    logger.info(`[Set Lock State] Queue "${queueName}" in guild ${guildId} set to ${isLocked ? "locked" : "unlocked"}.`)
   }
 }

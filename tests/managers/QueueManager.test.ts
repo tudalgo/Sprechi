@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { QueueManager } from '@managers/QueueManager';
 import db from '@db';
-import { queues, queueMembers } from '@db/schema';
+import { queues, queueMembers, sessions } from '@db/schema';
 import { bot } from '@/bot';
 import { mockDeep, mockReset } from 'vitest-mock-extended';
 import { RoomManager } from '@managers/RoomManager';
@@ -254,39 +254,6 @@ describe('QueueManager', () => {
       const result = await queueManager.getQueueByName('guild-123', 'non-existent');
 
       expect(result).toBeNull();
-    });
-  });
-
-  describe('toggleLock', () => {
-    it('should toggle lock state successfully', async () => {
-      const mockQueue = {
-        id: 'queue-123',
-        guildId: 'guild-123',
-        name: 'test-queue',
-        isLocked: true,
-      };
-
-      // Mock db.update chain
-      const returningMock = vi.fn().mockResolvedValue([mockQueue]);
-      const whereMock = vi.fn().mockReturnValue({ returning: returningMock });
-      const setMock = vi.fn().mockReturnValue({ where: whereMock });
-      (db.update as any).mockReturnValue({ set: setMock });
-
-      await queueManager.toggleLock('guild-123', 'test-queue', true);
-
-      expect(db.update).toHaveBeenCalledWith(queues);
-      expect(setMock).toHaveBeenCalledWith({ isLocked: true });
-    });
-
-    it('should throw QueueNotFoundError if queue does not exist', async () => {
-      // Mock db.update chain
-      const returningMock = vi.fn().mockResolvedValue([]);
-      const whereMock = vi.fn().mockReturnValue({ returning: returningMock });
-      const setMock = vi.fn().mockReturnValue({ where: whereMock });
-      (db.update as any).mockReturnValue({ set: setMock });
-
-      await expect(queueManager.toggleLock('guild-123', 'non-existent', true))
-        .rejects.toThrow('Queue "non-existent" not found');
     });
   });
 
@@ -1030,6 +997,139 @@ describe('QueueManager', () => {
       const result = await queueManager.getQueueMember('queue-123', 'user-123');
 
       expect(result).toEqual(mockMember);
+    });
+  });
+  describe('getAllActiveSessions', () => {
+    it('should return active sessions with stats', async () => {
+      const mockSession = {
+        id: 'session-123',
+        queueId: 'queue-123',
+        tutorId: 'tutor-123',
+        startTime: new Date(),
+        endTime: null,
+      };
+      const mockDbResult = [{
+        session: mockSession,
+        queueName: 'test-queue',
+        studentCount: 3,
+      }];
+
+      // Mock db chain
+      const groupByMock = vi.fn().mockResolvedValue(mockDbResult);
+      const whereMock = vi.fn().mockReturnValue({ groupBy: groupByMock });
+      const leftJoin2Mock = vi.fn().mockReturnValue({ where: whereMock });
+      const innerJoinMock = vi.fn().mockReturnValue({ leftJoin: leftJoin2Mock });
+      const fromMock = vi.fn().mockReturnValue({ innerJoin: innerJoinMock });
+      (db.select as any).mockReturnValue({ from: fromMock });
+
+      const result = await queueManager.getAllActiveSessions('guild-123');
+
+      expect(result).toEqual([{
+        ...mockSession,
+        queueName: 'test-queue',
+        studentCount: 3,
+      }]);
+    });
+  });
+
+  describe('terminateSessionsByUser', () => {
+    it('should terminate sessions for user', async () => {
+      const mockSession = { id: 'session-123', tutorId: 'tutor-123' };
+      const mockQueue = { id: 'queue-123', name: 'test-queue', logChannelId: 'log-123' };
+      const mockActiveSessions = [{ session: mockSession, queue: mockQueue }];
+
+      // Mock select
+      const whereSelectMock = vi.fn().mockResolvedValue(mockActiveSessions);
+      const innerJoinMock = vi.fn().mockReturnValue({ where: whereSelectMock });
+      const fromMock = vi.fn().mockReturnValue({ innerJoin: innerJoinMock });
+      (db.select as any).mockReturnValue({ from: fromMock });
+
+      // Mock update
+      const whereUpdateMock = vi.fn().mockResolvedValue([]);
+      const setMock = vi.fn().mockReturnValue({ where: whereUpdateMock });
+      (db.update as any).mockReturnValue({ set: setMock });
+
+      // Mock logToChannel
+      const logToChannel = vi.spyOn(queueManager as any, 'logToChannel');
+
+      const count = await queueManager.terminateSessionsByUser('guild-123', 'tutor-123');
+
+      expect(count).toBe(1);
+      expect(db.update).toHaveBeenCalledWith(sessions);
+      expect(logToChannel).toHaveBeenCalled();
+    });
+
+    it('should return 0 if no sessions found', async () => {
+      // Mock select empty
+      const whereSelectMock = vi.fn().mockResolvedValue([]);
+      const innerJoinMock = vi.fn().mockReturnValue({ where: whereSelectMock });
+      const fromMock = vi.fn().mockReturnValue({ innerJoin: innerJoinMock });
+      (db.select as any).mockReturnValue({ from: fromMock });
+
+      const count = await queueManager.terminateSessionsByUser('guild-123', 'tutor-123');
+
+      expect(count).toBe(0);
+      expect(db.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('terminateAllSessions', () => {
+    it('should terminate all sessions', async () => {
+      const mockSession = { id: 'session-123', tutorId: 'tutor-123' };
+      const mockQueue = { id: 'queue-123', name: 'test-queue', logChannelId: 'log-123' };
+      const mockActiveSessions = [{ session: mockSession, queue: mockQueue }];
+
+      // Mock select
+      const whereSelectMock = vi.fn().mockResolvedValue(mockActiveSessions);
+      const innerJoinMock = vi.fn().mockReturnValue({ where: whereSelectMock });
+      const fromMock = vi.fn().mockReturnValue({ innerJoin: innerJoinMock });
+      (db.select as any).mockReturnValue({ from: fromMock });
+
+      // Mock update
+      const whereUpdateMock = vi.fn().mockResolvedValue([]);
+      const setMock = vi.fn().mockReturnValue({ where: whereUpdateMock });
+      (db.update as any).mockReturnValue({ set: setMock });
+
+      // Mock logToChannel
+      const logToChannel = vi.spyOn(queueManager as any, 'logToChannel');
+
+      const count = await queueManager.terminateAllSessions('guild-123');
+
+      expect(count).toBe(1);
+      expect(db.update).toHaveBeenCalledWith(sessions);
+      expect(logToChannel).toHaveBeenCalled();
+    });
+  });
+
+  describe('setQueueLockState', () => {
+    it('should set lock state successfully', async () => {
+      const mockQueue = { id: 'queue-123', isLocked: false, name: 'test-queue' };
+      vi.spyOn(queueManager, 'getQueueByName').mockResolvedValue(mockQueue as any);
+
+      // Mock update
+      const whereUpdateMock = vi.fn().mockResolvedValue([]);
+      const setMock = vi.fn().mockReturnValue({ where: whereUpdateMock });
+      (db.update as any).mockReturnValue({ set: setMock });
+
+      await queueManager.setQueueLockState('guild-123', 'test-queue', true);
+
+      expect(db.update).toHaveBeenCalledWith(queues);
+      expect(setMock).toHaveBeenCalledWith({ isLocked: true });
+    });
+
+    it('should throw QueueError if already in state', async () => {
+      const mockQueue = { id: 'queue-123', isLocked: true, name: 'test-queue' };
+      vi.spyOn(queueManager, 'getQueueByName').mockResolvedValue(mockQueue as any);
+
+      await expect(queueManager.setQueueLockState('guild-123', 'test-queue', true))
+        .rejects.toThrow('Queue "test-queue" is already locked.');
+    });
+
+    it('should throw QueueNotFoundError if queue not found', async () => {
+      vi.spyOn(queueManager, 'getQueueByName').mockResolvedValue(null as any);
+
+      await expect(queueManager.setQueueLockState('guild-123', 'test-queue', true))
+        .rejects.toThrow('Queue "test-queue" not found');
     });
   });
 });

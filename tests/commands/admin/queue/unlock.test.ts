@@ -1,11 +1,11 @@
 import "reflect-metadata";
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { AdminQueueLockCommand } from '@commands/admin/queue/lock';
+import { AdminQueueUnlockCommand } from '@commands/admin/queue/unlock';
 import { QueueManager } from '@managers/QueueManager';
 import { CommandInteraction } from 'discord.js';
 import { mockDeep } from 'vitest-mock-extended';
 
-describe('AdminQueueLockCommand', () => {
+describe('AdminQueueUnlockCommand', () => {
   let mockQueueManager: any;
   let mockInteraction: any;
 
@@ -17,19 +17,19 @@ describe('AdminQueueLockCommand', () => {
     mockInteraction.deferReply = vi.fn();
   });
 
-  it('should lock queue successfully', async () => {
-    const command = new AdminQueueLockCommand(mockQueueManager);
+  it('should unlock queue successfully', async () => {
+    const command = new AdminQueueUnlockCommand(mockQueueManager);
     mockQueueManager.setQueueLockState.mockResolvedValue(undefined);
 
-    await command.lock('test-queue', mockInteraction);
+    await command.unlock('test-queue', mockInteraction);
 
-    expect(mockQueueManager.setQueueLockState).toHaveBeenCalledWith('guild-123', 'test-queue', true);
+    expect(mockQueueManager.setQueueLockState).toHaveBeenCalledWith('guild-123', 'test-queue', false);
     expect(mockInteraction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({
         embeds: expect.arrayContaining([
           expect.objectContaining({
             data: expect.objectContaining({
-              title: 'Queue Locked',
+              title: 'Queue Unlocked',
             }),
           }),
         ]),
@@ -37,11 +37,11 @@ describe('AdminQueueLockCommand', () => {
     );
   });
 
-  it("should throw an error if queue is already locked", async () => {
-    const command = new AdminQueueLockCommand(mockQueueManager);
-    mockQueueManager.setQueueLockState.mockRejectedValue(new Error('Queue is already locked'));
+  it("should throw an error if the queue is not locked", async () => {
+    const command = new AdminQueueUnlockCommand(mockQueueManager);
+    mockQueueManager.setQueueLockState.mockRejectedValue(new Error('Queue is not locked'));
 
-    await command.lock('test-queue', mockInteraction);
+    await command.unlock('test-queue', mockInteraction);
 
     expect(mockInteraction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -49,7 +49,7 @@ describe('AdminQueueLockCommand', () => {
           expect.objectContaining({
             data: expect.objectContaining({
               title: 'Error',
-              description: 'Queue is already locked',
+              description: 'Queue is not locked',
             }),
           }),
         ]),
@@ -57,11 +57,11 @@ describe('AdminQueueLockCommand', () => {
     );
   });
 
-  it('should throw an error if queue is not found', async () => {
-    const command = new AdminQueueLockCommand(mockQueueManager);
+  it('should throw an error if the queue is not found', async () => {
+    const command = new AdminQueueUnlockCommand(mockQueueManager);
     mockQueueManager.setQueueLockState.mockRejectedValue(new Error('Queue not found'));
 
-    await command.lock('test-queue', mockInteraction);
+    await command.unlock('test-queue', mockInteraction);
 
     expect(mockInteraction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -78,10 +78,10 @@ describe('AdminQueueLockCommand', () => {
   });
 
   it('should return early if not in a guild', async () => {
-    const command = new AdminQueueLockCommand(mockQueueManager);
+    const command = new AdminQueueUnlockCommand(mockQueueManager);
     mockInteraction.guildId = null;
 
-    await command.lock('test-queue', mockInteraction);
+    await command.unlock('test-queue', mockInteraction);
 
     expect(mockInteraction.deferReply).not.toHaveBeenCalled();
   });

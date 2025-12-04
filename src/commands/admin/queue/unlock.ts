@@ -1,46 +1,40 @@
-import {
-  ApplicationCommandOptionType,
-  CommandInteraction,
-  EmbedBuilder,
-  Colors,
-  MessageFlags,
-} from "discord.js"
-import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
+import { CommandInteraction, ApplicationCommandOptionType, EmbedBuilder, Colors, MessageFlags } from "discord.js"
+import { Discord, Slash, SlashOption, SlashGroup } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { inject, injectable } from "tsyringe"
 
 @Discord()
 @injectable()
 @SlashGroup("queue", "admin")
-export class AdminQueueLockCommand {
+export class AdminQueueUnlockCommand {
   constructor(
     @inject(QueueManager) private queueManager: QueueManager
   ) { }
 
-  @Slash({ name: "lock", description: "Lock a queue" })
-  async lock(
+  @Slash({ name: "unlock", description: "Unlock a queue" })
+  async unlock(
     @SlashOption({
       name: "name",
-      description: "The name of the queue to lock",
+      description: "The name of the queue to unlock",
       required: true,
       type: ApplicationCommandOptionType.String,
     })
     name: string,
-    interaction: CommandInteraction,
-  ): Promise<void> {
+    interaction: CommandInteraction
+  ) {
     if (!interaction.guildId) return
 
     await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 
     try {
-      await this.queueManager.setQueueLockState(interaction.guildId, name, true)
+      await this.queueManager.setQueueLockState(interaction.guildId, name, false)
 
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Queue Locked")
-            .setDescription(`Queue **${name}** has been locked.`)
-            .setColor(Colors.Red),
+            .setTitle("Queue Unlocked")
+            .setDescription(`Queue **${name}** has been unlocked.`)
+            .setColor(Colors.Green),
         ],
       })
     } catch (error: any) {
@@ -48,7 +42,7 @@ export class AdminQueueLockCommand {
         embeds: [
           new EmbedBuilder()
             .setTitle("Error")
-            .setDescription(error.message || "An error occurred while locking the queue.")
+            .setDescription(error.message || "An error occurred while unlocking the queue.")
             .setColor(Colors.Red),
         ],
       })

@@ -1,6 +1,12 @@
+import "reflect-metadata"
 import { dirname, importx } from "@discordx/importer"
-import { bot } from "./bot.js"
-import { migrateDb } from "migrate.js"
+import { bot } from "@/bot"
+import { migrateDb } from "@/migrate"
+import { container } from "tsyringe"
+import { DIService, tsyringeDependencyRegistryEngine } from "discordx"
+
+// Enable DI
+DIService.engine = tsyringeDependencyRegistryEngine.setInjector(container)
 
 async function run() {
   await migrateDb()
