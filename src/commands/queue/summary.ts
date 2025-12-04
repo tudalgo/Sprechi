@@ -37,6 +37,8 @@ export class QueueSummaryCommand {
       const members = await this.queueManager.getQueueMembers(interaction.guildId, queue.name)
       const memberCount = members.length
 
+      const member = await this.queueManager.getQueueMember(queue.id, interaction.user.id)
+
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
@@ -45,6 +47,7 @@ export class QueueSummaryCommand {
             .addFields(
               { name: "Total Entries", value: String(memberCount), inline: true },
               { name: "Your Position", value: String(position), inline: true },
+              { name: "Joined", value: `<t:${Math.floor(member.joinedAt.getTime() / 1000)}:R>`, inline: true },
             )
             .setColor(Colors.Blue)
             .setTimestamp(),

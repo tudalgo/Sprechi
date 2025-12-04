@@ -44,16 +44,9 @@ export class QueueButtons {
 
       const position = await this.queueManager.getQueuePosition(queue.id, interaction.user.id)
 
-      // Calculate wait time
-      const joinedAt = new Date(member.joinedAt)
-      const now = new Date()
-      const diffMs = now.getTime() - joinedAt.getTime()
-      const minutes = Math.floor(diffMs / 60000)
-      const seconds = Math.floor((diffMs % 60000) / 1000)
-
       const embed = new EmbedBuilder()
         .setTitle(`Joined Queue: ${queue.name}`)
-        .setDescription(`You have joined the queue **${queue.name}**.\n\n**Position:** ${position}\n**Wait Time:** ${minutes} min ${seconds} sec`)
+        .setDescription(`You have joined the queue **${queue.name}**.\n\n**Position:** ${position}\n**Joined:** <t:${Math.floor(member.joinedAt.getTime() / 1000)}:R>`)
         .setColor(Colors.Green)
         .setTimestamp()
 

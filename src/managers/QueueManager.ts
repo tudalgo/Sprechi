@@ -129,22 +129,11 @@ export class QueueManager {
       const user = await bot.users.fetch(userId)
       const position = await this.getQueuePosition(queue.id, userId)
 
-      // Calculate wait time
       const member = await this.getQueueMember(queue.id, userId)
-      let waitText = "0 min 0 sec"
-
-      if (member) {
-        const joinedAt = new Date(member.joinedAt)
-        const now = new Date()
-        const diffMs = now.getTime() - joinedAt.getTime()
-        const minutes = Math.floor(diffMs / 60000)
-        const seconds = Math.floor((diffMs % 60000) / 1000)
-        waitText = `${minutes} min ${seconds} sec`
-      }
 
       const embed = new EmbedBuilder()
         .setTitle(`Joined Queue: ${queue.name}`)
-        .setDescription(`You have joined the queue **${queue.name}**.\n\n**Position:** ${position}\n**Wait Time:** ${waitText}`)
+        .setDescription(`You have joined the queue **${queue.name}**.\n\n**Position:** ${position}\n**Joined:** <t:${Math.floor(member.joinedAt.getTime() / 1000)}:R>`)
         .setColor(Colors.Green)
         .setTimestamp()
 

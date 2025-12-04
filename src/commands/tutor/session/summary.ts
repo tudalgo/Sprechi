@@ -16,14 +16,14 @@ import { inject, injectable } from "tsyringe"
 @Discord()
 @injectable()
 @SlashGroup("session", "tutor")
-export class TutorSessionInfo {
+export class TutorSessionSummary {
   constructor(
     @inject(QueueManager) private queueManager: QueueManager
   ) { }
 
-  @Slash({ name: "info", description: "Get information about the current session" })
-  async info(interaction: CommandInteraction): Promise<void> {
-    logger.info(`Command 'tutor session info' triggered by ${interaction.user.tag} (${interaction.user.id})`)
+  @Slash({ name: "summary", description: "Get summary of the current session" })
+  async summary(interaction: CommandInteraction): Promise<void> {
+    logger.info(`Command 'tutor session summary' triggered by ${interaction.user.tag} (${interaction.user.id})`)
 
     if (!interaction.guild) {
       await interaction.reply({
@@ -52,7 +52,7 @@ export class TutorSessionInfo {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Session Info")
+            .setTitle("Session Summary")
             .addFields(
               { name: "Queue", value: queue.name, inline: true },
               { name: "Started", value: `<t:${Math.floor(startTime.getTime() / 1000)}:R>`, inline: true },

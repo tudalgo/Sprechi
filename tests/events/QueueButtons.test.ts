@@ -55,6 +55,7 @@ describe('QueueButtons', () => {
           expect.objectContaining({
             data: expect.objectContaining({
               title: 'Joined Queue: test-queue',
+              description: expect.stringContaining(`<t:${Math.floor(mockMember.joinedAt.getTime() / 1000)}:R>`),
               color: Colors.Green,
             }),
           }),

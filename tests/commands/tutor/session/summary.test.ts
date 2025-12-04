@@ -1,6 +1,6 @@
 import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { TutorSessionInfo } from '@commands/tutor/session/info';
+import { TutorSessionSummary } from '@commands/tutor/session/summary';
 import { QueueManager } from '@managers/QueueManager';
 import { CommandInteraction, MessageFlags, Colors } from 'discord.js';
 import { mockDeep } from 'vitest-mock-extended';
@@ -27,8 +27,8 @@ vi.mock('@utils/logger', () => ({
   },
 }));
 
-describe('TutorSessionInfo', () => {
-  let tutorSessionInfo: TutorSessionInfo;
+describe('TutorSessionSummary', () => {
+  let tutorSessionSummary: TutorSessionSummary;
   let mockQueueManager: any;
   let mockInteraction: any;
 
@@ -36,9 +36,9 @@ describe('TutorSessionInfo', () => {
     mockQueueManager = mockDeep<QueueManager>();
     (QueueManager as any).mockImplementation(function () { return mockQueueManager });
 
-    tutorSessionInfo = new TutorSessionInfo(mockQueueManager);
+    tutorSessionSummary = new TutorSessionSummary(mockQueueManager);
     // Manually inject the mock
-    (tutorSessionInfo as any).queueManager = mockQueueManager;
+    (tutorSessionSummary as any).queueManager = mockQueueManager;
 
     mockInteraction = mockDeep<CommandInteraction>();
     mockInteraction.user = { tag: 'tutor', id: 'tutor-123' };
@@ -56,14 +56,14 @@ describe('TutorSessionInfo', () => {
     mockQueueManager.getActiveSession.mockResolvedValue(mockSession);
     ((db as any).where as any).mockResolvedValue([{ count: 5 }]);
 
-    await tutorSessionInfo.info(mockInteraction);
+    await tutorSessionSummary.summary(mockInteraction);
 
     expect(mockQueueManager.getActiveSession).toHaveBeenCalledWith('guild-123', 'tutor-123');
     expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
       embeds: expect.arrayContaining([
         expect.objectContaining({
           data: expect.objectContaining({
-            title: 'Session Info',
+            title: 'Session Summary',
             fields: expect.arrayContaining([
               expect.objectContaining({ name: 'Queue', value: 'test-queue' }),
               expect.objectContaining({ name: 'Students Helped', value: '5' }),
@@ -79,7 +79,7 @@ describe('TutorSessionInfo', () => {
   it('should handle no active session', async () => {
     mockQueueManager.getActiveSession.mockResolvedValue(null);
 
-    await tutorSessionInfo.info(mockInteraction);
+    await tutorSessionSummary.summary(mockInteraction);
 
     expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
       embeds: expect.arrayContaining([
@@ -97,7 +97,7 @@ describe('TutorSessionInfo', () => {
   it('should not allow command outside of guild', async () => {
     mockInteraction.guild = null;
 
-    await tutorSessionInfo.info(mockInteraction);
+    await tutorSessionSummary.summary(mockInteraction);
 
     expect(mockInteraction.reply).toHaveBeenCalledWith({
       content: 'This command can only be used in a server.',

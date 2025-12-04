@@ -25,6 +25,8 @@ describe('QueueSummaryCommand', () => {
     mockQueueManager.getQueueByUser.mockResolvedValue(mockQueue);
     mockQueueManager.getQueuePosition.mockResolvedValue(1);
     mockQueueManager.getQueueMembers.mockResolvedValue(['member1', 'member2']);
+    const joinedAt = new Date();
+    mockQueueManager.getQueueMember.mockResolvedValue({ joinedAt });
 
     await command.summary(mockInteraction);
 
@@ -37,6 +39,7 @@ describe('QueueSummaryCommand', () => {
               fields: expect.arrayContaining([
                 expect.objectContaining({ name: 'Total Entries', value: '2' }),
                 expect.objectContaining({ name: 'Your Position', value: '1' }),
+                expect.objectContaining({ name: 'Joined', value: `<t:${Math.floor(joinedAt.getTime() / 1000)}:R>` }),
               ]),
             }),
           }),
