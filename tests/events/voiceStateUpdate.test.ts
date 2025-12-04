@@ -1,3 +1,4 @@
+import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { VoiceStateUpdate } from '@events/voiceStateUpdate';
 import { QueueManager } from '@managers/QueueManager';

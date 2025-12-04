@@ -9,13 +9,17 @@ import { QueueManager } from "@managers/QueueManager"
 import { RoomManager } from "@managers/RoomManager"
 import { QueueError } from "@errors/QueueErrors"
 import logger from "@utils/logger"
+import { inject, injectable } from "tsyringe"
 
 @Discord()
+@injectable()
 @SlashGroup({ name: "tutor", description: "Tutor commands" })
 @SlashGroup({ name: "queue", description: "Queue management", root: "tutor" })
 export class TutorQueueNext {
-  private queueManager = new QueueManager()
-  private roomManager = new RoomManager()
+  constructor(
+    @inject(QueueManager) private queueManager: QueueManager,
+    @inject(RoomManager) private roomManager: RoomManager
+  ) { }
 
   @Slash({ name: "next", description: "Pick the next student from the queue" })
   @SlashGroup("queue", "tutor")
@@ -59,7 +63,7 @@ export class TutorQueueNext {
       )
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An error occurred."
-      logger.warn(`Failed to pick next student for tutor ${interaction.user.tag}: ${message}`)
+      logger.warn(`Failed to pick next student for tutor ${interaction.user.tag}: ${message} `)
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()

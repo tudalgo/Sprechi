@@ -1,3 +1,4 @@
+import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { TutorQueuePick } from '@commands/tutor/queue/pick';
 import { QueueManager } from '@managers/QueueManager';
@@ -33,7 +34,7 @@ describe('TutorQueuePick', () => {
     mockRoomManager = mockDeep<RoomManager>();
     (RoomManager as any).mockImplementation(function () { return mockRoomManager });
 
-    tutorQueuePick = new TutorQueuePick();
+    tutorQueuePick = new TutorQueuePick(mockQueueManager, mockRoomManager);
     // Manually inject the mocks
     (tutorQueuePick as any).queueManager = mockQueueManager;
     (tutorQueuePick as any).roomManager = mockRoomManager;

@@ -1,8 +1,17 @@
+import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GuildManager } from '@managers/GuildManager';
-import { Client, Guild, Collection } from 'discord.js';
+import { Guild, Collection } from 'discord.js';
 import db, { guilds } from '@db';
-import { mockDeep } from 'vitest-mock-extended';
+
+// Mock bot - use factory function to avoid hoisting issues
+vi.mock('@/bot', () => ({
+  bot: {
+    guilds: {
+      cache: new Collection()
+    }
+  }
+}));
 
 // Mock db
 vi.mock('@db', () => ({
@@ -26,20 +35,20 @@ vi.mock('@utils/logger', () => ({
 
 describe('GuildManager', () => {
   let guildManager: GuildManager;
-  let mockClient: any;
 
-  beforeEach(() => {
-    mockClient = mockDeep<Client>();
-    guildManager = new GuildManager(mockClient);
+  beforeEach(async () => {
+    guildManager = new GuildManager();
+    // Import bot after mocks are set up
+    const { bot } = await import('@/bot');
+    bot.guilds.cache.clear();
     vi.clearAllMocks();
   });
 
   describe('syncAllGuilds', () => {
     it('should sync guilds successfully', async () => {
+      const { bot } = await import('@/bot');
       const mockGuild = { id: 'guild-123', name: 'Test Guild', memberCount: 10 };
-      const mockGuilds = new Collection<string, any>();
-      mockGuilds.set(mockGuild.id, mockGuild);
-      mockClient.guilds.cache = mockGuilds;
+      (bot.guilds.cache as any).set(mockGuild.id, mockGuild);
 
       // Mock db.select (existing guilds)
       const fromMock = vi.fn().mockResolvedValue([]);
@@ -61,10 +70,9 @@ describe('GuildManager', () => {
     });
 
     it('should not add existing guilds', async () => {
+      const { bot } = await import('@/bot');
       const mockGuild = { id: 'guild-123', name: 'Test Guild', memberCount: 10 };
-      const mockGuilds = new Collection<string, any>();
-      mockGuilds.set(mockGuild.id, mockGuild);
-      mockClient.guilds.cache = mockGuilds;
+      (bot.guilds.cache as any).set(mockGuild.id, mockGuild);
 
       // Mock db.select (existing guilds)
       const fromMock = vi.fn().mockResolvedValue([{ id: 'guild-123' }]);
@@ -73,11 +81,6 @@ describe('GuildManager', () => {
       await guildManager.syncAllGuilds();
 
       expect(db.insert).not.toHaveBeenCalled();
-    });
-
-    it('should throw error if client not initialized', async () => {
-      const manager = new GuildManager();
-      await expect(manager.syncAllGuilds()).rejects.toThrow('Client not initialized in GuildManager.');
     });
   });
 

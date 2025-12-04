@@ -1,3 +1,4 @@
+import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { QueueButtons } from '@events/QueueButtons';
 import { QueueManager } from '@managers/QueueManager';
@@ -26,9 +27,7 @@ describe('QueueButtons', () => {
     mockQueueManager = mockDeep<QueueManager>();
     (QueueManager as any).mockImplementation(function () { return mockQueueManager });
 
-    queueButtons = new QueueButtons();
-    // Manually inject the mock
-    (queueButtons as any).queueManager = mockQueueManager;
+    queueButtons = new QueueButtons(mockQueueManager);
 
     mockInteraction = mockDeep<ButtonInteraction>();
     mockInteraction.user = { tag: 'user', id: 'user-123' };

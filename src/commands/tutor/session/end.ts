@@ -7,12 +7,16 @@ import {
 import { Discord, Slash, SlashGroup } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import logger from "@utils/logger"
+import { inject, injectable } from "tsyringe"
 
 @Discord()
+@injectable()
 @SlashGroup({ name: "tutor", description: "Tutor commands" })
 @SlashGroup({ name: "session", description: "Session management", root: "tutor" })
 export class TutorSessionEnd {
-  private queueManager = new QueueManager()
+  constructor(
+    @inject(QueueManager) private queueManager: QueueManager
+  ) { }
 
   @Slash({ name: "end", description: "End your tutoring session" })
   @SlashGroup("session", "tutor")

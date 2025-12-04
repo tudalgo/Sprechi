@@ -1,7 +1,7 @@
+import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GuildCreateEvent } from '@events/guildCreate';
 import { GuildManager } from '@managers/GuildManager';
-import { Guild } from 'discord.js';
 import { mockDeep } from 'vitest-mock-extended';
 
 // Mock GuildManager
@@ -25,7 +25,7 @@ describe('GuildCreateEvent', () => {
     mockGuildManager = mockDeep<GuildManager>();
     (GuildManager as any).mockImplementation(function () { return mockGuildManager });
 
-    guildCreateEvent = new GuildCreateEvent();
+    guildCreateEvent = new GuildCreateEvent(mockGuildManager);
     mockGuild = { id: 'guild-123', name: 'Test Guild' };
 
     vi.clearAllMocks();

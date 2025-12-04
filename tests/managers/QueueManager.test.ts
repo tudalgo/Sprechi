@@ -1,9 +1,10 @@
+import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { QueueManager } from '@managers/QueueManager';
 import db from '@db';
 import { queues, queueMembers, sessions } from '@db/schema';
 import { bot } from '@/bot';
-import { mockDeep, mockReset } from 'vitest-mock-extended';
+import { mockDeep } from 'vitest-mock-extended';
 import { RoomManager } from '@managers/RoomManager';
 
 // Mock RoomManager

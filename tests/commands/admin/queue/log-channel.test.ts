@@ -1,3 +1,4 @@
+import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AdminQueueLogChannel } from '@commands/admin/queue/log-channel';
 import { QueueManager } from '@managers/QueueManager';
@@ -27,7 +28,7 @@ describe('AdminQueueLogChannel', () => {
     mockQueueManager = mockDeep<QueueManager>();
     (QueueManager as any).mockImplementation(function () { return mockQueueManager });
 
-    adminQueueLogChannel = new AdminQueueLogChannel();
+    adminQueueLogChannel = new AdminQueueLogChannel(mockQueueManager);
     // Manually inject the mock
     (adminQueueLogChannel as any).queueManager = mockQueueManager;
 

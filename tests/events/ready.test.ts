@@ -1,3 +1,4 @@
+import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ReadyEvent } from '@events/ready';
 import { GuildManager } from '@managers/GuildManager';
@@ -25,7 +26,7 @@ describe('ReadyEvent', () => {
     mockGuildManager = mockDeep<GuildManager>();
     (GuildManager as any).mockImplementation(function () { return mockGuildManager });
 
-    readyEvent = new ReadyEvent();
+    readyEvent = new ReadyEvent(mockGuildManager);
     mockClient = mockDeep<Client>();
     mockClient.user = { tag: 'bot#123' };
 

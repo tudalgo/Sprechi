@@ -5,7 +5,9 @@ import {
   PermissionFlagsBits,
 } from "discord.js"
 import logger from "@utils/logger"
+import { injectable } from "tsyringe"
 
+@injectable()
 export class RoomManager {
   async createEphemeralChannel(
     guild: Guild,

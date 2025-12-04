@@ -11,11 +11,15 @@ import db from "@db"
 import { sessionStudents } from "@db/schema"
 import { eq, sql } from "drizzle-orm"
 import logger from "@utils/logger"
+import { inject, injectable } from "tsyringe"
 
 @Discord()
+@injectable()
 @SlashGroup("session", "tutor")
 export class TutorSessionInfo {
-  private queueManager = new QueueManager()
+  constructor(
+    @inject(QueueManager) private queueManager: QueueManager
+  ) { }
 
   @Slash({ name: "info", description: "Get information about the current session" })
   async info(interaction: CommandInteraction): Promise<void> {

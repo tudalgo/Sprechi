@@ -1,3 +1,4 @@
+import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { QueueJoin } from '@commands/queue/join';
 import { QueueManager } from '@managers/QueueManager';
@@ -26,9 +27,7 @@ describe('QueueJoin', () => {
     mockQueueManager = mockDeep<QueueManager>();
     (QueueManager as any).mockImplementation(function () { return mockQueueManager });
 
-    queueJoin = new QueueJoin();
-    // Manually inject the mock
-    (queueJoin as any).queueManager = mockQueueManager;
+    queueJoin = new QueueJoin(mockQueueManager);
 
     mockInteraction = mockDeep<CommandInteraction>();
     mockInteraction.user = { tag: 'testuser', id: 'user-123' };

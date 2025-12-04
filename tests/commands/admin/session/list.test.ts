@@ -4,6 +4,7 @@ import { AdminSessionListCommand } from '@commands/admin/session/list';
 import { QueueManager } from '@managers/QueueManager';
 import { CommandInteraction } from 'discord.js';
 import { mockDeep } from 'vitest-mock-extended';
+import { Guild } from 'discord.js';
 
 describe('AdminSessionListCommand', () => {
   let mockQueueManager: any;
@@ -13,6 +14,7 @@ describe('AdminSessionListCommand', () => {
     mockQueueManager = mockDeep<QueueManager>();
     mockInteraction = mockDeep<CommandInteraction>();
     mockInteraction.guildId = 'guild-123';
+    mockInteraction.guild = mockDeep<Guild>();
     mockInteraction.editReply = vi.fn();
     mockInteraction.deferReply = vi.fn();
   });
@@ -28,6 +30,9 @@ describe('AdminSessionListCommand', () => {
         studentCount: 2,
       },
     ]);
+    mockInteraction.guild.members.fetch.mockResolvedValue({ user: { displayName: 'Mock Tutor' } });
+
+
 
     await command.list(mockInteraction);
 

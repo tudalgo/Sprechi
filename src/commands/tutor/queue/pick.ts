@@ -11,12 +11,16 @@ import { QueueManager } from "@managers/QueueManager"
 import { RoomManager } from "@managers/RoomManager"
 import { QueueError } from "@errors/QueueErrors"
 import logger from "@utils/logger"
+import { inject, injectable } from "tsyringe"
 
 @Discord()
+@injectable()
 @SlashGroup("queue", "tutor")
 export class TutorQueuePick {
-  private queueManager = new QueueManager()
-  private roomManager = new RoomManager()
+  constructor(
+    @inject(QueueManager) private queueManager: QueueManager,
+    @inject(RoomManager) private roomManager: RoomManager
+  ) { }
 
   @Slash({ name: "pick", description: "Pick a specific student from the queue" })
   async pick(

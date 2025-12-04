@@ -1,3 +1,4 @@
+import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { DmManager } from '@managers/DmManager';
 import { Client, EmbedBuilder } from 'discord.js';

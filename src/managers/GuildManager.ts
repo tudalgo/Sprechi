@@ -1,20 +1,20 @@
 import db, { guilds } from "@db"
 import logger from "@utils/logger"
-import { Client, Guild } from "discord.js"
+import { Guild } from "discord.js"
+import { injectable } from "tsyringe"
 
+@injectable()
 export class GuildManager {
-  public constructor(private client?: Client) { }
-
   async syncAllGuilds(): Promise<void> {
-    if (!this.client) {
-      throw new Error("Client not initialized in GuildManager.")
-    }
+    // Import bot lazily to avoid circular dependency in tests
+    const { bot } = await import("@/bot")
+    const client = bot
 
     const existing = await db.select({ id: guilds.id }).from(guilds)
     const existingIds = new Set(existing.map(g => g.id))
     logger.info(`Bot is in ${existingIds.size} guilds. Checking database...`)
 
-    const allGuilds = this.client.guilds.cache
+    const allGuilds = client.guilds.cache
     for (const [id, guild] of allGuilds) {
       if (!existingIds.has(id)) {
         await this.addGuild(guild)

@@ -14,11 +14,15 @@ import {
   QueueError,
 } from "../../errors/QueueErrors"
 import logger from "@utils/logger"
+import { inject, injectable } from "tsyringe"
 
 @Discord()
+@injectable()
 @SlashGroup("queue")
 export class QueueJoin {
-  private queueManager = new QueueManager()
+  constructor(
+    @inject(QueueManager) private queueManager: QueueManager
+  ) { }
 
   @Slash({ name: "join", description: "Join a queue" })
   async join(

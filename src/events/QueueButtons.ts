@@ -1,12 +1,16 @@
-import { ButtonInteraction, EmbedBuilder, Colors, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } from "discord.js"
+import { ButtonInteraction, EmbedBuilder, Colors, MessageFlags } from "discord.js"
 import { Discord, ButtonComponent } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
-import { QueueNotFoundError, NotInQueueError } from "@errors/QueueErrors"
 import logger from "@utils/logger"
+import { NotInQueueError } from "../errors/QueueErrors"
+import { inject, injectable } from "tsyringe"
 
 @Discord()
+@injectable()
 export class QueueButtons {
-  private queueManager = new QueueManager()
+  constructor(
+    @inject(QueueManager) private queueManager: QueueManager
+  ) { }
 
   @ButtonComponent({ id: /^queue_refresh_(.+)$/ })
   async refresh(interaction: ButtonInteraction): Promise<void> {
@@ -55,7 +59,7 @@ export class QueueButtons {
 
       await interaction.editReply({ embeds: [embed] })
     } catch (error) {
-      logger.warn(`Error refreshing queue status for user ${interaction.user.tag}:`, error)
+      logger.warn(`Error refreshing queue status for user ${interaction.user.tag}: `, error)
     }
   }
 
@@ -99,7 +103,7 @@ export class QueueButtons {
           flags: MessageFlags.Ephemeral,
         })
       } else {
-        logger.error(`Error handling queue leave button for user ${interaction.user.tag}:`, error)
+        logger.error(`Error handling queue leave button for user ${interaction.user.tag}: `, error)
       }
     }
   }

@@ -14,11 +14,11 @@ export class AdminSessionListCommand {
   @Slash({ name: "list", description: "List all active sessions" })
   @SlashGroup("session", "admin")
   async list(interaction: CommandInteraction) {
-    if (!interaction.guild) return
+    if (!interaction.guildId) return
 
     await interaction.deferReply()
 
-    const sessions = await this.queueManager.getAllActiveSessions(interaction.guild.id)
+    const sessions = await this.queueManager.getAllActiveSessions(interaction.guildId)
 
     if (sessions.length === 0) {
       await interaction.editReply({
@@ -40,7 +40,7 @@ export class AdminSessionListCommand {
     const fields = await Promise.all(sessions.map(async session => {
       const tutor = await interaction.guild!.members.fetch(session.tutorId)
       return {
-        name: `Tutor: ${tutor.user.username}`,
+        name: `Tutor: ${tutor.user.displayName}`,
         value: `- **User:** <@${session.tutorId}>\n- **Queue:** ${session.queueName}\n- **Started:** <t:${Math.floor(session.startTime.getTime() / 1000)}:R>\n- **Students Helped:** ${session.studentCount}`,
         inline: false,
       }

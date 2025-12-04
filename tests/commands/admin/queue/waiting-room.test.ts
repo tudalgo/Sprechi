@@ -1,3 +1,4 @@
+import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AdminQueueWaitingRoom } from '@commands/admin/queue/waiting-room';
 import { QueueManager } from '@managers/QueueManager';
@@ -27,7 +28,7 @@ describe('AdminQueueWaitingRoom', () => {
     mockQueueManager = mockDeep<QueueManager>();
     (QueueManager as any).mockImplementation(function () { return mockQueueManager });
 
-    adminQueueWaitingRoom = new AdminQueueWaitingRoom();
+    adminQueueWaitingRoom = new AdminQueueWaitingRoom(mockQueueManager);
     // Manually inject the mock
     (adminQueueWaitingRoom as any).queueManager = mockQueueManager;
 
