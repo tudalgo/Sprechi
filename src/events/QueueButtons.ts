@@ -2,7 +2,7 @@ import { ButtonInteraction, EmbedBuilder, Colors, MessageFlags } from "discord.j
 import { Discord, ButtonComponent } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import logger from "@utils/logger"
-import { NotInQueueError } from "../errors/QueueErrors"
+import { NotInQueueError, TutorCannotJoinQueueError } from "../errors/QueueErrors"
 import { inject, injectable } from "tsyringe"
 
 @Discord()
@@ -135,10 +135,20 @@ export class QueueButtons {
         components: []
       })
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to rejoin queue."
+      let message = "Failed to rejoin queue."
+      if (error instanceof TutorCannotJoinQueueError) {
+        message = "You cannot join a queue while you have an active tutor session."
+      } else if (error instanceof Error) {
+        message = error.message
+      }
       logger.warn(`Error handling queue rejoin button for user ${interaction.user.tag}: ${message}`)
       await interaction.followUp({
-        content: message,
+        embeds: [
+          new EmbedBuilder()
+            .setTitle("Error")
+            .setDescription(message)
+            .setColor(Colors.Red)
+        ],
         flags: MessageFlags.Ephemeral,
       })
     }

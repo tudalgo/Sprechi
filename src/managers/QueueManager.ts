@@ -8,6 +8,8 @@ import {
   AlreadyInQueueError,
   NotInQueueError,
   SessionAlreadyActiveError,
+  TutorCannotJoinQueueError,
+  StudentCannotStartSessionError,
   QueueError,
 } from "../errors/QueueErrors"
 import { bot } from "../bot"
@@ -81,6 +83,12 @@ export class QueueManager {
 
     if (queue.isLocked) {
       throw new QueueLockedError(queueName)
+    }
+
+    // Check if user has an active session as a tutor
+    const activeSession = await this.getActiveSession(guildId, userId)
+    if (activeSession) {
+      throw new TutorCannotJoinQueueError()
     }
 
     // Check if user is already in queue
@@ -407,6 +415,12 @@ export class QueueManager {
 
     if (activeSession) {
       throw new SessionAlreadyActiveError()
+    }
+
+    // Check if user is currently in a queue as a student
+    const currentQueue = await this.getQueueByUser(guildId, tutorId)
+    if (currentQueue) {
+      throw new StudentCannotStartSessionError()
     }
 
     await db.insert(sessions).values({

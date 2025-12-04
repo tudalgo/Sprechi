@@ -1,7 +1,7 @@
 import { ArgsOf, Discord, On } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import logger from "@utils/logger"
-import { AlreadyInQueueError, NotInQueueError } from "../errors/QueueErrors"
+import { AlreadyInQueueError, NotInQueueError, TutorCannotJoinQueueError } from "../errors/QueueErrors"
 import db from "@db"
 import { sessionStudents } from "@db/schema"
 import { eq, and, isNull } from "drizzle-orm"
@@ -27,8 +27,8 @@ export class VoiceStateUpdate {
           logger.info(`User ${newState.member?.user.tag} (${userId}) auto-joined queue '${queue.name}' by entering waiting room`)
         }
       } catch (error: unknown) {
-        // If they are already in the queue, we can ignore it or log it
-        if (!(error instanceof AlreadyInQueueError)) {
+        // If they are already in the queue or are a tutor with an active session, we can ignore it or log it
+        if (!(error instanceof AlreadyInQueueError) && !(error instanceof TutorCannotJoinQueueError)) {
           logger.error(`Failed to auto-join queue for user ${userId}:`, error)
         }
       }

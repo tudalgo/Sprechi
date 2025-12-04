@@ -4,7 +4,7 @@ import { TutorSessionStart } from '@commands/tutor/session/start';
 import { QueueManager } from '@managers/QueueManager';
 import { CommandInteraction, MessageFlags, Colors } from 'discord.js';
 import { mockDeep } from 'vitest-mock-extended';
-import { QueueNotFoundError, SessionAlreadyActiveError } from '@errors/QueueErrors';
+import { QueueNotFoundError, SessionAlreadyActiveError, StudentCannotStartSessionError } from '@errors/QueueErrors';
 
 // Mock QueueManager
 vi.mock('@managers/QueueManager');
@@ -120,6 +120,27 @@ describe('TutorSessionStart', () => {
           data: expect.objectContaining({
             title: 'Error',
             description: 'You already have an active session.',
+          }),
+        }),
+      ]),
+      flags: MessageFlags.Ephemeral,
+    }));
+  });
+
+  it('should handle student in queue trying to start session', async () => {
+    const queueName = 'test-queue';
+
+    mockQueueManager.resolveQueue.mockResolvedValue({ name: queueName });
+    mockQueueManager.createSession.mockRejectedValue(new StudentCannotStartSessionError());
+
+    await tutorSessionStart.start(queueName, mockInteraction);
+
+    expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: 'Error',
+            description: 'You cannot start a session while you are in a queue.',
           }),
         }),
       ]),

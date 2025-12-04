@@ -389,6 +389,9 @@ describe('QueueManager', () => {
       // Mock getQueueByName
       vi.spyOn(queueManager, 'getQueueByName').mockResolvedValue(mockQueue as any);
 
+      // Mock getActiveSession (no active session)
+      vi.spyOn(queueManager, 'getActiveSession').mockResolvedValue(null as any);
+
       // Mock existing member check (not in queue)
       const whereMock = vi.fn().mockResolvedValue([]);
       const fromMock = vi.fn().mockReturnValue({ where: whereMock });
@@ -439,6 +442,9 @@ describe('QueueManager', () => {
 
       vi.spyOn(queueManager, 'getQueueByName').mockResolvedValue(mockQueue as any);
 
+      // Mock getActiveSession (no active session)
+      vi.spyOn(queueManager, 'getActiveSession').mockResolvedValue(null as any);
+
       // Mock existing member check (active)
       const mockMember = { id: 'member-123', leftAt: null };
       const whereMock = vi.fn().mockResolvedValue([mockMember]);
@@ -458,6 +464,9 @@ describe('QueueManager', () => {
       };
 
       vi.spyOn(queueManager, 'getQueueByName').mockResolvedValue(mockQueue as any);
+
+      // Mock getActiveSession (no active session)
+      vi.spyOn(queueManager, 'getActiveSession').mockResolvedValue(null as any);
 
       // Mock existing member check (left recently)
       const leftAt = new Date(); // Just left
@@ -491,6 +500,9 @@ describe('QueueManager', () => {
 
       vi.spyOn(queueManager, 'getQueueByName').mockResolvedValue(mockQueue as any);
 
+      // Mock getActiveSession (no active session)
+      vi.spyOn(queueManager, 'getActiveSession').mockResolvedValue(null as any);
+
       // Mock existing member check (left long ago)
       const leftAt = new Date(Date.now() - 70000); // 70s ago
       const mockMember = { id: 'member-123', leftAt: leftAt.toISOString() };
@@ -522,6 +534,9 @@ describe('QueueManager', () => {
 
       vi.spyOn(queueManager, 'getQueueByName').mockResolvedValue(mockQueue as any);
 
+      // Mock getActiveSession (no active session)
+      vi.spyOn(queueManager, 'getActiveSession').mockResolvedValue(null as any);
+
       // Mock not in queue
       const whereMock = vi.fn().mockResolvedValue([]);
       const fromMock = vi.fn().mockReturnValue({ where: whereMock });
@@ -548,6 +563,9 @@ describe('QueueManager', () => {
       };
 
       vi.spyOn(queueManager, 'getQueueByName').mockResolvedValue(mockQueue as any);
+
+      // Mock getActiveSession (no active session)
+      vi.spyOn(queueManager, 'getActiveSession').mockResolvedValue(null as any);
 
       // Mock not in queue
       const whereMock = vi.fn().mockResolvedValue([]);
@@ -749,6 +767,9 @@ describe('QueueManager', () => {
       const innerJoinMock = vi.fn().mockReturnValue({ where: whereMock });
       const fromMock = vi.fn().mockReturnValue({ innerJoin: innerJoinMock });
       (db.select as any).mockReturnValue({ from: fromMock });
+
+      // Mock getQueueByUser (not in queue)
+      vi.spyOn(queueManager, 'getQueueByUser').mockResolvedValue(null as any);
 
       // Mock db.insert
       (db.insert as any).mockReturnValue({ values: vi.fn().mockResolvedValue([]) });

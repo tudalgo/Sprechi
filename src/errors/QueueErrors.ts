@@ -39,3 +39,17 @@ export class SessionAlreadyActiveError extends QueueError {
     this.name = "SessionAlreadyActiveError"
   }
 }
+
+export class TutorCannotJoinQueueError extends QueueError {
+  constructor() {
+    super("Tutors with active sessions cannot join queues")
+    this.name = "TutorCannotJoinQueueError"
+  }
+}
+
+export class StudentCannotStartSessionError extends QueueError {
+  constructor() {
+    super("Students in a queue cannot start a session")
+    this.name = "StudentCannotStartSessionError"
+  }
+}

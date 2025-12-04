@@ -4,7 +4,7 @@ import { QueueJoin } from '@commands/queue/join';
 import { QueueManager } from '@managers/QueueManager';
 import { CommandInteraction, MessageFlags, Colors } from 'discord.js';
 import { mockDeep } from 'vitest-mock-extended';
-import { QueueNotFoundError, QueueLockedError, AlreadyInQueueError } from '@errors/QueueErrors';
+import { QueueNotFoundError, QueueLockedError, AlreadyInQueueError, TutorCannotJoinQueueError } from '@errors/QueueErrors';
 
 // Mock QueueManager
 vi.mock('@managers/QueueManager');
@@ -115,6 +115,27 @@ describe('QueueJoin', () => {
           data: expect.objectContaining({
             title: 'Error',
             description: `You are already in queue **${queueName}**.`,
+          }),
+        }),
+      ]),
+      flags: MessageFlags.Ephemeral,
+    }));
+  });
+
+  it('should handle tutor with active session trying to join queue', async () => {
+    const queueName = 'test-queue';
+
+    mockQueueManager.resolveQueue.mockResolvedValue({ name: queueName });
+    mockQueueManager.joinQueue.mockRejectedValue(new TutorCannotJoinQueueError());
+
+    await queueJoin.join(queueName, mockInteraction);
+
+    expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: 'Error',
+            description: 'You cannot join a queue while you have an active tutor session.',
           }),
         }),
       ]),

@@ -10,6 +10,7 @@ import { QueueManager } from "@managers/QueueManager"
 import {
   QueueNotFoundError,
   SessionAlreadyActiveError,
+  StudentCannotStartSessionError,
   QueueError,
 } from "../../../errors/QueueErrors"
 import logger from "@utils/logger"
@@ -67,6 +68,9 @@ export class TutorSessionStart {
       } else if (error instanceof SessionAlreadyActiveError) {
         errorMessage = "You already have an active session."
         logger.warn(`Failed to start session: Tutor ${interaction.user.tag} already has an active session in guild '${interaction.guild.id}'`)
+      } else if (error instanceof StudentCannotStartSessionError) {
+        errorMessage = "You cannot start a session while you are in a queue."
+        logger.warn(`Failed to start session: User ${interaction.user.tag} is in a queue in guild '${interaction.guild.id}'`)
       } else if (error instanceof QueueError) {
         errorMessage = error.message
         logger.warn(`Failed to start session for tutor ${interaction.user.tag}: ${error.message}`)

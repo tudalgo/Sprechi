@@ -11,6 +11,7 @@ import {
   QueueNotFoundError,
   QueueLockedError,
   AlreadyInQueueError,
+  TutorCannotJoinQueueError,
   QueueError,
 } from "../../errors/QueueErrors"
 import logger from "@utils/logger"
@@ -71,6 +72,9 @@ export class QueueJoin {
       } else if (error instanceof AlreadyInQueueError) {
         errorMessage = `You are already in queue **${name}**.`
         logger.warn(`Failed to join queue: User ${interaction.user.tag} already in queue '${name}' in guild '${interaction.guild.id}'`)
+      } else if (error instanceof TutorCannotJoinQueueError) {
+        errorMessage = "You cannot join a queue while you have an active tutor session."
+        logger.warn(`Failed to join queue: Tutor ${interaction.user.tag} has active session in guild '${interaction.guild.id}'`)
       } else if (error instanceof QueueError) {
         errorMessage = error.message
         logger.warn(`Failed to join queue '${name}': ${error.message}`)

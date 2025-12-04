@@ -4,6 +4,7 @@ import { VoiceStateUpdate } from '@events/voiceStateUpdate';
 import { QueueManager } from '@managers/QueueManager';
 import { VoiceState } from 'discord.js';
 import { mockDeep } from 'vitest-mock-extended';
+import { AlreadyInQueueError, TutorCannotJoinQueueError } from '@errors/QueueErrors';
 import db from '@db';
 import { sessionStudents } from '@db/schema';
 
@@ -79,6 +80,21 @@ describe('VoiceStateUpdate', () => {
       await voiceStateUpdate.voiceStateUpdate([mockOldState, mockNewState]);
 
       expect(mockQueueManager.joinQueue).not.toHaveBeenCalled();
+    });
+
+    it('should silently ignore tutor with active session joining waiting room', async () => {
+      mockOldState.channelId = null;
+      mockNewState.channelId = 'waiting-room-123';
+
+      const mockQueue = { name: 'test-queue' };
+      mockQueueManager.getQueueByWaitingRoom.mockResolvedValue(mockQueue);
+      mockQueueManager.joinQueue.mockRejectedValue(new TutorCannotJoinQueueError());
+
+      await voiceStateUpdate.voiceStateUpdate([mockOldState, mockNewState]);
+
+      expect(mockQueueManager.getQueueByWaitingRoom).toHaveBeenCalledWith('guild-123', 'waiting-room-123');
+      expect(mockQueueManager.joinQueue).toHaveBeenCalledWith('guild-123', 'test-queue', 'user-123');
+      // Should not throw or log error for TutorCannotJoinQueueError
     });
   });
 

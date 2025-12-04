@@ -4,7 +4,7 @@ import { QueueButtons } from '@events/QueueButtons';
 import { QueueManager } from '@managers/QueueManager';
 import { ButtonInteraction, MessageFlags, Colors } from 'discord.js';
 import { mockDeep } from 'vitest-mock-extended';
-import { NotInQueueError } from '@errors/QueueErrors';
+import { NotInQueueError, TutorCannotJoinQueueError } from '@errors/QueueErrors';
 
 // Mock QueueManager
 vi.mock('@managers/QueueManager');
@@ -160,7 +160,36 @@ describe('QueueButtons', () => {
       await queueButtons.rejoin(mockInteraction);
 
       expect(mockInteraction.followUp).toHaveBeenCalledWith({
-        content: 'Failed to join',
+        embeds: expect.arrayContaining([
+          expect.objectContaining({
+            data: expect.objectContaining({
+              title: 'Error',
+              description: 'Failed to join',
+              color: Colors.Red,
+            }),
+          }),
+        ]),
+        flags: MessageFlags.Ephemeral,
+      });
+    });
+
+    it('should handle tutor with active session trying to rejoin', async () => {
+      const mockQueue = { id: 'queue-123', name: 'test-queue', guildId: 'guild-123' };
+      mockQueueManager.getQueueById.mockResolvedValue(mockQueue);
+      mockQueueManager.joinQueue.mockRejectedValue(new TutorCannotJoinQueueError());
+
+      await queueButtons.rejoin(mockInteraction);
+
+      expect(mockInteraction.followUp).toHaveBeenCalledWith({
+        embeds: expect.arrayContaining([
+          expect.objectContaining({
+            data: expect.objectContaining({
+              title: 'Error',
+              description: 'You cannot join a queue while you have an active tutor session.',
+              color: Colors.Red,
+            }),
+          }),
+        ]),
         flags: MessageFlags.Ephemeral,
       });
     });
