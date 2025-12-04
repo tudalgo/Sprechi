@@ -4,9 +4,9 @@ import { dirname, resolve } from "@discordx/importer"
 import chokidar from "chokidar"
 import { DIService, MetadataStorage } from "discordx"
 
-import { bot } from "./bot.js"
-import logger from "@utils/logger.js"
-import { migrateDb } from "migrate.js"
+import { bot } from "@/bot"
+import logger from "@utils/logger"
+import { migrateDb } from "@/migrate"
 
 const envFilePath = path.resolve(dirname(import.meta.url), "../.env.dev")
 logger.info(`Loading environment variables from: ${envFilePath}`)
