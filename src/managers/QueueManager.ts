@@ -306,7 +306,9 @@ export class QueueManager {
 
   async getQueueMembers(guildId: string, queueName: string, limit?: number) {
     const queue = await this.getQueueByName(guildId, queueName)
-    if (!queue) return []
+    if (!queue) {
+      throw new QueueNotFoundError(queueName)
+    }
 
     let base = db.select()
       .from(queueMembers)
