@@ -1,4 +1,4 @@
-import { CommandInteraction, EmbedBuilder, Colors, MessageFlags } from "discord.js"
+import { CommandInteraction, EmbedBuilder, Colors } from "discord.js"
 import { Discord, Slash, SlashGroup } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { inject, injectable } from "tsyringe"
@@ -8,7 +8,7 @@ import { inject, injectable } from "tsyringe"
 @SlashGroup({ name: "session", description: "Manage sessions", root: "admin" })
 export class AdminSessionListCommand {
   constructor(
-    @inject(QueueManager) private queueManager: QueueManager
+    @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
   @Slash({ name: "list", description: "List all active sessions" })
@@ -37,7 +37,7 @@ export class AdminSessionListCommand {
       .setColor(Colors.Blue)
       .setTimestamp()
 
-    const fields = await Promise.all(sessions.map(async session => {
+    const fields = await Promise.all(sessions.map(async (session) => {
       const tutor = await interaction.guild!.members.fetch(session.tutorId)
       return {
         name: `Tutor: ${tutor.user.displayName}`,

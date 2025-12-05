@@ -14,7 +14,7 @@ import { inject, injectable } from "tsyringe"
 @SlashGroup({ name: "queue", description: "Queue commands" })
 export class QueueList {
   constructor(
-    @inject(QueueManager) private queueManager: QueueManager
+    @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
   @Slash({ name: "list", description: "List all available queues" })

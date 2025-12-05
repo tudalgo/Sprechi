@@ -18,7 +18,7 @@ import { inject, injectable } from "tsyringe"
 export class TutorQueueNext {
   constructor(
     @inject(QueueManager) private queueManager: QueueManager,
-    @inject(RoomManager) private roomManager: RoomManager
+    @inject(RoomManager) private roomManager: RoomManager,
   ) { }
 
   @Slash({ name: "next", description: "Pick the next student from the queue" })
@@ -59,7 +59,7 @@ export class TutorQueueNext {
         queue,
         session,
         studentId,
-        tutorId
+        tutorId,
       )
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An error occurred."

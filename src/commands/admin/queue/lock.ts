@@ -14,7 +14,7 @@ import { inject, injectable } from "tsyringe"
 @SlashGroup("queue", "admin")
 export class AdminQueueLockCommand {
   constructor(
-    @inject(QueueManager) private queueManager: QueueManager
+    @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
   @Slash({ name: "lock", description: "Lock a queue" })
@@ -43,12 +43,13 @@ export class AdminQueueLockCommand {
             .setColor(Colors.Red),
         ],
       })
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "An error occurred."
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle("Error")
-            .setDescription(error.message || "An error occurred while locking the queue.")
+            .setDescription(message)
             .setColor(Colors.Red),
         ],
       })

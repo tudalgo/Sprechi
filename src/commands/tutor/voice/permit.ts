@@ -20,7 +20,7 @@ import { QueueManager } from "@managers/QueueManager"
 export class TutorVoicePermit {
   constructor(
     @inject(RoomManager) private roomManager: RoomManager,
-    @inject(QueueManager) private queueManager: QueueManager
+    @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
   @Slash({ name: "permit", description: "Permit a user to join the current temporary voice channel" })
@@ -96,7 +96,7 @@ export class TutorVoicePermit {
               user.id,
               sessionId,
               interaction.user.id,
-              channel.id
+              channel.id,
             )
             description += `\nAlso picked from queue **${queue.name}**.`
           } catch (err) {

@@ -11,7 +11,7 @@ import logger from "@utils/logger"
 @SlashGroup({ name: "role", description: "Role management commands", root: "admin" })
 export class AdminRoleSet {
   constructor(
-    @inject(GuildManager) private guildManager: GuildManager
+    @inject(GuildManager) private guildManager: GuildManager,
   ) { }
 
   @Slash({ name: "set", description: "Set an internal role mapping" })
@@ -32,7 +32,7 @@ export class AdminRoleSet {
       type: ApplicationCommandOptionType.Role,
     })
     role: Role,
-    interaction: CommandInteraction
+    interaction: CommandInteraction,
   ): Promise<void> {
     if (!interaction.guild) {
       await interaction.reply({
@@ -59,9 +59,9 @@ export class AdminRoleSet {
           new EmbedBuilder()
             .setTitle("Error")
             .setDescription("An error occurred while setting the role mapping.")
-            .setColor(Colors.Red)
+            .setColor(Colors.Red),
         ],
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       })
     }
   }

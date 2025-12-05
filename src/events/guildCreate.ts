@@ -8,7 +8,7 @@ import { inject, injectable } from "tsyringe"
 @injectable()
 export class GuildCreateEvent {
   constructor(
-    @inject(GuildManager) private guildManager: GuildManager
+    @inject(GuildManager) private guildManager: GuildManager,
   ) { }
 
   @On({ event: "guildCreate" })

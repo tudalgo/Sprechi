@@ -18,7 +18,7 @@ import { inject, injectable } from "tsyringe"
 @SlashGroup("queue")
 export class AdminQueueWaitingRoom {
   constructor(
-    @inject(QueueManager) private queueManager: QueueManager
+    @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
   @Slash({ name: "waiting-room", description: "Set the waiting room for a queue" })

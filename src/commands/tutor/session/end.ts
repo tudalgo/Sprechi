@@ -15,7 +15,7 @@ import { inject, injectable } from "tsyringe"
 @SlashGroup({ name: "session", description: "Session management", root: "tutor" })
 export class TutorSessionEnd {
   constructor(
-    @inject(QueueManager) private queueManager: QueueManager
+    @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
   @Slash({ name: "end", description: "End your tutoring session" })

@@ -3,6 +3,7 @@ import {
   Guild,
   VoiceChannel,
   PermissionFlagsBits,
+  DiscordAPIError,
 } from "discord.js"
 import logger from "@utils/logger"
 import { injectable } from "tsyringe"
@@ -68,14 +69,16 @@ export class RoomManager {
     try {
       await channel.delete()
       logger.info(`[Delete Room] Deleted channel "${channel.name}" (${channel.id})`)
-    } catch (error: any) {
-      if (error.code === 10003) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "An error occurred."
+      if (error instanceof DiscordAPIError && error.code === 10003) {
         logger.warn(`[Delete Room] Channel "${channel.name}" (${channel.id}) was already deleted.`)
       } else {
-        logger.error(`Failed to delete channel ${channel.id}:`, error)
+        logger.error(`Failed to delete channel ${channel.id}:`, message)
       }
     }
   }
+
   async isEphemeralChannel(channelId: string): Promise<boolean> {
     try {
       const [result] = await db.select()
@@ -83,12 +86,13 @@ export class RoomManager {
         .where(
           and(
             eq(sessionStudents.channelId, channelId),
-            isNull(sessionStudents.endTime)
-          )
+            isNull(sessionStudents.endTime),
+          ),
         )
       return !!result
     } catch (error) {
-      logger.error("Failed to check if channel is ephemeral:", error)
+      const message = error instanceof Error ? error.message : "An error occurred."
+      logger.error("Failed to check if channel is ephemeral:", message)
       return false
     }
   }
@@ -102,7 +106,8 @@ export class RoomManager {
       }
       logger.info(`[RoomManager] Kicked all members from channel "${channel.name}" (${channel.id})`)
     } catch (error) {
-      logger.error(`Failed to kick all members from channel ${channel.id}:`, error)
+      const message = error instanceof Error ? error.message : "An error occurred."
+      logger.error(`Failed to kick all members from channel ${channel.id}:`, message)
     }
   }
 
@@ -118,7 +123,8 @@ export class RoomManager {
         logger.info(`[RoomManager] Kicked user ${userId} from channel "${channel.name}" (${channel.id})`)
       }
     } catch (error) {
-      logger.error(`Failed to kick/unpermit user ${userId} from channel ${channel.id}:`, error)
+      const message = error instanceof Error ? error.message : "An error occurred."
+      logger.error(`Failed to kick/unpermit user ${userId} from channel ${channel.id}:`, message)
     }
   }
 
@@ -129,12 +135,13 @@ export class RoomManager {
         .where(
           and(
             eq(sessionStudents.channelId, channelId),
-            isNull(sessionStudents.endTime)
-          )
+            isNull(sessionStudents.endTime),
+          ),
         )
       return result?.sessionId ?? null
     } catch (error) {
-      logger.error("Failed to get session ID from channel:", error)
+      const message = error instanceof Error ? error.message : "An error occurred."
+      logger.error("Failed to get session ID from channel:", message)
       return null
     }
   }

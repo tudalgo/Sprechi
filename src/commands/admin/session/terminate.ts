@@ -8,7 +8,7 @@ import { inject, injectable } from "tsyringe"
 @SlashGroup("session", "admin")
 export class AdminSessionTerminateCommand {
   constructor(
-    @inject(QueueManager) private queueManager: QueueManager
+    @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
   @Slash({ name: "terminate", description: "Terminate all sessions for a specific user" })
@@ -20,7 +20,7 @@ export class AdminSessionTerminateCommand {
       type: ApplicationCommandOptionType.User,
     })
     user: User,
-    interaction: CommandInteraction
+    interaction: CommandInteraction,
   ) {
     if (!interaction.guildId) return
 

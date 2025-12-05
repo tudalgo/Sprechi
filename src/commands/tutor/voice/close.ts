@@ -17,7 +17,7 @@ import logger from "@utils/logger"
 @SlashGroup("voice", "tutor")
 export class TutorVoiceClose {
   constructor(
-    @inject(RoomManager) private roomManager: RoomManager
+    @inject(RoomManager) private roomManager: RoomManager,
   ) { }
 
   @Slash({ name: "close", description: "Close the current temporary voice channel" })

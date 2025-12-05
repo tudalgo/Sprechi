@@ -18,7 +18,7 @@ import logger from "@utils/logger"
 @SlashGroup("voice", "tutor")
 export class TutorVoiceKick {
   constructor(
-    @inject(RoomManager) private roomManager: RoomManager
+    @inject(RoomManager) private roomManager: RoomManager,
   ) { }
 
   @Slash({ name: "kick", description: "Kick a user from the current voice channel" })

@@ -154,7 +154,7 @@ export class QueueManager {
           new ButtonBuilder()
             .setCustomId(`queue_leave_${queue.id}`)
             .setLabel("Leave Queue")
-            .setStyle(ButtonStyle.Danger)
+            .setStyle(ButtonStyle.Danger),
         )
 
       await user.send({ embeds: [embed], components: [row] })
@@ -211,7 +211,7 @@ export class QueueManager {
           new ButtonBuilder()
             .setCustomId(`queue_rejoin_${queue.id}`)
             .setLabel("Rejoin Queue")
-            .setStyle(ButtonStyle.Success)
+            .setStyle(ButtonStyle.Success),
         )
 
       await user.send({ embeds: [embed], components: [row] })
@@ -298,12 +298,12 @@ export class QueueManager {
       throw new QueueNotFoundError(queueName)
     }
 
-    let base = db.select()
+    const base = db.select()
       .from(queueMembers)
       .where(and(eq(queueMembers.queueId, queue.id), isNull(queueMembers.leftAt)))
-      .orderBy(queueMembers.joinedAt);
+      .orderBy(queueMembers.joinedAt)
 
-    const query = limit ? base.limit(limit) : base;
+    const query = limit ? base.limit(limit) : base
 
     return query
   }
@@ -311,10 +311,10 @@ export class QueueManager {
   async processStudentPick(
     interaction: CommandInteraction,
     roomManager: RoomManager,
-    queue: { name: string; waitingRoomId: string | null },
+    queue: { name: string, waitingRoomId: string | null },
     session: { id: string },
     studentId: string,
-    tutorId: string
+    tutorId: string,
   ) {
     // Get waiting room category
     let categoryId: string | undefined
@@ -325,7 +325,8 @@ export class QueueManager {
           categoryId = waitingChannel.parentId
         }
       } catch (error) {
-        // Ignore if waiting room not found
+        const message = error instanceof Error ? error.message : "An error occurred."
+        logger.error(`Failed to fetch waiting room category: ${message}`)
       }
     }
 
@@ -545,6 +546,7 @@ export class QueueManager {
       .where(and(eq(queueMembers.queueId, queueId), eq(queueMembers.userId, userId), isNull(queueMembers.leftAt)))
     return member ?? null
   }
+
   async getAllActiveSessions(guildId: string) {
     const activeSessions = await db.select({
       session: sessions,

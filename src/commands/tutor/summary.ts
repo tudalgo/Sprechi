@@ -10,7 +10,6 @@ import { injectable } from "tsyringe"
 @injectable()
 @SlashGroup("tutor")
 export class TutorSummaryCommand {
-
   @Slash({ name: "summary", description: "Get an overview of your tutoring sessions" })
   async summary(interaction: CommandInteraction): Promise<void> {
     logger.info(`Command 'tutor summary' triggered by ${interaction.user.username} (${interaction.user.id})`)
@@ -31,7 +30,7 @@ export class TutorSummaryCommand {
         .from(sessions)
         .where(eq(sessions.tutorId, interaction.user.id))
 
-      let totalSessions = tutorSessions.length
+      const totalSessions = tutorSessions.length
       let totalTimeMs = 0
       let totalStudentsHelped = 0
 
@@ -56,7 +55,7 @@ export class TutorSummaryCommand {
         embeds: [
           new EmbedBuilder()
             .setTitle("Tutor Summary")
-            .setDescription(`Overview of your tutoring stats.`)
+            .setDescription("Overview of your tutoring stats.")
             .addFields(
               { name: "Total Sessions", value: String(totalSessions), inline: true },
               { name: "Total Time", value: `${totalHours}h ${totalMinutes}m`, inline: true },
@@ -70,7 +69,7 @@ export class TutorSummaryCommand {
       const message = error instanceof Error ? error.message : "Failed to get tutor summary."
       logger.error(`Failed to get tutor summary for ${interaction.user.username}: ${message}`)
       await interaction.editReply({
-        content: "An error occurred while fetching your summary."
+        content: "An error occurred while fetching your summary.",
       })
     }
   }

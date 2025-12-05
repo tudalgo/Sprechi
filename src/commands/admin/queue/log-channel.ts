@@ -18,7 +18,7 @@ import { inject, injectable } from "tsyringe"
 @SlashGroup("queue")
 export class AdminQueueLogChannel {
   constructor(
-    @inject(QueueManager) private queueManager: QueueManager
+    @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
   @Slash({ name: "log-channel", description: "Set the log channel for a queue" })

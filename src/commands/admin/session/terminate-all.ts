@@ -8,7 +8,7 @@ import { inject, injectable } from "tsyringe"
 @SlashGroup("session", "admin")
 export class AdminSessionTerminateAllCommand {
   constructor(
-    @inject(QueueManager) private queueManager: QueueManager
+    @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
   @Slash({ name: "terminate-all", description: "Terminate ALL sessions on this server" })

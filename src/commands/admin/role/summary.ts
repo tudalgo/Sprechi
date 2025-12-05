@@ -9,7 +9,7 @@ import { InternalRole } from "@db"
 @SlashGroup("role", "admin")
 export class AdminRoleSummary {
   constructor(
-    @inject(GuildManager) private guildManager: GuildManager
+    @inject(GuildManager) private guildManager: GuildManager,
   ) { }
 
   @Slash({ name: "summary", description: "Show role mappings summary" })
@@ -17,7 +17,7 @@ export class AdminRoleSummary {
     if (!interaction.guild) {
       await interaction.reply({
         content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlags.Ephemeral,
       })
       return
     }
@@ -26,7 +26,7 @@ export class AdminRoleSummary {
     const roleMap = new Map(roles.map(r => [r.type, r.roleId]))
 
     const allTypes = Object.values(InternalRole)
-    const description = allTypes.map(type => {
+    const description = allTypes.map((type) => {
       const roleId = roleMap.get(type)
       const roleMention = roleId ? `<@&${roleId}>` : "*Unassigned*"
       return `**${type}**: ${roleMention}`

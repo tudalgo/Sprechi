@@ -8,7 +8,7 @@ import { inject, injectable } from "tsyringe"
 @SlashGroup("queue", "admin")
 export class AdminQueueUnlockCommand {
   constructor(
-    @inject(QueueManager) private queueManager: QueueManager
+    @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
   @Slash({ name: "unlock", description: "Unlock a queue" })
@@ -20,7 +20,7 @@ export class AdminQueueUnlockCommand {
       type: ApplicationCommandOptionType.String,
     })
     name: string,
-    interaction: CommandInteraction
+    interaction: CommandInteraction,
   ) {
     if (!interaction.guildId) return
 
@@ -37,12 +37,13 @@ export class AdminQueueUnlockCommand {
             .setColor(Colors.Green),
         ],
       })
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "An error occurred."
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle("Error")
-            .setDescription(error.message || "An error occurred while unlocking the queue.")
+            .setDescription(message)
             .setColor(Colors.Red),
         ],
       })

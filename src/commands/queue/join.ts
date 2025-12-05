@@ -22,7 +22,7 @@ import { inject, injectable } from "tsyringe"
 @SlashGroup("queue")
 export class QueueJoin {
   constructor(
-    @inject(QueueManager) private queueManager: QueueManager
+    @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
   @Slash({ name: "join", description: "Join a queue" })

@@ -6,7 +6,6 @@ import { injectable } from "tsyringe"
 @injectable()
 @SlashGroup({ name: "admin", description: "Admin commands" })
 export class AdminBotInfo {
-
   @Slash({ name: "botinfo", description: "Display bot information" })
   @SlashGroup("admin")
   async botinfo(interaction: CommandInteraction): Promise<void> {
@@ -27,7 +26,7 @@ export class AdminBotInfo {
         { name: "Guilds", value: `${interaction.client.guilds.cache.size}`, inline: true },
         { name: "Version", value: process.env.npm_package_version ?? "1.0.0", inline: true },
         { name: "Discord.js", value: `v${djsVersion}`, inline: true },
-        { name: "Node.js", value: process.version, inline: true }
+        { name: "Node.js", value: process.version, inline: true },
       )
       .setColor(Colors.Blue)
 

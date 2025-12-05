@@ -19,7 +19,7 @@ import { inject, injectable } from "tsyringe"
 export class TutorQueuePick {
   constructor(
     @inject(QueueManager) private queueManager: QueueManager,
-    @inject(RoomManager) private roomManager: RoomManager
+    @inject(RoomManager) private roomManager: RoomManager,
   ) { }
 
   @Slash({ name: "pick", description: "Pick a specific student from the queue" })
@@ -31,7 +31,7 @@ export class TutorQueuePick {
       type: ApplicationCommandOptionType.User,
     })
     user: User,
-    interaction: CommandInteraction
+    interaction: CommandInteraction,
   ): Promise<void> {
     logger.info(`Command 'tutor queue pick' triggered by ${interaction.user.username} (${interaction.user.id})`)
 
@@ -62,7 +62,7 @@ export class TutorQueuePick {
         queue,
         session,
         studentId,
-        tutorId
+        tutorId,
       )
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An error occurred."

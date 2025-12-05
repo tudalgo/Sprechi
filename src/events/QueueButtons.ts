@@ -9,7 +9,7 @@ import { inject, injectable } from "tsyringe"
 @injectable()
 export class QueueButtons {
   constructor(
-    @inject(QueueManager) private queueManager: QueueManager
+    @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
   @ButtonComponent({ id: /^queue_refresh_(.+)$/ })
@@ -87,7 +87,7 @@ export class QueueButtons {
       await interaction.editReply({
         content: "",
         embeds: [embed],
-        components: []
+        components: [],
       })
     } catch (error) {
       if (error instanceof NotInQueueError) {
@@ -132,7 +132,7 @@ export class QueueButtons {
       await interaction.editReply({
         content: "",
         embeds: [embed],
-        components: []
+        components: [],
       })
     } catch (error) {
       let message = "Failed to rejoin queue."
@@ -147,7 +147,7 @@ export class QueueButtons {
           new EmbedBuilder()
             .setTitle("Error")
             .setDescription(message)
-            .setColor(Colors.Red)
+            .setColor(Colors.Red),
         ],
         flags: MessageFlags.Ephemeral,
       })

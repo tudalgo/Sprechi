@@ -8,7 +8,7 @@ import { inject, injectable } from "tsyringe"
 @SlashGroup({ name: "queue", description: "Manage queues" })
 export class QueueSummaryCommand {
   constructor(
-    @inject(QueueManager) private queueManager: QueueManager
+    @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
   @Slash({ name: "summary", description: "Show summary of your current queue" })
@@ -53,12 +53,13 @@ export class QueueSummaryCommand {
             .setTimestamp(),
         ],
       })
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "An error occurred."
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
             .setTitle("Error")
-            .setDescription(error.message || "An error occurred while fetching queue summary.")
+            .setDescription(message)
             .setColor(Colors.Red),
         ],
       })

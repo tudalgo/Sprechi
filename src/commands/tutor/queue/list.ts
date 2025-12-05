@@ -16,7 +16,7 @@ import { inject, injectable } from "tsyringe"
 @SlashGroup("queue", "tutor")
 export class TutorQueueList {
   constructor(
-    @inject(QueueManager) private queueManager: QueueManager
+    @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
   @Slash({ name: "list", description: "List members in the active session's queue" })
@@ -28,7 +28,7 @@ export class TutorQueueList {
       type: ApplicationCommandOptionType.Integer,
     })
     maxEntries: number | undefined,
-    interaction: CommandInteraction
+    interaction: CommandInteraction,
   ): Promise<void> {
     logger.info(`Command 'tutor queue list' triggered by ${interaction.user.username} (${interaction.user.id})`)
 
