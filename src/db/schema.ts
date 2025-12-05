@@ -7,6 +7,7 @@ import {
   index,
   uniqueIndex,
   boolean,
+  pgEnum,
 } from "drizzle-orm/pg-core"
 
 // Guilds Table
@@ -74,4 +75,29 @@ export const sessionStudents = pgTable("session_students", {
   index("session_students_session_id_idx").on(table.sessionId),
   index("session_students_student_id_idx").on(table.studentId),
   index("session_students_channel_id_idx").on(table.channelId),
+])
+
+// Role Mappings Table
+export enum InternalRole {
+  Admin = "admin",
+  Tutor = "tutor",
+  Verified = "verified",
+  ActiveSession = "active_session",
+}
+
+export const internalRoleEnum = pgEnum("internal_role", [
+  InternalRole.Admin,
+  InternalRole.Tutor,
+  InternalRole.Verified,
+  InternalRole.ActiveSession,
+])
+
+export const roleMappings = pgTable("role_mappings", {
+  guildId: text("guild_id").references(() => guilds.id, { onDelete: "cascade" }).notNull(),
+  roleType: internalRoleEnum("role_type").notNull(), // admin, tutor, verified, active_session
+  roleId: text("role_id").notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, table => [
+  uniqueIndex("role_mappings_guild_type_idx").on(table.guildId, table.roleType),
+  index("role_mappings_guild_id_idx").on(table.guildId),
 ])

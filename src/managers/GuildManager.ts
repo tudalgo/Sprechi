@@ -1,4 +1,4 @@
-import db, { guilds } from "@db"
+import db, { guilds, roleMappings, InternalRole } from "@db"
 import logger from "@utils/logger"
 import { Guild } from "discord.js"
 import { injectable } from "tsyringe"
@@ -30,5 +30,31 @@ export class GuildManager {
       memberCount: guild.memberCount,
     }).onConflictDoNothing()
     logger.info(`[New Guild] Added ${guild.name} (${guild.id}) to the database.`)
+  }
+
+  async setRole(guildId: string, type: InternalRole, roleId: string): Promise<void> {
+    await db.insert(roleMappings).values({
+      guildId,
+      roleType: type,
+      roleId,
+    }).onConflictDoUpdate({
+      target: [roleMappings.guildId, roleMappings.roleType],
+      set: { roleId, updatedAt: new Date() },
+    })
+    logger.info(`[GuildManager] Set role ${type} for guild ${guildId} to ${roleId}`)
+  }
+
+  async getRole(guildId: string, type: InternalRole): Promise<string | null> {
+    const mapping = await db.query.roleMappings.findFirst({
+      where: (table, { eq, and }) => and(eq(table.guildId, guildId), eq(table.roleType, type)),
+    })
+    return mapping?.roleId ?? null
+  }
+
+  async getAllRoles(guildId: string): Promise<{ type: InternalRole, roleId: string }[]> {
+    const mappings = await db.query.roleMappings.findMany({
+      where: (table, { eq }) => eq(table.guildId, guildId),
+    })
+    return mappings.map(m => ({ type: m.roleType as InternalRole, roleId: m.roleId }))
   }
 }
