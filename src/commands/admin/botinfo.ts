@@ -4,10 +4,9 @@ import { injectable } from "tsyringe"
 
 @Discord()
 @injectable()
-@SlashGroup({ name: "admin", description: "Admin commands" })
+@SlashGroup("admin")
 export class AdminBotInfo {
   @Slash({ name: "botinfo", description: "Display bot information" })
-  @SlashGroup("admin")
   async botinfo(interaction: CommandInteraction): Promise<void> {
     const memory = process.memoryUsage()
     const uptime = process.uptime()

@@ -1,24 +1,31 @@
 import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { QueueManager } from "@managers/QueueManager"
-import db from "@db"
+import db, { InternalRole } from "@db"
 import { queues, queueMembers, sessions } from "@db/schema"
 import { bot } from "@/bot"
 import { mockDeep } from "vitest-mock-extended"
 import { RoomManager } from "@managers/RoomManager"
+import { GuildManager } from "@managers/GuildManager"
 
 // Mock RoomManager
 vi.mock("@managers/RoomManager")
+// Mock GuildManager
+vi.mock("@managers/GuildManager")
 
 // Mock the db module
-vi.mock("@db", () => ({
-  default: {
-    insert: vi.fn(),
-    select: vi.fn(),
-    update: vi.fn(),
-    delete: vi.fn(),
-  },
-}))
+vi.mock("@db", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@db")>()
+  return {
+    ...actual,
+    default: {
+      insert: vi.fn(),
+      select: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+  }
+})
 
 // Mock logger to avoid cluttering test output
 vi.mock("@utils/logger", () => ({
@@ -46,10 +53,13 @@ vi.mock("@/bot", () => ({
 
 describe("QueueManager", () => {
   let queueManager: QueueManager
+
   let mockRoomManager: any
+  let mockGuildManager: any
 
   beforeEach(() => {
-    queueManager = new QueueManager()
+    mockGuildManager = mockDeep<GuildManager>()
+    queueManager = new QueueManager(mockGuildManager)
     mockRoomManager = mockDeep<RoomManager>()
     vi.clearAllMocks()
   })
@@ -581,6 +591,44 @@ describe("QueueManager", () => {
     })
   })
 
+  it("should include active session role ping in log", async () => {
+    const mockQueue = {
+      id: "queue-123",
+      guildId: "guild-123",
+      name: "test-queue",
+      isLocked: false,
+      logChannelId: "log-123",
+    }
+
+    vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+    vi.spyOn(queueManager, "getActiveSession").mockResolvedValue(null as any)
+
+    // Mock member check
+    const whereMock = vi.fn().mockResolvedValue([])
+    const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+    (db.select as any).mockReturnValue({ from: fromMock });
+    (db.insert as any).mockReturnValue({ values: vi.fn().mockResolvedValue([]) })
+
+    // Mock GuildManager to return a role
+    mockGuildManager.getRole.mockResolvedValue("role-123")
+
+    // Mock channel fetch and send
+    const mockChannel = {
+      type: 0, // GuildText
+      send: vi.fn(),
+    }
+      ; (bot.channels.fetch as any).mockResolvedValue(mockChannel)
+    ; (bot.users.fetch as any).mockResolvedValue({ send: vi.fn() })
+
+    await queueManager.joinQueue("guild-123", "test-queue", "user-123")
+
+    expect(bot.channels.fetch).toHaveBeenCalledWith("log-123")
+    expect(mockGuildManager.getRole).toHaveBeenCalledWith("guild-123", InternalRole.ActiveSession)
+    expect(mockChannel.send).toHaveBeenCalledWith(expect.objectContaining({
+      content: "<@&role-123> ",
+    }))
+  })
+
   describe("leaveQueue", () => {
     it("should leave queue successfully", async () => {
       const mockQueue = {
@@ -802,26 +850,56 @@ describe("QueueManager", () => {
       await expect(queueManager.createSession("guild-123", "non-existent", "tutor-123"))
         .rejects.toThrow("Queue \"non-existent\" not found")
     })
+
+    it("should assign active_session role on session start", async () => {
+      const mockQueue = { id: "queue-123", guildId: "guild-123", name: "test-queue" }
+      vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+
+      const whereMock = vi.fn().mockResolvedValue([])
+      const innerJoinMock = vi.fn().mockReturnValue({ where: whereMock })
+      const fromMock = vi.fn().mockReturnValue({ innerJoin: innerJoinMock });
+      (db.select as any).mockReturnValue({ from: fromMock })
+
+      vi.spyOn(queueManager, "getQueueByUser").mockResolvedValue(null as any);
+      (db.insert as any).mockReturnValue({ values: vi.fn().mockResolvedValue([]) })
+
+      // Mock Role assignment
+      mockGuildManager.getRole.mockResolvedValue("role-123")
+      const mockMember = { roles: { add: vi.fn() } }
+      const mockGuild = { members: { fetch: vi.fn().mockResolvedValue(mockMember) } }
+        ; (bot.guilds.fetch as any).mockResolvedValue(mockGuild)
+
+      await queueManager.createSession("guild-123", "test-queue", "tutor-123")
+
+      expect(mockGuildManager.getRole).toHaveBeenCalledWith("guild-123", InternalRole.ActiveSession)
+      expect(mockMember.roles.add).toHaveBeenCalledWith("role-123")
+    })
   })
 
   describe("endSession", () => {
-    it("should end session successfully", async () => {
-      const mockSession = {
-        session: { id: "session-123" },
-        queue: { id: "queue-123", name: "test-queue" },
-      }
+    it("should end session successfully and remove role", async () => {
+      const mockQueue = { id: "queue-123", guildId: "guild-123", name: "test-queue", logChannelId: "log-123" }
+      const mockSession = { id: "session-123", tutorId: "tutor-123" }
 
-      vi.spyOn(queueManager, "getActiveSession").mockResolvedValue(mockSession as any)
+      vi.spyOn(queueManager, "getActiveSession").mockResolvedValue({ session: mockSession, queue: mockQueue } as any)
 
-      // Mock db.update
-      const returningMock = vi.fn().mockResolvedValue([{ id: "session-123" }])
+      const returningMock = vi.fn().mockResolvedValue([mockSession])
       const whereMock = vi.fn().mockReturnValue({ returning: returningMock })
       const setMock = vi.fn().mockReturnValue({ where: whereMock });
       (db.update as any).mockReturnValue({ set: setMock })
 
+      // Mock Role removal
+      mockGuildManager.getRole.mockResolvedValue("role-123")
+      const mockMember = { roles: { remove: vi.fn() } }
+      const mockGuild = { members: { fetch: vi.fn().mockResolvedValue(mockMember) } }
+        ; (bot.guilds.fetch as any).mockResolvedValue(mockGuild)
+      ; (bot.channels.fetch as any).mockResolvedValue({ send: vi.fn() }) // for logToChannel
+
       await queueManager.endSession("guild-123", "tutor-123")
 
-      expect(db.update).toHaveBeenCalled()
+      expect(db.update).toHaveBeenCalledWith(sessions)
+      expect(mockGuildManager.getRole).toHaveBeenCalledWith("guild-123", InternalRole.ActiveSession)
+      expect(mockMember.roles.remove).toHaveBeenCalledWith("role-123")
     })
 
     it("should throw error if no active session", async () => {

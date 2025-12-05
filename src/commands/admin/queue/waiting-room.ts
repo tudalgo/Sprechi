@@ -15,7 +15,7 @@ import { inject, injectable } from "tsyringe"
 
 @Discord()
 @injectable()
-@SlashGroup("queue")
+@SlashGroup("queue", "admin")
 export class AdminQueueWaitingRoom {
   constructor(
     @inject(QueueManager) private queueManager: QueueManager,

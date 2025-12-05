@@ -32,23 +32,7 @@ export class TutorQueueSummary {
 
       const { queue } = activeSession
 
-      // Get queue stats
-      const allQueues = await this.queueManager.listQueues(interaction.guild.id)
-      const queueStats = allQueues.find(q => q.id === queue.id)
-
-      if (!queueStats) {
-        throw new QueueError("Queue not found.")
-      }
-
-      const embed = new EmbedBuilder()
-        .setTitle(`Queue Summary: ${queue.name}`)
-        .setDescription(queue.description || "No description.")
-        .addFields(
-          { name: "Students in Queue", value: String(queueStats.memberCount), inline: true },
-          { name: "Active Sessions", value: String(queueStats.sessionCount), inline: true },
-        )
-        .setColor(Colors.Blue)
-        .setFooter({ text: `Queue ID: ${queue.id}` })
+      const embed = await this.queueManager.getQueueSummaryEmbed(interaction.guild.id, queue.name)
 
       await interaction.reply({
         embeds: [embed],

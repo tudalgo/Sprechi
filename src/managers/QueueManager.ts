@@ -1,4 +1,4 @@
-import db from "@db"
+import db, { InternalRole } from "@db"
 import { queues, queueMembers, sessions, sessionStudents } from "@db/schema"
 import logger from "@utils/logger"
 import { eq, and, sql, isNull } from "drizzle-orm"
@@ -15,6 +15,8 @@ import {
 import { bot } from "../bot"
 import { EmbedBuilder, Colors, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, CommandInteraction } from "discord.js"
 import { RoomManager } from "./RoomManager"
+import { GuildManager } from "./GuildManager"
+import { inject } from "tsyringe"
 
 export interface QueueData {
   guildId: string
@@ -26,6 +28,10 @@ import { singleton } from "tsyringe"
 
 @singleton()
 export class QueueManager {
+  constructor(
+    @inject(GuildManager) private guildManager: GuildManager,
+  ) { }
+
   async createQueue(data: QueueData & { isLocked?: boolean }) {
     const [newQueue] = await db.insert(queues)
       .values({
@@ -431,6 +437,18 @@ export class QueueManager {
 
     await this.logToChannel(queue, `Tutor <@${tutorId}> started a session.`)
     logger.info(`[Create Session] Tutor ${tutorId} started session on queue "${queueName}" in guild ${guildId}.`)
+
+    // Assign active_session role
+    try {
+      const activeSessionRoleId = await this.guildManager.getRole(guildId, InternalRole.ActiveSession)
+      if (activeSessionRoleId) {
+        const guild = await bot.guilds.fetch(guildId)
+        const member = await guild.members.fetch(tutorId)
+        await member.roles.add(activeSessionRoleId)
+      }
+    } catch (error) {
+      logger.error(`Failed to assign active_session role to tutor ${tutorId}:`, error)
+    }
   }
 
   async endSession(guildId: string, tutorId: string) {
@@ -449,6 +467,18 @@ export class QueueManager {
     if (result.length > 0) {
       await this.logToChannel(queue, `Tutor <@${tutorId}> ended their session.`)
       logger.info(`[End Session] Tutor ${tutorId} ended session in guild ${guildId}.`)
+
+      // Remove active_session role
+      try {
+        const activeSessionRoleId = await this.guildManager.getRole(guildId, InternalRole.ActiveSession)
+        if (activeSessionRoleId) {
+          const guild = await bot.guilds.fetch(guildId)
+          const member = await guild.members.fetch(tutorId)
+          await member.roles.remove(activeSessionRoleId)
+        }
+      } catch (error) {
+        logger.error(`Failed to remove active_session role from tutor ${tutorId}:`, error)
+      }
     }
   }
 
@@ -507,6 +537,9 @@ export class QueueManager {
           .from(sessions)
           .where(and(eq(sessions.queueId, queue.id), isNull(sessions.endTime)))
 
+        const activeSessionRole = await this.guildManager.getRole(queue.guildId, InternalRole.ActiveSession)
+        const prefix = activeSessionRole ? `<@&${activeSessionRole}> ` : ""
+
         const embed = new EmbedBuilder()
           .setTitle(`Queue Update: ${queue.name}`)
           .setDescription(message)
@@ -517,11 +550,53 @@ export class QueueManager {
           .setColor(Colors.Blue)
           .setTimestamp()
 
-        await channel.send({ embeds: [embed] })
+        await channel.send({ content: prefix || undefined, embeds: [embed] })
       }
     } catch (error) {
       logger.error(`Failed to log to channel ${queue.logChannelId}:`, error)
     }
+  }
+
+  async getQueueSummaryEmbed(guildId: string, queueName: string) {
+    const queue = await this.getQueueByName(guildId, queueName)
+    if (!queue) throw new QueueNotFoundError(queueName)
+
+    const allQueues = await this.listQueues(guildId)
+    const queueStats = allQueues.find(q => q.id === queue.id)
+
+    if (!queueStats) throw new QueueError("Queue not found.")
+
+    return new EmbedBuilder()
+      .setTitle(`Queue Summary: ${queue.name}`)
+      .setDescription(queue.description || "No description.")
+      .addFields(
+        { name: "Students in Queue", value: String(queueStats.memberCount), inline: true },
+        { name: "Active Sessions", value: String(queueStats.sessionCount), inline: true },
+        { name: "Locked", value: queue.isLocked ? "Yes" : "No", inline: true },
+      )
+      .setColor(Colors.Blue)
+      .setFooter({ text: `Queue ID: ${queue.id}` })
+  }
+
+  async getQueueListEmbed(guildId: string, queueName: string, limit: number = 5) {
+    const queue = await this.getQueueByName(guildId, queueName)
+    if (!queue) throw new QueueNotFoundError(queueName)
+
+    const members = await this.getQueueMembers(guildId, queueName, limit)
+
+    if (members.length === 0) {
+      return new EmbedBuilder()
+        .setTitle(`Queue: ${queue.name}`)
+        .setDescription("The queue is empty.")
+        .setColor(Colors.Blue)
+        .setFooter({ text: "Total: 0" })
+    }
+
+    return new EmbedBuilder()
+      .setTitle(`Queue: ${queue.name}`)
+      .setDescription(members.map((m, i) => `${i + 1}. <@${m.userId}>`).join("\n"))
+      .setColor(Colors.Blue)
+      .setFooter({ text: `Showing top ${members.length} members` })
   }
 
   async getQueuePosition(queueId: string, userId: string): Promise<number> {
@@ -597,6 +672,18 @@ export class QueueManager {
     for (const { session, queue } of activeSessions) {
       await this.logToChannel(queue, `Session for <@${session.tutorId}> was forcefully terminated by admin.`)
       logger.info(`[Terminate Session] Session ${session.id} for tutor ${session.tutorId} terminated by admin in guild ${guildId}.`)
+
+      // Remove active_session role
+      try {
+        const activeSessionRoleId = await this.guildManager.getRole(guildId, InternalRole.ActiveSession)
+        if (activeSessionRoleId) {
+          const guild = await bot.guilds.fetch(guildId)
+          const member = await guild.members.fetch(session.tutorId)
+          await member.roles.remove(activeSessionRoleId)
+        }
+      } catch (error) {
+        logger.error(`Failed to remove active_session role from tutor ${session.tutorId}:`, error)
+      }
     }
 
     return activeSessions.length
@@ -629,6 +716,18 @@ export class QueueManager {
     for (const { session, queue } of activeSessions) {
       await this.logToChannel(queue, `Session for <@${session.tutorId}> was forcefully terminated by admin (Terminate All).`)
       logger.info(`[Terminate All Sessions] Session ${session.id} for tutor ${session.tutorId} terminated by admin in guild ${guildId}.`)
+
+      // Remove active_session role
+      try {
+        const activeSessionRoleId = await this.guildManager.getRole(guildId, InternalRole.ActiveSession)
+        if (activeSessionRoleId) {
+          const guild = await bot.guilds.fetch(guildId)
+          const member = await guild.members.fetch(session.tutorId)
+          await member.roles.remove(activeSessionRoleId)
+        }
+      } catch (error) {
+        logger.error(`Failed to remove active_session role from tutor ${session.tutorId}:`, error)
+      }
     }
 
     return activeSessions.length

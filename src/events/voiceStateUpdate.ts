@@ -6,9 +6,14 @@ import db from "@db"
 import { sessionStudents } from "@db/schema"
 import { eq, and, isNull } from "drizzle-orm"
 
+import { injectable, inject } from "tsyringe"
+
 @Discord()
+@injectable()
 export class VoiceStateUpdate {
-  private queueManager = new QueueManager()
+  constructor(
+    @inject(QueueManager) private queueManager: QueueManager,
+  ) { }
 
   @On()
   async voiceStateUpdate([oldState, newState]: ArgsOf<"voiceStateUpdate">): Promise<void> {

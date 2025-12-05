@@ -45,7 +45,7 @@ describe("VoiceStateUpdate", () => {
       return mockQueueManager
     })
 
-    voiceStateUpdate = new VoiceStateUpdate()
+    voiceStateUpdate = new VoiceStateUpdate(mockQueueManager)
 
     mockOldState = mockDeep<VoiceState>()
     mockNewState = mockDeep<VoiceState>()

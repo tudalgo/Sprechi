@@ -38,49 +38,43 @@ describe("TutorQueueList", () => {
 
   it("should list queue members successfully", async () => {
     const mockSession = { queue: { name: "test-queue" } }
-    const mockMembers = [
-      { userId: "student-1" },
-      { userId: "student-2" },
-    ]
+    const mockEmbed = {
+      data: {
+        title: "Queue: test-queue",
+        description: "1. <@student-1>\n2. <@student-2>",
+        color: Colors.Blue,
+      },
+    }
 
     mockQueueManager.getActiveSession.mockResolvedValue(mockSession)
-    mockQueueManager.getQueueMembers.mockResolvedValue(mockMembers)
+    mockQueueManager.getQueueListEmbed.mockResolvedValue(mockEmbed)
 
     await tutorQueueList.list(undefined, mockInteraction)
 
     expect(mockQueueManager.getActiveSession).toHaveBeenCalledWith("guild-123", "tutor-123")
-    expect(mockQueueManager.getQueueMembers).toHaveBeenCalledWith("guild-123", "test-queue", 5)
+    expect(mockQueueManager.getQueueListEmbed).toHaveBeenCalledWith("guild-123", "test-queue", 5)
     expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
-      embeds: expect.arrayContaining([
-        expect.objectContaining({
-          data: expect.objectContaining({
-            title: "Queue: test-queue",
-            description: expect.stringContaining("1. <@student-1>\n2. <@student-2>"),
-            color: Colors.Blue,
-          }),
-        }),
-      ]),
+      embeds: [mockEmbed],
       flags: MessageFlags.Ephemeral,
     }))
   })
 
   it("should handle empty queue", async () => {
     const mockSession = { queue: { name: "test-queue" } }
+    const mockEmbed = {
+      data: {
+        title: "Queue: test-queue",
+        description: "The queue is empty.",
+      },
+    }
 
     mockQueueManager.getActiveSession.mockResolvedValue(mockSession)
-    mockQueueManager.getQueueMembers.mockResolvedValue([])
+    mockQueueManager.getQueueListEmbed.mockResolvedValue(mockEmbed)
 
     await tutorQueueList.list(undefined, mockInteraction)
 
     expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
-      embeds: expect.arrayContaining([
-        expect.objectContaining({
-          data: expect.objectContaining({
-            title: "Queue: test-queue",
-            description: "The queue is empty.",
-          }),
-        }),
-      ]),
+      embeds: [mockEmbed],
       flags: MessageFlags.Ephemeral,
     }))
   })
@@ -105,12 +99,13 @@ describe("TutorQueueList", () => {
 
   it("should respect max_entries parameter", async () => {
     const mockSession = { queue: { name: "test-queue" } }
+    const mockEmbed = { data: {} }
 
     mockQueueManager.getActiveSession.mockResolvedValue(mockSession)
-    mockQueueManager.getQueueMembers.mockResolvedValue([])
+    mockQueueManager.getQueueListEmbed.mockResolvedValue(mockEmbed)
 
     await tutorQueueList.list(10, mockInteraction)
 
-    expect(mockQueueManager.getQueueMembers).toHaveBeenCalledWith("guild-123", "test-queue", 10)
+    expect(mockQueueManager.getQueueListEmbed).toHaveBeenCalledWith("guild-123", "test-queue", 10)
   })
 })

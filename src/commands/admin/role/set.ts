@@ -7,7 +7,6 @@ import logger from "@utils/logger"
 
 @Discord()
 @injectable()
-@SlashGroup({ name: "admin", description: "Admin commands" })
 @SlashGroup({ name: "role", description: "Role management commands", root: "admin" })
 export class AdminRoleSet {
   constructor(

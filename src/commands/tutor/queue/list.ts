@@ -42,33 +42,14 @@ export class TutorQueueList {
 
       const { queue } = activeSession
       const limit = maxEntries ?? 5
-      const members = await this.queueManager.getQueueMembers(interaction.guild.id, queue.name, limit)
 
-      if (members.length === 0) {
-        const embed = new EmbedBuilder()
-          .setTitle(`Queue: ${queue.name}`)
-          .setDescription("The queue is empty.")
-          .setColor(Colors.Blue)
-          .setFooter({ text: "Total: 0" })
-
-        await interaction.reply({
-          embeds: [embed],
-          flags: MessageFlags.Ephemeral,
-        })
-        return
-      }
-
-      const embed = new EmbedBuilder()
-        .setTitle(`Queue: ${queue.name}`)
-        .setDescription(members.map((m, i) => `${i + 1}. <@${m.userId}>`).join("\n"))
-        .setColor(Colors.Blue)
-        .setFooter({ text: `Showing top ${members.length} members` })
+      const embed = await this.queueManager.getQueueListEmbed(interaction.guild.id, queue.name, limit)
 
       await interaction.reply({
         embeds: [embed],
         flags: MessageFlags.Ephemeral,
       })
-      logger.info(`Listed ${members.length} members for queue '${queue.name}' in active session of tutor ${interaction.user.username}`)
+      logger.info(`Listed members for queue '${queue.name}' in active session of tutor ${interaction.user.username}`)
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An error occurred."
       logger.warn(`Failed to list queue members for tutor ${interaction.user.username}: ${message}`)

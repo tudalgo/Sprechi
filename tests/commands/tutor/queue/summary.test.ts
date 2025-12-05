@@ -38,38 +38,36 @@ describe("TutorQueueSummary", () => {
 
   it("should show queue summary successfully", async () => {
     const mockSession = { queue: { id: "queue-1", name: "test-queue", description: "Test Description" } }
-    const mockQueueStats = { id: "queue-1", name: "test-queue", memberCount: 5, sessionCount: 2 }
+    const mockEmbed = {
+      data: {
+        title: "Queue Summary: test-queue",
+        description: "Test Description",
+        fields: [
+          { name: "Students in Queue", value: "5" },
+          { name: "Active Sessions", value: "2" },
+        ],
+        color: Colors.Blue,
+      },
+    }
 
     mockQueueManager.getActiveSession.mockResolvedValue(mockSession)
-    mockQueueManager.listQueues.mockResolvedValue([mockQueueStats])
+    mockQueueManager.getQueueSummaryEmbed.mockResolvedValue(mockEmbed)
 
     await tutorQueueSummary.summary(mockInteraction)
 
     expect(mockQueueManager.getActiveSession).toHaveBeenCalledWith("guild-123", "tutor-123")
-    expect(mockQueueManager.listQueues).toHaveBeenCalledWith("guild-123")
+    expect(mockQueueManager.getQueueSummaryEmbed).toHaveBeenCalledWith("guild-123", "test-queue")
     expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
-      embeds: expect.arrayContaining([
-        expect.objectContaining({
-          data: expect.objectContaining({
-            title: "Queue Summary: test-queue",
-            description: "Test Description",
-            fields: expect.arrayContaining([
-              expect.objectContaining({ name: "Students in Queue", value: "5" }),
-              expect.objectContaining({ name: "Active Sessions", value: "2" }),
-            ]),
-            color: Colors.Blue,
-          }),
-        }),
-      ]),
+      embeds: [mockEmbed],
       flags: MessageFlags.Ephemeral,
     }))
   })
 
-  it("should handle queue not found in stats", async () => {
+  it("should handle error from getQueueSummaryEmbed", async () => {
     const mockSession = { queue: { id: "queue-1", name: "test-queue" } }
 
     mockQueueManager.getActiveSession.mockResolvedValue(mockSession)
-    mockQueueManager.listQueues.mockResolvedValue([])
+    mockQueueManager.getQueueSummaryEmbed.mockRejectedValue(new Error("Queue not found."))
 
     await tutorQueueSummary.summary(mockInteraction)
 
