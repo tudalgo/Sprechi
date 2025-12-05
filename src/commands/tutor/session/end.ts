@@ -21,7 +21,7 @@ export class TutorSessionEnd {
   @Slash({ name: "end", description: "End your tutoring session" })
   @SlashGroup("session", "tutor")
   async end(interaction: CommandInteraction): Promise<void> {
-    logger.info(`Command 'tutor session end' triggered by ${interaction.user.tag} (${interaction.user.id})`)
+    logger.info(`Command 'tutor session end' triggered by ${interaction.user.username} (${interaction.user.id})`)
 
     if (!interaction.guild) {
       await interaction.reply({
@@ -43,10 +43,10 @@ export class TutorSessionEnd {
         ],
         flags: MessageFlags.Ephemeral,
       })
-      logger.info(`Tutor ${interaction.user.tag} ended their session in guild '${interaction.guild.name}' (${interaction.guild.id})`)
+      logger.info(`Tutor ${interaction.user.username} ended their session in guild '${interaction.guild.name}' (${interaction.guild.id})`)
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to end session."
-      logger.warn(`Failed to end session for tutor ${interaction.user.tag}: ${message}`)
+      logger.warn(`Failed to end session for tutor ${interaction.user.username}: ${message}`)
       await interaction.reply({
         embeds: [
           new EmbedBuilder()

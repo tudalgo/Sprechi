@@ -36,7 +36,7 @@ export class QueueJoin {
     name: string | undefined,
     interaction: CommandInteraction,
   ): Promise<void> {
-    logger.info(`Command 'join queue' triggered by ${interaction.user.tag} (${interaction.user.id}) for queue '${name ?? "default"}'`)
+    logger.info(`Command 'join queue' triggered by ${interaction.user.username} (${interaction.user.id}) for queue '${name ?? "default"}'`)
 
     if (!interaction.guild) {
       await interaction.reply({
@@ -50,7 +50,7 @@ export class QueueJoin {
       const queue = await this.queueManager.resolveQueue(interaction.guild.id, name)
       await this.queueManager.joinQueue(interaction.guild.id, queue.name, interaction.user.id)
 
-      logger.info(`User ${interaction.user.tag} (${interaction.user.id}) joined queue '${queue.name}' in guild '${interaction.guild.name}' (${interaction.guild.id})`)
+      logger.info(`User ${interaction.user.username} (${interaction.user.id}) joined queue '${queue.name}' in guild '${interaction.guild.name}' (${interaction.guild.id})`)
 
       await interaction.reply({
         embeds: [
@@ -71,10 +71,10 @@ export class QueueJoin {
         logger.warn(`Failed to join queue: Queue '${name}' is locked in guild '${interaction.guild.id}'`)
       } else if (error instanceof AlreadyInQueueError) {
         errorMessage = `You are already in queue **${name}**.`
-        logger.warn(`Failed to join queue: User ${interaction.user.tag} already in queue '${name}' in guild '${interaction.guild.id}'`)
+        logger.warn(`Failed to join queue: User ${interaction.user.username} already in queue '${name}' in guild '${interaction.guild.id}'`)
       } else if (error instanceof TutorCannotJoinQueueError) {
         errorMessage = "You cannot join a queue while you have an active tutor session."
-        logger.warn(`Failed to join queue: Tutor ${interaction.user.tag} has active session in guild '${interaction.guild.id}'`)
+        logger.warn(`Failed to join queue: Tutor ${interaction.user.username} has active session in guild '${interaction.guild.id}'`)
       } else if (error instanceof QueueError) {
         errorMessage = error.message
         logger.warn(`Failed to join queue '${name}': ${error.message}`)

@@ -20,7 +20,7 @@ export class QueueList {
   @Slash({ name: "list", description: "List all available queues" })
   @SlashGroup("queue")
   async list(interaction: CommandInteraction): Promise<void> {
-    logger.info(`Command 'list queues' triggered by ${interaction.user.tag} (${interaction.user.id})`)
+    logger.info(`Command 'list queues' triggered by ${interaction.user.username} (${interaction.user.id})`)
 
     if (!interaction.guild) {
       await interaction.reply({

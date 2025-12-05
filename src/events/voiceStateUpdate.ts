@@ -24,7 +24,7 @@ export class VoiceStateUpdate {
         const queue = await this.queueManager.getQueueByWaitingRoom(guildId, channelId)
         if (queue) {
           await this.queueManager.joinQueue(guildId, queue.name, userId)
-          logger.info(`User ${newState.member?.user.tag} (${userId}) auto-joined queue '${queue.name}' by entering waiting room`)
+          logger.info(`User ${newState.member?.user.username} (${userId}) auto-joined queue '${queue.name}' by entering waiting room`)
         }
       } catch (error: unknown) {
         // If they are already in the queue or are a tutor with an active session, we can ignore it or log it
@@ -47,7 +47,7 @@ export class VoiceStateUpdate {
         if (queue) {
           // Silent leave (grace period starts, log only if they don't rejoin)
           await this.queueManager.leaveQueue(guildId, queue.name, userId)
-          logger.info(`User ${oldState.member?.user.tag} (${userId}) left waiting room of queue '${queue.name}' (grace period started)`)
+          logger.info(`User ${oldState.member?.user.username} (${userId}) left waiting room of queue '${queue.name}' (grace period started)`)
         }
 
         // Check for ephemeral channel cleanup

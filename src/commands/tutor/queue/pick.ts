@@ -33,7 +33,7 @@ export class TutorQueuePick {
     user: User,
     interaction: CommandInteraction
   ): Promise<void> {
-    logger.info(`Command 'tutor queue pick' triggered by ${interaction.user.tag} (${interaction.user.id})`)
+    logger.info(`Command 'tutor queue pick' triggered by ${interaction.user.username} (${interaction.user.id})`)
 
     if (!interaction.guild) return
 
@@ -66,7 +66,7 @@ export class TutorQueuePick {
       )
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An error occurred."
-      logger.warn(`Failed to pick student ${user.id} for tutor ${interaction.user.tag}: ${message}`)
+      logger.warn(`Failed to pick student ${user.id} for tutor ${interaction.user.username}: ${message}`)
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()

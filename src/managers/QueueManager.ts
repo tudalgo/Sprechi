@@ -370,7 +370,7 @@ export class QueueManager {
           .setColor(Colors.Green),
       ],
     })
-    logger.info(`Tutor ${interaction.user.tag} picked student ${studentId} from queue '${queue.name}'. Created room '${channelName}' (${channel.id})`)
+    logger.info(`Tutor ${interaction.user.username} picked student ${studentId} from queue '${queue.name}'. Created room '${channelName}' (${channel.id})`)
   }
 
   async setWaitingRoom(guildId: string, queueName: string, channelId: string) {

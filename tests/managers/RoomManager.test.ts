@@ -3,6 +3,19 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { RoomManager } from '@managers/RoomManager';
 import { Guild, VoiceChannel, ChannelType, PermissionFlagsBits } from 'discord.js';
 import { mockDeep } from 'vitest-mock-extended';
+import db from '@db';
+import { sessionStudents } from '@db/schema';
+
+// Mock db
+vi.mock('@db', () => ({
+  default: {
+    select: vi.fn(),
+  },
+  sessionStudents: {
+    channelId: 'channelId',
+    endTime: 'endTime',
+  },
+}));
 
 // Mock logger
 vi.mock('@utils/logger', () => ({
@@ -102,6 +115,116 @@ describe('RoomManager', () => {
       await roomManager.deleteChannel(mockChannel);
 
       expect(mockChannel.delete).toHaveBeenCalled();
+    });
+  });
+  describe('isEphemeralChannel', () => {
+    it('should return true if channel is ephemeral', async () => {
+      const channelId = 'channel-123';
+      const mockResult = { id: 1, channelId };
+
+      const whereMock = vi.fn().mockResolvedValue([mockResult]);
+      const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+      (db.select as any).mockReturnValue({ from: fromMock });
+
+      const result = await roomManager.isEphemeralChannel(channelId);
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false if channel is not ephemeral', async () => {
+      const channelId = 'channel-123';
+
+      const whereMock = vi.fn().mockResolvedValue([]);
+      const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+      (db.select as any).mockReturnValue({ from: fromMock });
+
+      const result = await roomManager.isEphemeralChannel(channelId);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('kickAllMembers', () => {
+    it('should kick all members', async () => {
+      const channel = mockDeep<VoiceChannel>();
+      channel.id = 'channel-123';
+      const user1 = { id: 'user-1', voice: { channelId: 'channel-123', disconnect: vi.fn() } };
+      const user2 = { id: 'user-2', voice: { channelId: 'channel-123', disconnect: vi.fn() } };
+
+      (channel as any).members = new Map([
+        ['user-1', user1],
+        ['user-2', user2],
+      ]);
+
+      await roomManager.kickAllMembers(channel);
+
+      expect(user1.voice.disconnect).toHaveBeenCalled();
+      expect(user2.voice.disconnect).toHaveBeenCalled();
+    });
+  });
+
+  describe('kickUser', () => {
+    it('should kick specific user and unpermit them', async () => {
+      const channel = mockDeep<VoiceChannel>();
+      const user = { id: 'user-1', voice: { disconnect: vi.fn() } };
+      channel.members.get.mockReturnValue(user as any);
+      channel.permissionOverwrites.delete.mockResolvedValue({} as any);
+
+      await roomManager.kickUser(channel, 'user-1');
+
+      expect(channel.permissionOverwrites.delete).toHaveBeenCalledWith('user-1');
+      expect(user.voice.disconnect).toHaveBeenCalled();
+    });
+
+    it('should not throw if user not found', async () => {
+      const channel = mockDeep<VoiceChannel>();
+      channel.members.get.mockReturnValue(undefined);
+
+      await roomManager.kickUser(channel, 'user-1');
+    });
+  });
+
+  describe('getSessionIdFromChannel', () => {
+    it('should return session ID if found', async () => {
+      const channelId = 'channel-123';
+      const mockResult = { sessionId: 'session-123' };
+
+      const whereMock = vi.fn().mockResolvedValue([mockResult]);
+      const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+      (db.select as any).mockReturnValue({ from: fromMock });
+
+      const result = await roomManager.getSessionIdFromChannel(channelId);
+
+      expect(result).toBe('session-123');
+    });
+
+    it('should return null if not found', async () => {
+      const channelId = 'channel-123';
+
+      const whereMock = vi.fn().mockResolvedValue([]);
+      const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+      (db.select as any).mockReturnValue({ from: fromMock });
+
+      const result = await roomManager.getSessionIdFromChannel(channelId);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('permitUser', () => {
+    it('should permit user and move them if in voice', async () => {
+      const channel = mockDeep<VoiceChannel>();
+      channel.guild.members.fetch.mockResolvedValue({
+        voice: { channel: true, setChannel: vi.fn() }
+      } as any);
+      channel.permissionOverwrites.edit.mockResolvedValue({} as any);
+
+      const result = await roomManager.permitUser(channel, 'user-1');
+
+      expect(channel.permissionOverwrites.edit).toHaveBeenCalledWith('user-1', expect.objectContaining({
+        ViewChannel: true,
+      }));
+      expect(result).toBe(true);
     });
   });
 });

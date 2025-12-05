@@ -15,6 +15,6 @@ export class ReadyEvent {
   async onReady([client]: [Client]): Promise<void> {
     logger.info("The bot is ready!")
     await this.guildManager.syncAllGuilds()
-    logger.info(`Successfully checked and synced guilds for ${client.user!.tag}`)
+    logger.info(`Successfully checked and synced guilds for ${client.user!.username}`)
   }
 }

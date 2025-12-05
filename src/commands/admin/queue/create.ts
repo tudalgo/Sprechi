@@ -38,7 +38,7 @@ export class AdminQueueCreate {
     description: string,
     interaction: CommandInteraction,
   ): Promise<void> {
-    logger.info(`Command 'create queue' triggered by ${interaction.user.tag} (${interaction.user.id}) for queue '${name}'`)
+    logger.info(`Command 'create queue' triggered by ${interaction.user.username} (${interaction.user.id}) for queue '${name}'`)
 
     if (!interaction.guild) {
       await interaction.reply({

@@ -30,7 +30,7 @@ export class TutorQueueList {
     maxEntries: number | undefined,
     interaction: CommandInteraction
   ): Promise<void> {
-    logger.info(`Command 'tutor queue list' triggered by ${interaction.user.tag} (${interaction.user.id})`)
+    logger.info(`Command 'tutor queue list' triggered by ${interaction.user.username} (${interaction.user.id})`)
 
     if (!interaction.guild) return
 
@@ -68,10 +68,10 @@ export class TutorQueueList {
         embeds: [embed],
         flags: MessageFlags.Ephemeral,
       })
-      logger.info(`Listed ${members.length} members for queue '${queue.name}' in active session of tutor ${interaction.user.tag}`)
+      logger.info(`Listed ${members.length} members for queue '${queue.name}' in active session of tutor ${interaction.user.username}`)
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An error occurred."
-      logger.warn(`Failed to list queue members for tutor ${interaction.user.tag}: ${message}`)
+      logger.warn(`Failed to list queue members for tutor ${interaction.user.username}: ${message}`)
       await interaction.reply({
         embeds: [
           new EmbedBuilder()

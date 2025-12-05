@@ -35,7 +35,7 @@ export class TutorSessionStart {
     name: string | undefined,
     interaction: CommandInteraction,
   ): Promise<void> {
-    logger.info(`Command 'tutor session start' triggered by ${interaction.user.tag} (${interaction.user.id}) for queue '${name ?? "auto-detect"}'`)
+    logger.info(`Command 'tutor session start' triggered by ${interaction.user.username} (${interaction.user.id}) for queue '${name ?? "auto-detect"}'`)
 
     if (!interaction.guild) {
       await interaction.reply({
@@ -49,7 +49,7 @@ export class TutorSessionStart {
       const queue = await this.queueManager.resolveQueue(interaction.guild.id, name)
       await this.queueManager.createSession(interaction.guild.id, queue.name, interaction.user.id)
 
-      logger.info(`Tutor ${interaction.user.tag} started session on queue '${queue.name}' in guild '${interaction.guild.name}' (${interaction.guild.id})`)
+      logger.info(`Tutor ${interaction.user.username} started session on queue '${queue.name}' in guild '${interaction.guild.name}' (${interaction.guild.id})`)
 
       await interaction.reply({
         embeds: [
@@ -67,15 +67,15 @@ export class TutorSessionStart {
         logger.warn(`Failed to start session: Queue '${name}' not found in guild '${interaction.guild.id}'`)
       } else if (error instanceof SessionAlreadyActiveError) {
         errorMessage = "You already have an active session."
-        logger.warn(`Failed to start session: Tutor ${interaction.user.tag} already has an active session in guild '${interaction.guild.id}'`)
+        logger.warn(`Failed to start session: Tutor ${interaction.user.username} already has an active session in guild '${interaction.guild.id}'`)
       } else if (error instanceof StudentCannotStartSessionError) {
         errorMessage = "You cannot start a session while you are in a queue."
-        logger.warn(`Failed to start session: User ${interaction.user.tag} is in a queue in guild '${interaction.guild.id}'`)
+        logger.warn(`Failed to start session: User ${interaction.user.username} is in a queue in guild '${interaction.guild.id}'`)
       } else if (error instanceof QueueError) {
         errorMessage = error.message
-        logger.warn(`Failed to start session for tutor ${interaction.user.tag}: ${error.message}`)
+        logger.warn(`Failed to start session for tutor ${interaction.user.username}: ${error.message}`)
       } else {
-        logger.error(`Error starting session for tutor ${interaction.user.tag}:`, error)
+        logger.error(`Error starting session for tutor ${interaction.user.username}:`, error)
       }
 
       await interaction.reply({

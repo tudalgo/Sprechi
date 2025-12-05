@@ -20,7 +20,7 @@ export class TutorQueueSummary {
 
   @Slash({ name: "summary", description: "Show summary of the active session's queue" })
   async summary(interaction: CommandInteraction): Promise<void> {
-    logger.info(`Command 'tutor queue summary' triggered by ${interaction.user.tag} (${interaction.user.id})`)
+    logger.info(`Command 'tutor queue summary' triggered by ${interaction.user.username} (${interaction.user.id})`)
 
     if (!interaction.guild) return
 
@@ -54,10 +54,10 @@ export class TutorQueueSummary {
         embeds: [embed],
         flags: MessageFlags.Ephemeral,
       })
-      logger.info(`Shown summary for queue '${queue.name}' to tutor ${interaction.user.tag}`)
+      logger.info(`Shown summary for queue '${queue.name}' to tutor ${interaction.user.username}`)
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An error occurred."
-      logger.warn(`Failed to show queue summary for tutor ${interaction.user.tag}: ${message}`)
+      logger.warn(`Failed to show queue summary for tutor ${interaction.user.username}: ${message}`)
       await interaction.reply({
         embeds: [
           new EmbedBuilder()

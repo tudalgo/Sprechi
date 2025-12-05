@@ -23,7 +23,7 @@ export class TutorSessionSummary {
 
   @Slash({ name: "summary", description: "Get summary of the current session" })
   async summary(interaction: CommandInteraction): Promise<void> {
-    logger.info(`Command 'tutor session summary' triggered by ${interaction.user.tag} (${interaction.user.id})`)
+    logger.info(`Command 'tutor session summary' triggered by ${interaction.user.username} (${interaction.user.id})`)
 
     if (!interaction.guild) {
       await interaction.reply({
@@ -63,10 +63,10 @@ export class TutorSessionSummary {
         ],
         flags: MessageFlags.Ephemeral,
       })
-      logger.info(`Displayed session info for tutor ${interaction.user.tag} in guild '${interaction.guild.name}' (${interaction.guild.id})`)
+      logger.info(`Displayed session info for tutor ${interaction.user.username} in guild '${interaction.guild.name}' (${interaction.guild.id})`)
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to get session info."
-      logger.warn(`Failed to get session info for tutor ${interaction.user.tag}: ${message}`)
+      logger.warn(`Failed to get session info for tutor ${interaction.user.username}: ${message}`)
       await interaction.reply({
         embeds: [
           new EmbedBuilder()

@@ -13,7 +13,7 @@ export class TutorSummaryCommand {
 
   @Slash({ name: "summary", description: "Get an overview of your tutoring sessions" })
   async summary(interaction: CommandInteraction): Promise<void> {
-    logger.info(`Command 'tutor summary' triggered by ${interaction.user.tag} (${interaction.user.id})`)
+    logger.info(`Command 'tutor summary' triggered by ${interaction.user.username} (${interaction.user.id})`)
 
     if (!interaction.guild) {
       await interaction.reply({
@@ -68,7 +68,7 @@ export class TutorSummaryCommand {
       })
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Failed to get tutor summary."
-      logger.error(`Failed to get tutor summary for ${interaction.user.tag}: ${message}`)
+      logger.error(`Failed to get tutor summary for ${interaction.user.username}: ${message}`)
       await interaction.editReply({
         content: "An error occurred while fetching your summary."
       })

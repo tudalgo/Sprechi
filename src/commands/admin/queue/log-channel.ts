@@ -40,10 +40,10 @@ export class AdminQueueLogChannel {
     channel: TextChannel,
     interaction: CommandInteraction,
   ): Promise<void> {
-    logger.info(`Command 'log-channel' triggered by ${interaction.user.tag} (${interaction.user.id}) for queue '${name}'`)
+    logger.info(`Command 'log-channel' triggered by ${interaction.user.username} (${interaction.user.id}) for queue '${name}'`)
 
     if (!interaction.guild) {
-      logger.warn(`Command 'log-channel' used outside of a guild by ${interaction.user.tag}`)
+      logger.warn(`Command 'log-channel' used outside of a guild by ${interaction.user.username}`)
       await interaction.reply({
         content: "This command can only be used in a server.",
         flags: MessageFlags.Ephemeral,

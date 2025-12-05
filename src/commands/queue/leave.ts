@@ -34,7 +34,7 @@ export class QueueLeave {
     name: string | undefined,
     interaction: CommandInteraction,
   ): Promise<void> {
-    logger.info(`Command 'leave queue' triggered by ${interaction.user.tag} (${interaction.user.id}) for queue '${name ?? "auto-detect"}'`)
+    logger.info(`Command 'leave queue' triggered by ${interaction.user.username} (${interaction.user.id}) for queue '${name ?? "auto-detect"}'`)
 
     if (!interaction.guild) {
       await interaction.reply({
@@ -59,7 +59,7 @@ export class QueueLeave {
 
       await this.queueManager.leaveQueue(interaction.guild.id, queueName!, interaction.user.id)
 
-      logger.info(`User ${interaction.user.tag} (${interaction.user.id}) left queue '${queueName}' in guild '${interaction.guild.name}' (${interaction.guild.id})`)
+      logger.info(`User ${interaction.user.username} (${interaction.user.id}) left queue '${queueName}' in guild '${interaction.guild.name}' (${interaction.guild.id})`)
 
       await interaction.reply({
         embeds: [
@@ -77,7 +77,7 @@ export class QueueLeave {
         logger.warn(`Failed to leave queue: Queue '${name}' not found in guild '${interaction.guild.id}'`)
       } else if (error instanceof NotInQueueError) {
         errorMessage = `You are not in queue **${name ?? "any queue"}**.`
-        logger.warn(`Failed to leave queue: User ${interaction.user.tag} not in queue '${name ?? "any"}' in guild '${interaction.guild.id}'`)
+        logger.warn(`Failed to leave queue: User ${interaction.user.username} not in queue '${name ?? "any"}' in guild '${interaction.guild.id}'`)
       } else if (error instanceof QueueError) {
         errorMessage = error.message
         logger.warn(`Failed to leave queue '${name}': ${error.message}`)

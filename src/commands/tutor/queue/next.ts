@@ -24,7 +24,7 @@ export class TutorQueueNext {
   @Slash({ name: "next", description: "Pick the next student from the queue" })
   @SlashGroup("queue", "tutor")
   async next(interaction: CommandInteraction): Promise<void> {
-    logger.info(`Command 'tutor queue next' triggered by ${interaction.user.tag} (${interaction.user.id})`)
+    logger.info(`Command 'tutor queue next' triggered by ${interaction.user.username} (${interaction.user.id})`)
 
     if (!interaction.guild) return
 
@@ -63,7 +63,7 @@ export class TutorQueueNext {
       )
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "An error occurred."
-      logger.warn(`Failed to pick next student for tutor ${interaction.user.tag}: ${message} `)
+      logger.warn(`Failed to pick next student for tutor ${interaction.user.username}: ${message} `)
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
