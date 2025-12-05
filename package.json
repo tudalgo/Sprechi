@@ -1,8 +1,8 @@
 {
   "name": "sprechi-v2",
-  "version": "1.0.0",
+  "version": "3.0.0-beta.1",
   "private": true,
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "main": "build/main.js",
   "scripts": {
