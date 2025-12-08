@@ -9,20 +9,20 @@ import {
 } from "discord.js"
 import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
-import { QueueNotFoundError } from "../../../errors/QueueErrors"
+import { QueueNotFoundError } from "@errors/QueueErrors"
 import logger from "@utils/logger"
 import { inject, injectable } from "tsyringe"
 
 @Discord()
 @injectable()
 @SlashGroup("queue", "admin")
-export class AdminQueueLogChannel {
+export class AdminQueueLogChannelPrivate {
   constructor(
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "log-channel", description: "Set the log channel for a queue" })
-  async setLogChannel(
+  @Slash({ name: "set-private-log-channel", description: "Set the private log channel for a queue" })
+  async setPrivateLogChannel(
     @SlashOption({
       name: "name",
       description: "The name of the queue",
@@ -40,10 +40,10 @@ export class AdminQueueLogChannel {
     channel: TextChannel,
     interaction: CommandInteraction,
   ): Promise<void> {
-    logger.info(`Command 'log-channel' triggered by ${interaction.user.username} (${interaction.user.id}) for queue '${name}'`)
+    logger.info(`Command 'set-private-log-channel' triggered by ${interaction.user.username} (${interaction.user.id}) for queue '${name}'`)
 
     if (!interaction.guild) {
-      logger.warn(`Command 'log-channel' used outside of a guild by ${interaction.user.username}`)
+      logger.warn(`Command 'set-private-log-channel' used outside of a guild by ${interaction.user.username}`)
       await interaction.reply({
         content: "This command can only be used in a server.",
         flags: MessageFlags.Ephemeral,
@@ -52,14 +52,14 @@ export class AdminQueueLogChannel {
     }
 
     try {
-      await this.queueManager.setLogChannel(interaction.guild.id, name, channel.id)
-      logger.info(`Log channel for queue '${name}' set to channel '${channel.name}' (${channel.id}) in guild '${interaction.guild.name}' (${interaction.guild.id})`)
+      await this.queueManager.setPrivateLogChannel(interaction.guild.id, name, channel.id)
+      logger.info(`Private log channel for queue '${name}' set to channel '${channel.name}' (${channel.id}) in guild '${interaction.guild.name}' (${interaction.guild.id})`)
 
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Log Channel Set")
-            .setDescription(`Log channel for queue **${name}** set to <#${channel.id}>.`)
+            .setTitle("Private Log Channel Set")
+            .setDescription(`Private log channel for queue **${name}** set to <#${channel.id}>.`)
             .setColor(Colors.Green),
         ],
         flags: MessageFlags.Ephemeral,

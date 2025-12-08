@@ -2,7 +2,7 @@ import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { QueueManager } from "@managers/QueueManager"
 import db, { InternalRole } from "@db"
-import { queues, queueMembers, sessions } from "@db/schema"
+import { queues, queueMembers, sessions, queueSchedules } from "@db/schema"
 import { bot } from "@/bot"
 import { mockDeep } from "vitest-mock-extended"
 import { RoomManager } from "@managers/RoomManager"
@@ -214,7 +214,7 @@ describe("QueueManager", () => {
         ...mockQueueData,
         isLocked: false,
         waitingRoomId: null,
-        logChannelId: null,
+        privateLogChannelId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       }
@@ -300,25 +300,26 @@ describe("QueueManager", () => {
     })
   })
 
-  describe("setLogChannel", () => {
-    it("should set log channel successfully", async () => {
+  describe("setPrivateLogChannel", () => {
+    it("should set private log channel successfully", async () => {
       const mockQueue = {
         id: "queue-123",
         guildId: "guild-123",
         name: "test-queue",
-        logChannelId: "channel-456",
+        privateLogChannelId: "channel-456",
       }
 
       // Mock db.update chain
       const returningMock = vi.fn().mockResolvedValue([mockQueue])
       const whereMock = vi.fn().mockReturnValue({ returning: returningMock })
       const setMock = vi.fn().mockReturnValue({ where: whereMock });
+      // Cast to any to mock the chain
       (db.update as any).mockReturnValue({ set: setMock })
 
-      await queueManager.setLogChannel("guild-123", "test-queue", "channel-456")
+      await queueManager.setPrivateLogChannel("guild-123", "test-queue", "channel-456")
 
       expect(db.update).toHaveBeenCalledWith(queues)
-      expect(setMock).toHaveBeenCalledWith({ logChannelId: "channel-456" })
+      expect(setMock).toHaveBeenCalledWith({ privateLogChannelId: "channel-456" })
     })
 
     it("should throw QueueNotFoundError if queue does not exist", async () => {
@@ -328,7 +329,7 @@ describe("QueueManager", () => {
       const setMock = vi.fn().mockReturnValue({ where: whereMock });
       (db.update as any).mockReturnValue({ set: setMock })
 
-      await expect(queueManager.setLogChannel("guild-123", "non-existent", "channel-456"))
+      await expect(queueManager.setPrivateLogChannel("guild-123", "non-existent", "channel-456"))
         .rejects.toThrow("Queue \"non-existent\" not found")
     })
   })
@@ -568,7 +569,7 @@ describe("QueueManager", () => {
         guildId: "guild-123",
         name: "test-queue",
         isLocked: false,
-        logChannelId: "log-channel-123",
+        privateLogChannelId: "log-channel-123",
       }
 
       vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
@@ -597,7 +598,7 @@ describe("QueueManager", () => {
       guildId: "guild-123",
       name: "test-queue",
       isLocked: false,
-      logChannelId: "log-123",
+      privateLogChannelId: "log-123",
     }
 
     vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
@@ -618,7 +619,7 @@ describe("QueueManager", () => {
       send: vi.fn(),
     }
       ; (bot.channels.fetch as any).mockResolvedValue(mockChannel)
-    ; (bot.users.fetch as any).mockResolvedValue({ send: vi.fn() })
+      ; (bot.users.fetch as any).mockResolvedValue({ send: vi.fn() })
 
     await queueManager.joinQueue("guild-123", "test-queue", "user-123")
 
@@ -878,7 +879,7 @@ describe("QueueManager", () => {
 
   describe("endSession", () => {
     it("should end session successfully and remove role", async () => {
-      const mockQueue = { id: "queue-123", guildId: "guild-123", name: "test-queue", logChannelId: "log-123" }
+      const mockQueue = { id: "queue-123", guildId: "guild-123", name: "test-queue", privateLogChannelId: "log-123" }
       const mockSession = { id: "session-123", tutorId: "tutor-123" }
 
       vi.spyOn(queueManager, "getActiveSession").mockResolvedValue({ session: mockSession, queue: mockQueue } as any)
@@ -893,7 +894,7 @@ describe("QueueManager", () => {
       const mockMember = { roles: { remove: vi.fn() } }
       const mockGuild = { members: { fetch: vi.fn().mockResolvedValue(mockMember) } }
         ; (bot.guilds.fetch as any).mockResolvedValue(mockGuild)
-      ; (bot.channels.fetch as any).mockResolvedValue({ send: vi.fn() }) // for logToChannel
+        ; (bot.channels.fetch as any).mockResolvedValue({ send: vi.fn() }) // for logToChannel
 
       await queueManager.endSession("guild-123", "tutor-123")
 
@@ -1134,7 +1135,7 @@ describe("QueueManager", () => {
   describe("terminateSessionsByUser", () => {
     it("should terminate sessions for user", async () => {
       const mockSession = { id: "session-123", tutorId: "tutor-123" }
-      const mockQueue = { id: "queue-123", name: "test-queue", logChannelId: "log-123" }
+      const mockQueue = { id: "queue-123", name: "test-queue", privateLogChannelId: "log-123" }
       const mockActiveSessions = [{ session: mockSession, queue: mockQueue }]
 
       // Mock select
@@ -1175,7 +1176,7 @@ describe("QueueManager", () => {
   describe("terminateAllSessions", () => {
     it("should terminate all sessions", async () => {
       const mockSession = { id: "session-123", tutorId: "tutor-123" }
-      const mockQueue = { id: "queue-123", name: "test-queue", logChannelId: "log-123" }
+      const mockQueue = { id: "queue-123", name: "test-queue", privateLogChannelId: "log-123" }
       const mockActiveSessions = [{ session: mockSession, queue: mockQueue }]
 
       // Mock select
@@ -1229,6 +1230,164 @@ describe("QueueManager", () => {
 
       await expect(queueManager.setQueueLockState("guild-123", "test-queue", true))
         .rejects.toThrow("Queue \"test-queue\" not found")
+    })
+  })
+  describe("Scheduling", () => {
+    it("should add a schedule", async () => {
+      const mockQueue = { id: "queue-123", guildId: "guild-123", name: "test-queue" }
+      vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+
+      const valuesMock = vi.fn().mockReturnValue({ onConflictDoUpdate: vi.fn().mockResolvedValue([]) })
+        ; (db.insert as any).mockReturnValue({ values: valuesMock })
+
+      await queueManager.addSchedule("guild-123", "test-queue", 1, "08:00", "20:00")
+
+      expect(db.insert).toHaveBeenCalledWith(queueSchedules)
+      expect(valuesMock).toHaveBeenCalledWith({
+        queueId: "queue-123",
+        dayOfWeek: 1,
+        startTime: "08:00",
+        endTime: "20:00",
+      })
+    })
+
+    it("should remove a schedule", async () => {
+      const mockQueue = { id: "queue-123", guildId: "guild-123", name: "test-queue" }
+      vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+
+      const whereMock = vi.fn().mockResolvedValue([])
+        ; (db.delete as any).mockReturnValue({ where: whereMock })
+
+      await queueManager.removeSchedule("guild-123", "test-queue", 1)
+
+      expect(db.delete).toHaveBeenCalledWith(queueSchedules)
+    })
+
+    it("should set schedule shift", async () => {
+      const mockQueue = { id: "queue-123", guildId: "guild-123", name: "test-queue" }
+      vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+
+      const setMock = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) })
+        ; (db.update as any).mockReturnValue({ set: setMock })
+
+      await queueManager.setScheduleShift("guild-123", "test-queue", 10)
+
+      expect(db.update).toHaveBeenCalledWith(queues)
+      expect(setMock).toHaveBeenCalledWith({ scheduleShiftMinutes: 10 })
+    })
+
+    it("should set schedule enabled", async () => {
+      const mockQueue = { id: "queue-123", guildId: "guild-123", name: "test-queue" }
+      vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+
+      const setMock = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([]) })
+        ; (db.update as any).mockReturnValue({ set: setMock })
+
+      await queueManager.setScheduleEnabled("guild-123", "test-queue", true)
+
+      expect(db.update).toHaveBeenCalledWith(queues)
+      expect(setMock).toHaveBeenCalledWith({ scheduleEnabled: true })
+    })
+
+    it("should check schedules - unlock if within time", async () => {
+      const mockQueue = {
+        id: "queue-123",
+        guildId: "guild-123",
+        name: "test-queue",
+        scheduleEnabled: true,
+        isLocked: true,
+        scheduleShiftMinutes: 0
+      }
+
+      // Mock list of scheduled queues
+      const fromMock = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([mockQueue]) })
+        ; (db.select as any).mockReturnValueOnce({ from: fromMock })
+
+      // Mock specific schedule fetch
+      // Assuming today is Monday (1) 12:00
+      vi.useFakeTimers()
+      const date = new Date(2023, 0, 2, 12, 0) // Mon Jan 02 2023 12:00:00
+      vi.setSystemTime(date)
+
+      const mockSchedule = { startTime: "08:00", endTime: "20:00" }
+      const fromScheduleMock = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([mockSchedule]) })
+        ; (db.select as any).mockReturnValueOnce({ from: fromScheduleMock }) // For the loop
+
+      const setLockSpy = vi.spyOn(queueManager, "setQueueLockState").mockResolvedValue(undefined)
+      // Mock getQueueByName for setQueueLockState
+      vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+        // Mock db update for setQueueLockState
+        ; (db.update as any).mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
+
+      await queueManager.checkSchedules()
+
+      expect(setLockSpy).toHaveBeenCalledWith("guild-123", "test-queue", false)
+
+      vi.useRealTimers()
+    })
+
+    it("should check schedules - lock if outside time", async () => {
+      const mockQueue = {
+        id: "queue-123",
+        guildId: "guild-123",
+        name: "test-queue",
+        scheduleEnabled: true,
+        isLocked: false,
+        scheduleShiftMinutes: 0
+      }
+
+      const fromMock = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([mockQueue]) })
+        ; (db.select as any).mockReturnValueOnce({ from: fromMock })
+
+      vi.useFakeTimers()
+      const date = new Date(2023, 0, 2, 22, 0) // Mon Jan 02 2023 22:00:00
+      vi.setSystemTime(date)
+
+      const mockSchedule = { startTime: "08:00", endTime: "20:00" }
+      const fromScheduleMock = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([mockSchedule]) })
+        ; (db.select as any).mockReturnValueOnce({ from: fromScheduleMock })
+
+      const setLockSpy = vi.spyOn(queueManager, "setQueueLockState").mockResolvedValue(undefined)
+      vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+        ; (db.update as any).mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
+
+      await queueManager.checkSchedules()
+
+      expect(setLockSpy).toHaveBeenCalledWith("guild-123", "test-queue", true)
+
+      vi.useRealTimers()
+    })
+
+    it("should check schedules - use shift (open earlier)", async () => {
+      const mockQueue = {
+        id: "queue-123",
+        guildId: "guild-123",
+        name: "test-queue",
+        scheduleEnabled: true,
+        isLocked: true,
+        scheduleShiftMinutes: 10 // Shift 10 mins earlier
+      }
+
+      const fromMock = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([mockQueue]) })
+        ; (db.select as any).mockReturnValueOnce({ from: fromMock })
+
+      vi.useFakeTimers()
+      const date = new Date(2023, 0, 2, 7, 55) // 7:55, normally closed (opens 8:00), but with shift 10m -> 7:50 open
+      vi.setSystemTime(date)
+
+      const mockSchedule = { startTime: "08:00", endTime: "20:00" }
+      const fromScheduleMock = vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue([mockSchedule]) })
+        ; (db.select as any).mockReturnValueOnce({ from: fromScheduleMock })
+
+      const setLockSpy = vi.spyOn(queueManager, "setQueueLockState").mockResolvedValue(undefined)
+      vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+        ; (db.update as any).mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
+
+      await queueManager.checkSchedules()
+
+      expect(setLockSpy).toHaveBeenCalledWith("guild-123", "test-queue", false)
+
+      vi.useRealTimers()
     })
   })
 })

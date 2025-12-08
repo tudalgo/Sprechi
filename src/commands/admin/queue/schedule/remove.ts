@@ -12,20 +12,27 @@ import { inject, injectable } from "tsyringe"
 @Discord()
 @injectable()
 @SlashGroup("queue", "admin")
-export class AdminQueueLockCommand {
+export class AdminQueueScheduleRemoveCommand {
   constructor(
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "lock", description: "Lock a queue" })
-  async lock(
+  @Slash({ name: "schedule-remove", description: "Remove a schedule from a queue" })
+  async remove(
     @SlashOption({
       name: "name",
-      description: "The name of the queue to lock",
+      description: "The name of the queue",
       required: true,
       type: ApplicationCommandOptionType.String,
     })
     name: string,
+    @SlashOption({
+      name: "day",
+      description: "Day of the week (e.g. Monday)",
+      required: true,
+      type: ApplicationCommandOptionType.String,
+    })
+    dayInput: string,
     interaction: CommandInteraction,
   ): Promise<void> {
     if (!interaction.guildId) return
@@ -33,15 +40,22 @@ export class AdminQueueLockCommand {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 
     try {
-      await this.queueManager.setScheduleEnabled(interaction.guildId, name, false)
-      await this.queueManager.setQueueLockState(interaction.guildId, name, true)
+      const days: Record<string, number> = {
+        sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6
+      }
+      const day = days[dayInput.toLowerCase()]
+      if (day === undefined) {
+        throw new Error("Invalid day of week. Please use full English names (e.g. Monday).")
+      }
+
+      await this.queueManager.removeSchedule(interaction.guildId, name, day)
 
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Queue Locked")
-            .setDescription(`Queue **${name}** has been locked.`)
-            .setColor(Colors.Red),
+            .setTitle("Schedule Removed")
+            .setDescription(`Removed schedule for queue **${name}** on **${dayInput}**.`)
+            .setColor(Colors.Green),
         ],
       })
     } catch (error) {

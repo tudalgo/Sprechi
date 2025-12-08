@@ -1,5 +1,5 @@
 import db, { InternalRole } from "@db"
-import { queues, queueMembers, sessions, sessionStudents } from "@db/schema"
+import { queues, queueMembers, sessions, sessionStudents, queueSchedules } from "@db/schema"
 import logger from "@utils/logger"
 import { eq, and, sql, isNull } from "drizzle-orm"
 import {
@@ -392,16 +392,28 @@ export class QueueManager {
     logger.info(`[Set Waiting Room] Queue "${queueName}" in guild ${guildId} waiting room set to ${channelId}.`)
   }
 
-  async setLogChannel(guildId: string, queueName: string, channelId: string) {
+  async setPrivateLogChannel(guildId: string, queueName: string, channelId: string) {
     const result = await db.update(queues)
-      .set({ logChannelId: channelId })
+      .set({ privateLogChannelId: channelId })
       .where(and(eq(queues.guildId, guildId), eq(queues.name, queueName)))
       .returning()
 
     if (result.length === 0) {
       throw new QueueNotFoundError(queueName)
     }
-    logger.info(`[Set Log Channel] Queue "${queueName}" in guild ${guildId} log channel set to ${channelId}.`)
+    logger.info(`[Set Private Log Channel] Queue "${queueName}" in guild ${guildId} private log channel set to ${channelId}.`)
+  }
+
+  async setPublicLogChannel(guildId: string, queueName: string, channelId: string) {
+    const result = await db.update(queues)
+      .set({ publicLogChannelId: channelId })
+      .where(and(eq(queues.guildId, guildId), eq(queues.name, queueName)))
+      .returning()
+
+    if (result.length === 0) {
+      throw new QueueNotFoundError(queueName)
+    }
+    logger.info(`[Set Public Log Channel] Queue "${queueName}" in guild ${guildId} public log channel set to ${channelId}.`)
   }
 
   async createSession(guildId: string, queueName: string, tutorId: string) {
@@ -522,10 +534,10 @@ export class QueueManager {
   }
 
   private async logToChannel(queue: typeof queues.$inferSelect, message: string) {
-    if (!queue.logChannelId) return
+    if (!queue.privateLogChannelId) return
 
     try {
-      const channel = await bot.channels.fetch(queue.logChannelId)
+      const channel = await bot.channels.fetch(queue.privateLogChannelId)
 
       if (channel && channel.type === ChannelType.GuildText) {
         // Get stats
@@ -553,7 +565,26 @@ export class QueueManager {
         await channel.send({ content: prefix || undefined, embeds: [embed] })
       }
     } catch (error) {
-      logger.error(`Failed to log to channel ${queue.logChannelId}:`, error)
+      logger.error(`Failed to log to channel ${queue.privateLogChannelId}:`, error)
+    }
+  }
+
+  private async logToPublicChannel(queue: typeof queues.$inferSelect, message: string, color: number = Colors.Blue) {
+    if (!queue.publicLogChannelId) return
+
+    try {
+      const channel = await bot.channels.fetch(queue.publicLogChannelId)
+      if (channel && channel.type === ChannelType.GuildText) {
+        const embed = new EmbedBuilder()
+          .setTitle(`Sprechstundensystem: ${queue.name}`)
+          .setDescription(message)
+          .setColor(color)
+          .setTimestamp()
+
+        await channel.send({ embeds: [embed] })
+      }
+    } catch (error) {
+      logger.error(`Failed to log to public channel ${queue.publicLogChannelId}:`, error)
     }
   }
 
@@ -747,6 +778,142 @@ export class QueueManager {
       .set({ isLocked })
       .where(eq(queues.id, queue.id))
 
-    logger.info(`[Set Lock State] Queue "${queueName}" in guild ${guildId} set to ${isLocked ? "locked" : "unlocked"}.`)
+    const lockStateStr = isLocked ? "locked" : "unlocked"
+    logger.info(`[Set Lock State] Queue "${queueName}" in guild ${guildId} set to ${lockStateStr}.`)
+
+    // Log to public log channel with appropriate color (Red for locked, Green for unlocked)
+    await this.logToPublicChannel(
+      queue,
+      `Queue **${queueName}** is now **${lockStateStr}**.`,
+      isLocked ? Colors.Red : Colors.Green
+    )
+    await this.logToChannel(
+      queue,
+      `Queue **${queueName}** is now **${lockStateStr}**.`,
+    )
+  }
+
+  async addSchedule(guildId: string, queueName: string, day: number, start: string, end: string) {
+    const queue = await this.getQueueByName(guildId, queueName)
+    if (!queue) throw new QueueNotFoundError(queueName)
+
+    // Validation: Start time must be before end time
+    const [startH, startM] = start.split(":").map(Number)
+    const [endH, endM] = end.split(":").map(Number)
+    const startTotal = startH * 60 + startM
+    const endTotal = endH * 60 + endM
+
+    if (startTotal >= endTotal) {
+      throw new QueueError("Start time must be before end time.")
+    }
+
+    await db.insert(queueSchedules)
+      .values({
+        queueId: queue.id,
+        dayOfWeek: day,
+        startTime: start,
+        endTime: end,
+      })
+      .onConflictDoUpdate({
+        target: [queueSchedules.queueId, queueSchedules.dayOfWeek],
+        set: { startTime: start, endTime: end, updatedAt: new Date() },
+      })
+
+    logger.info(`[Add Schedule] Added schedule for queue "${queueName}" on day ${day} (${start}-${end}) in guild ${guildId}.`)
+  }
+
+  async removeSchedule(guildId: string, queueName: string, day: number) {
+    const queue = await this.getQueueByName(guildId, queueName)
+    if (!queue) throw new QueueNotFoundError(queueName)
+
+    await db.delete(queueSchedules)
+      .where(and(eq(queueSchedules.queueId, queue.id), eq(queueSchedules.dayOfWeek, day)))
+
+    logger.info(`[Remove Schedule] Removed schedule for queue "${queueName}" on day ${day} in guild ${guildId}.`)
+  }
+
+  async getSchedules(guildId: string, queueName: string) {
+    const queue = await this.getQueueByName(guildId, queueName)
+    if (!queue) throw new QueueNotFoundError(queueName)
+
+    return db.select()
+      .from(queueSchedules)
+      .where(eq(queueSchedules.queueId, queue.id))
+      .orderBy(queueSchedules.dayOfWeek)
+  }
+
+  async setScheduleShift(guildId: string, queueName: string, minutes: number) {
+    const queue = await this.getQueueByName(guildId, queueName)
+    if (!queue) throw new QueueNotFoundError(queueName)
+
+    await db.update(queues)
+      .set({ scheduleShiftMinutes: minutes })
+      .where(eq(queues.id, queue.id))
+
+    logger.info(`[Set Schedule Shift] Set shift to ${minutes}m for queue "${queueName}" in guild ${guildId}.`)
+  }
+
+  async setScheduleEnabled(guildId: string, queueName: string, enabled: boolean) {
+    const queue = await this.getQueueByName(guildId, queueName)
+    if (!queue) throw new QueueNotFoundError(queueName)
+
+    await db.update(queues)
+      .set({ scheduleEnabled: enabled })
+      .where(eq(queues.id, queue.id))
+
+    logger.info(`[Set Schedule Enabled] Set schedule enabled to ${enabled} for queue "${queueName}" in guild ${guildId}.`)
+  }
+
+  async checkSchedules() {
+    try {
+      const scheduledQueues = await db.select()
+        .from(queues)
+        .where(eq(queues.scheduleEnabled, true))
+
+      const now = new Date()
+      // getDay: 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      const currentDay = now.getDay()
+      const currentMinutes = now.getHours() * 60 + now.getMinutes()
+
+      for (const queue of scheduledQueues) {
+        try {
+          const [schedule] = await db.select()
+            .from(queueSchedules)
+            .where(and(eq(queueSchedules.queueId, queue.id), eq(queueSchedules.dayOfWeek, currentDay)))
+
+          if (!schedule) {
+            // No schedule for today -> Close it if it's open
+            if (!queue.isLocked) {
+              await this.setQueueLockState(queue.guildId, queue.name, true)
+            }
+            continue
+          }
+
+          const [startH, startM] = schedule.startTime.split(":").map(Number)
+          const [endH, endM] = schedule.endTime.split(":").map(Number)
+
+          const shift = queue.scheduleShiftMinutes
+          const startTotal = (startH * 60 + startM) - shift
+          const endTotal = (endH * 60 + endM) - shift
+
+          const isOpenTime = currentMinutes >= startTotal && currentMinutes < endTotal
+
+          if (isOpenTime && queue.isLocked) {
+            await this.setQueueLockState(queue.guildId, queue.name, false)
+          } else if (!isOpenTime && !queue.isLocked) {
+            await this.setQueueLockState(queue.guildId, queue.name, true)
+          }
+        } catch (err: unknown) {
+          // Ignore "already locked/unlocked" errors if they happen despite our check
+          // But actually QueueError is thrown.
+          if (err instanceof QueueError && err.message.includes("is already")) {
+            continue
+          }
+          logger.error(`Error checking schedule for queue ${queue.id}:`, err)
+        }
+      }
+    } catch (error) {
+      logger.error("Error in checkSchedules:", error)
+    }
   }
 }

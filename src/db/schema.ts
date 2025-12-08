@@ -31,13 +31,29 @@ export const queues = pgTable("queues", {
   name: text("name").notNull(),
   description: text("description").notNull(),
   isLocked: boolean("is_locked").default(false).notNull(),
+  scheduleEnabled: boolean("schedule_enabled").default(false).notNull(),
+  scheduleShiftMinutes: integer("schedule_shift_minutes").default(0).notNull(),
   waitingRoomId: text("waiting_room_id"),
-  logChannelId: text("log_channel_id"),
+  privateLogChannelId: text("private_log_channel_id"),
+  publicLogChannelId: text("public_log_channel_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, table => [
   index("queues_guild_id_idx").on(table.guildId),
   uniqueIndex("queues_guild_name_idx").on(table.guildId, table.name),
+])
+
+export const queueSchedules = pgTable("queue_schedules", {
+  id: uuid("id").primaryKey().defaultRandom().notNull(),
+  queueId: uuid("queue_id").references(() => queues.id, { onDelete: "cascade" }).notNull(),
+  dayOfWeek: integer("day_of_week").notNull(), // 0=Sunday, 6=Saturday
+  startTime: text("start_time").notNull(), // HH:mm
+  endTime: text("end_time").notNull(), // HH:mm
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, table => [
+  index("queue_schedules_queue_id_idx").on(table.queueId),
+  uniqueIndex("queue_schedules_queue_day_idx").on(table.queueId, table.dayOfWeek),
 ])
 
 export const queueMembers = pgTable("queue_members", {

@@ -23,6 +23,7 @@ describe("AdminQueueUnlockCommand", () => {
 
     await command.unlock("test-queue", mockInteraction)
 
+    expect(mockQueueManager.setScheduleEnabled).toHaveBeenCalledWith("guild-123", "test-queue", false)
     expect(mockQueueManager.setQueueLockState).toHaveBeenCalledWith("guild-123", "test-queue", false)
     expect(mockInteraction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({

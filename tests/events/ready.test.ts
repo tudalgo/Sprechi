@@ -1,12 +1,15 @@
 import "reflect-metadata"
-import { describe, it, expect, vi, beforeEach } from "vitest"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import { ReadyEvent } from "@events/ready"
 import { GuildManager } from "@managers/GuildManager"
+import { QueueManager } from "@managers/QueueManager"
 import { Client } from "discord.js"
 import { mockDeep } from "vitest-mock-extended"
 
 // Mock GuildManager
 vi.mock("@managers/GuildManager")
+// Mock QueueManager
+vi.mock("@managers/QueueManager")
 
 // Mock logger
 vi.mock("@utils/logger", () => ({
@@ -20,24 +23,31 @@ vi.mock("@utils/logger", () => ({
 describe("ReadyEvent", () => {
   let readyEvent: ReadyEvent
   let mockGuildManager: any
+  let mockQueueManager: any
   let mockClient: any
 
   beforeEach(() => {
-    mockGuildManager = mockDeep<GuildManager>();
-    (GuildManager as any).mockImplementation(function () {
-      return mockGuildManager
-    })
+    mockGuildManager = mockDeep<GuildManager>()
+    mockQueueManager = mockDeep<QueueManager>()
 
-    readyEvent = new ReadyEvent(mockGuildManager)
+    readyEvent = new ReadyEvent(mockGuildManager, mockQueueManager)
     mockClient = mockDeep<Client>()
-    mockClient.user = { tag: "bot#123" }
+    mockClient.user = { tag: "bot#123", username: "bot" }
 
     vi.clearAllMocks()
+    vi.useFakeTimers()
   })
 
-  it("should sync guilds on ready", async () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it("should sync guilds and check schedules on ready", async () => {
+    mockQueueManager.checkSchedules.mockResolvedValue(undefined)
+
     await readyEvent.onReady([mockClient])
 
     expect(mockGuildManager.syncAllGuilds).toHaveBeenCalled()
+    expect(mockQueueManager.checkSchedules).toHaveBeenCalled()
   })
 })
