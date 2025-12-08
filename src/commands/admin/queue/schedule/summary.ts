@@ -59,7 +59,7 @@ export class AdminQueueScheduleSummaryCommand {
 
       const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
       const scheduleLines = schedules.map(s =>
-        `**${dayNames[s.dayOfWeek]}**: ${s.startTime} - ${s.endTime}`
+        `**${dayNames[s.dayOfWeek]}**: ${s.startTime} - ${s.endTime}`,
       ).join("\n")
 
       const shiftInfo = queue.scheduleShiftMinutes !== 0

@@ -785,7 +785,7 @@ export class QueueManager {
     await this.logToPublicChannel(
       queue,
       `Queue **${queueName}** is now **${lockStateStr}**.`,
-      isLocked ? Colors.Red : Colors.Green
+      isLocked ? Colors.Red : Colors.Green,
     )
     await this.logToChannel(
       queue,
