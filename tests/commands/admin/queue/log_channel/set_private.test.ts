@@ -6,6 +6,15 @@ import { CommandInteraction, TextChannel } from "discord.js"
 import { mockDeep } from "vitest-mock-extended"
 import { QueueNotFoundError } from "@errors/QueueErrors"
 
+// Mock logger
+vi.mock("@utils/logger", () => ({
+  default: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+  },
+}))
+
 describe("AdminQueueLogChannelPrivate", () => {
   let mockQueueManager: any
   let mockInteraction: any

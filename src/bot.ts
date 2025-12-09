@@ -1,4 +1,4 @@
-import { IntentsBitField, type Interaction, type Message } from "discord.js"
+import { IntentsBitField, Partials, type Interaction, type Message } from "discord.js"
 import { Client } from "discordx"
 
 export const bot = new Client({
@@ -13,6 +13,12 @@ export const bot = new Client({
     IntentsBitField.Flags.GuildMessageReactions,
     IntentsBitField.Flags.GuildVoiceStates,
     IntentsBitField.Flags.MessageContent,
+    IntentsBitField.Flags.DirectMessages,
+  ],
+
+  partials: [
+    Partials.Channel,
+    Partials.Message,
   ],
 
   // Debug logs are disabled in silent mode

@@ -1,9 +1,15 @@
 # files
 .vscode
-.env*
-.env.local
+.env
+.env.*
+!.env.example
 package-lock.json
 yarn.lock
+
+# Token generation (keep secure!)
+report.csv
+result.json
+result.json.bak
 
 # folders
 build

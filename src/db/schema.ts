@@ -117,3 +117,21 @@ export const roleMappings = pgTable("role_mappings", {
   uniqueIndex("role_mappings_guild_type_idx").on(table.guildId, table.roleType),
   index("role_mappings_guild_id_idx").on(table.guildId),
 ])
+
+// Users Table - for verified users
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom().notNull(),
+  discordId: text("discord_id").notNull(),
+  guildId: text("guild_id").references(() => guilds.id, { onDelete: "cascade" }).notNull(),
+  tuId: text("tu_id"),
+  moodleId: text("moodle_id"),
+  roles: internalRoleEnum("roles").array().notNull().default([]),
+  verifiedAt: timestamp("verified_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, table => [
+  uniqueIndex("users_discord_guild_idx").on(table.discordId, table.guildId),
+  index("users_discord_id_idx").on(table.discordId),
+  index("users_guild_id_idx").on(table.guildId),
+  index("users_tu_id_idx").on(table.tuId),
+  index("users_moodle_id_idx").on(table.moodleId),
+])
