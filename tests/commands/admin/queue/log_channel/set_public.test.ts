@@ -71,4 +71,38 @@ describe("AdminQueueLogChannelPublic", () => {
       }),
     )
   })
+
+  it("should reject command when not in a guild", async () => {
+    const command = new AdminQueueLogChannelPublic(mockQueueManager)
+    mockInteraction.guild = null
+    mockInteraction.guildId = null
+
+    await command.setPublicLogChannel("test-queue", mockChannel, mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalledWith({
+      content: "This command can only be used in a server.",
+      flags: expect.any(Number),
+    })
+    expect(mockQueueManager.setPublicLogChannel).not.toHaveBeenCalled()
+  })
+
+  it("should handle generic errors", async () => {
+    const command = new AdminQueueLogChannelPublic(mockQueueManager)
+    mockQueueManager.setPublicLogChannel.mockRejectedValue(new Error("Database connection failed"))
+
+    await command.setPublicLogChannel("test-queue", mockChannel, mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        embeds: expect.arrayContaining([
+          expect.objectContaining({
+            data: expect.objectContaining({
+              title: "Error",
+              description: "Failed to set public log channel.",
+            }),
+          }),
+        ]),
+      }),
+    )
+  })
 })

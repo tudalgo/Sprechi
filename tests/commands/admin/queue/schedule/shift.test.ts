@@ -58,4 +58,44 @@ describe("AdminQueueScheduleShiftCommand", () => {
       }),
     )
   })
+
+  it("should not execute when not in a guild", async () => {
+    const command = new AdminQueueScheduleShiftCommand(mockQueueManager)
+    mockInteraction.guildId = null
+
+    await command.shift("test-queue", 10, mockInteraction)
+
+    expect(mockQueueManager.setScheduleShift).not.toHaveBeenCalled()
+    expect(mockInteraction.deferReply).not.toHaveBeenCalled()
+    expect(mockInteraction.editReply).not.toHaveBeenCalled()
+  })
+
+  it("should handle negative shift values", async () => {
+    const command = new AdminQueueScheduleShiftCommand(mockQueueManager)
+    mockQueueManager.setScheduleShift.mockResolvedValue(undefined)
+
+    await command.shift("test-queue", -15, mockInteraction)
+
+    expect(mockQueueManager.setScheduleShift).toHaveBeenCalledWith("guild-123", "test-queue", -15)
+    expect(mockInteraction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        embeds: expect.arrayContaining([
+          expect.objectContaining({
+            data: expect.objectContaining({
+              title: "Schedule Shift Set",
+            }),
+          }),
+        ]),
+      }),
+    )
+  })
+
+  it("should handle extreme shift values", async () => {
+    const command = new AdminQueueScheduleShiftCommand(mockQueueManager)
+    mockQueueManager.setScheduleShift.mockResolvedValue(undefined)
+
+    await command.shift("test-queue", 1440, mockInteraction)
+
+    expect(mockQueueManager.setScheduleShift).toHaveBeenCalledWith("guild-123", "test-queue", 1440)
+  })
 })

@@ -129,4 +129,42 @@ describe("AdminQueueScheduleSummaryCommand", () => {
       }),
     )
   })
+
+  it("should not execute when not in a guild", async () => {
+    const command = new AdminQueueScheduleSummaryCommand(mockQueueManager)
+    mockInteraction.guildId = null
+
+    await command.summary("test-queue", false, mockInteraction)
+
+    expect(mockQueueManager.getQueueByName).not.toHaveBeenCalled()
+    expect(mockQueueManager.getSchedules).not.toHaveBeenCalled()
+    expect(mockInteraction.deferReply).not.toHaveBeenCalled()
+    expect(mockInteraction.editReply).not.toHaveBeenCalled()
+  })
+
+  it("should handle getSchedules rejection", async () => {
+    const command = new AdminQueueScheduleSummaryCommand(mockQueueManager)
+    const mockQueue = {
+      id: "queue-123",
+      name: "test-queue",
+      scheduleEnabled: true,
+      scheduleShiftMinutes: 10,
+    }
+    mockQueueManager.getQueueByName.mockResolvedValue(mockQueue)
+    mockQueueManager.getSchedules.mockRejectedValue(new Error("Database error"))
+
+    await command.summary("test-queue", false, mockInteraction)
+
+    expect(mockInteraction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        embeds: expect.arrayContaining([
+          expect.objectContaining({
+            data: expect.objectContaining({
+              title: "Error",
+            }),
+          }),
+        ]),
+      }),
+    )
+  })
 })

@@ -87,4 +87,34 @@ describe("AdminQueueScheduleRemoveCommand", () => {
       }),
     )
   })
+
+  it("should not execute when not in a guild", async () => {
+    const command = new AdminQueueScheduleRemoveCommand(mockQueueManager)
+    mockInteraction.guildId = null
+
+    await command.remove("test-queue", "Monday", mockInteraction)
+
+    expect(mockQueueManager.removeSchedule).not.toHaveBeenCalled()
+    expect(mockInteraction.deferReply).not.toHaveBeenCalled()
+    expect(mockInteraction.editReply).not.toHaveBeenCalled()
+  })
+
+  it("should handle removing non-existent schedule", async () => {
+    const command = new AdminQueueScheduleRemoveCommand(mockQueueManager)
+    mockQueueManager.removeSchedule.mockRejectedValue(new Error("No schedule found for the specified day"))
+
+    await command.remove("test-queue", "Monday", mockInteraction)
+
+    expect(mockInteraction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        embeds: expect.arrayContaining([
+          expect.objectContaining({
+            data: expect.objectContaining({
+              title: "Error",
+            }),
+          }),
+        ]),
+      }),
+    )
+  })
 })

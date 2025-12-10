@@ -120,4 +120,26 @@ describe("AdminQueueCreate", () => {
       flags: MessageFlags.Ephemeral,
     })
   })
+
+  it("should handle constraint errors from createQueue", async () => {
+    const queueName = "duplicate-queue"
+    const description = "A duplicate queue"
+
+    mockQueueManager.getQueueByName.mockResolvedValue(null)
+    // Simulate a race condition where queue was created after our check but before our insert
+    mockQueueManager.createQueue.mockRejectedValue(new Error("UNIQUE constraint failed"))
+
+    await adminQueueCreate.create(queueName, description, mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: ":x: Queue Creation Failed",
+          }),
+        }),
+      ]),
+      flags: MessageFlags.Ephemeral,
+    }))
+  })
 })

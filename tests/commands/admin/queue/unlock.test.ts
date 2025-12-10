@@ -86,4 +86,24 @@ describe("AdminQueueUnlockCommand", () => {
 
     expect(mockInteraction.deferReply).not.toHaveBeenCalled()
   })
+
+  it("should handle setScheduleEnabled failure", async () => {
+    const command = new AdminQueueUnlockCommand(mockQueueManager)
+    mockQueueManager.setScheduleEnabled.mockRejectedValue(new Error("Database error"))
+
+    await command.unlock("test-queue", mockInteraction)
+
+    expect(mockInteraction.editReply).toHaveBeenCalledWith(
+      expect.objectContaining({
+        embeds: expect.arrayContaining([
+          expect.objectContaining({
+            data: expect.objectContaining({
+              title: "Error",
+              description: "Database error",
+            }),
+          }),
+        ]),
+      }),
+    )
+  })
 })

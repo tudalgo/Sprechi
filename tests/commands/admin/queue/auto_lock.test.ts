@@ -18,26 +18,30 @@ describe("AdminQueueAutoLockCommand", () => {
     mockInteraction.deferReply = vi.fn()
   })
 
-  it("should enable auto mode successfully", async () => {
+  it("should enable auto-lock successfully", async () => {
     const command = new AdminQueueAutoLockCommand(mockQueueManager)
-    mockQueueManager.setScheduleEnabled.mockResolvedValue(undefined)
-    mockQueueManager.checkSchedules.mockResolvedValue(undefined)
+    mockQueueManager.setScheduleEnabled.mockResolvedValue()
+    mockQueueManager.checkSchedules.mockResolvedValue()
 
-    await command.autoLock("test-queue", mockInteraction)
+    await command.autoLock("queue1", mockInteraction)
 
-    expect(mockQueueManager.setScheduleEnabled).toHaveBeenCalledWith("guild-123", "test-queue", true)
+    expect(mockQueueManager.setScheduleEnabled).toHaveBeenCalledWith("guild-123", "queue1", true)
     expect(mockQueueManager.checkSchedules).toHaveBeenCalled()
-    expect(mockInteraction.editReply).toHaveBeenCalledWith(
-      expect.objectContaining({
-        embeds: expect.arrayContaining([
-          expect.objectContaining({
-            data: expect.objectContaining({
-              title: "Auto Mode Enabled",
-            }),
-          }),
-        ]),
-      }),
-    )
+    expect(mockInteraction.editReply).toHaveBeenCalled()
+
+    const call = mockInteraction.editReply.mock.calls[0][0]
+    expect(call.embeds[0].data.title).toBe("Auto Mode Enabled")
+    expect(call.embeds[0].data.description).toContain("queue1")
+  })
+
+  it("should return early when not in a guild", async () => {
+    const command = new AdminQueueAutoLockCommand(mockQueueManager)
+    mockInteraction.guildId = null
+
+    await command.autoLock("queue1", mockInteraction)
+
+    expect(mockQueueManager.setScheduleEnabled).not.toHaveBeenCalled()
+    expect(mockInteraction.deferReply).not.toHaveBeenCalled()
   })
 
   it("should fail if queue is not found", async () => {

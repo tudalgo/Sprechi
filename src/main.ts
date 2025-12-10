@@ -5,11 +5,12 @@ import { migrateDb } from "@/migrate"
 import { container } from "tsyringe"
 import { DIService, tsyringeDependencyRegistryEngine } from "discordx"
 import { MissingBotTokenError } from "@errors/ConfigErrors"
+import { fileURLToPath } from "url"
 
 // Enable DI
 DIService.engine = tsyringeDependencyRegistryEngine.setInjector(container)
 
-async function run() {
+export async function run() {
   await migrateDb()
   // The following syntax should be used in the commonjs environment
   //
@@ -27,4 +28,6 @@ async function run() {
   await bot.login(process.env.BOT_TOKEN)
 }
 
-void run()
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  void run()
+}

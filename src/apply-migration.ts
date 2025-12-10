@@ -10,10 +10,17 @@ const __dirname = dirname(__filename)
 
 dotenv.config({ path: path.resolve(__dirname, "../.env.dev") })
 
-migrateDb().then(() => {
-  logger.info("Migration complete")
-  process.exit(0)
-}).catch((err) => {
-  logger.error("Migration failed", err)
-  process.exit(1)
-})
+export async function run() {
+  try {
+    await migrateDb()
+    logger.info("Migration complete")
+    process.exit(0)
+  } catch (err) {
+    logger.error("Migration failed", err)
+    process.exit(1)
+  }
+}
+
+if (process.argv[1] === __filename) {
+  void run()
+}

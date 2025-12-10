@@ -149,4 +149,15 @@ describe("AdminQueueScheduleAddCommand", () => {
       }),
     )
   })
+
+  it("should not execute when not in a guild", async () => {
+    const command = new AdminQueueScheduleAddCommand(mockQueueManager)
+    mockInteraction.guildId = null
+
+    await command.add("test-queue", "Monday", "08:00", "20:00", mockInteraction)
+
+    expect(mockQueueManager.addSchedule).not.toHaveBeenCalled()
+    expect(mockInteraction.deferReply).not.toHaveBeenCalled()
+    expect(mockInteraction.editReply).not.toHaveBeenCalled()
+  })
 })

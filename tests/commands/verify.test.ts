@@ -2,7 +2,7 @@ import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { VerifyCommand } from "@commands/verify"
 import { UserManager } from "@managers/UserManager"
-import { CommandInteraction, Guild, GuildMember } from "discord.js"
+import { CommandInteraction, Guild, GuildMember, MessageFlags } from "discord.js"
 import { mockDeep } from "vitest-mock-extended"
 import {
   InvalidTokenError,
@@ -56,6 +56,7 @@ describe("VerifyCommand", () => {
     expect(call.embeds[0].data.title).toContain("✅")
     expect(call.embeds[0].data.description).toContain("Verified")
     expect(call.embeds[0].data.description).toContain("Student")
+    expect(call.flags).toBe(MessageFlags.Ephemeral)
   })
 
   it("should handle invalid token error", async () => {
@@ -66,6 +67,7 @@ describe("VerifyCommand", () => {
     expect(mockInteraction.reply).toHaveBeenCalled()
     const call = mockInteraction.reply.mock.calls[0][0]
     expect(call.embeds[0].data.description).toContain("Invalid token")
+    expect(call.flags).toBe(MessageFlags.Ephemeral)
   })
 
   it("should handle token already used error", async () => {
@@ -76,6 +78,7 @@ describe("VerifyCommand", () => {
     expect(mockInteraction.reply).toHaveBeenCalled()
     const call = mockInteraction.reply.mock.calls[0][0]
     expect(call.embeds[0].data.description).toContain("already been used")
+    expect(call.flags).toBe(MessageFlags.Ephemeral)
   })
 
   it("should handle wrong server error", async () => {
@@ -86,6 +89,7 @@ describe("VerifyCommand", () => {
     expect(mockInteraction.reply).toHaveBeenCalled()
     const call = mockInteraction.reply.mock.calls[0][0]
     expect(call.embeds[0].data.description).toContain("different server")
+    expect(call.flags).toBe(MessageFlags.Ephemeral)
   })
 
   it("should handle command used outside of guild", async () => {
@@ -98,6 +102,18 @@ describe("VerifyCommand", () => {
     expect(mockInteraction.reply).toHaveBeenCalled()
     const call = mockInteraction.reply.mock.calls[0][0]
     expect(call.embeds[0].data.description).toContain("only be used in a server")
+    expect(call.flags).toBe(MessageFlags.Ephemeral)
+  })
+
+  it("should handle member fetch failure", async () => {
+    mockGuild.members.fetch.mockRejectedValue(new Error("Fetch failed"))
+
+    await command.verify("test_token", mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalled()
+    const call = mockInteraction.reply.mock.calls[0][0]
+    expect(call.embeds[0].data.title).toContain("Verification Failed")
+    expect(call.flags).toBe(MessageFlags.Ephemeral)
   })
 
   it("should handle unknown errors", async () => {
@@ -108,6 +124,7 @@ describe("VerifyCommand", () => {
     expect(mockInteraction.reply).toHaveBeenCalled()
     const call = mockInteraction.reply.mock.calls[0][0]
     expect(call.embeds[0].data.description).toContain("unknown error")
+    expect(call.flags).toBe(MessageFlags.Ephemeral)
   })
 
   it("should allow duplicate verification", async () => {

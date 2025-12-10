@@ -1,4 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
+import { run } from "../src/dev"
+import { bot } from "@/bot"
+import { migrateDb } from "@/migrate"
 import { MissingBotTokenError } from "@errors/ConfigErrors"
 
 // Mock dependencies
@@ -30,38 +33,25 @@ vi.mock("chokidar", () => ({
 
 describe("dev.ts", () => {
   beforeEach(() => {
-    vi.resetAllMocks()
+    vi.clearAllMocks()
+    // Default to dev env
+    vi.stubEnv("NODE_ENV", "development")
   })
 
   it("should throw MissingBotTokenError when BOT_TOKEN is not set", async () => {
     vi.unstubAllEnvs()
+    vi.stubEnv("NODE_ENV", "development")
     delete process.env.BOT_TOKEN
 
-    const hasToken = !!process.env.BOT_TOKEN
-
-    if (!hasToken) {
-      expect(() => {
-        throw new MissingBotTokenError()
-      }).toThrowError(MissingBotTokenError)
-      expect(() => {
-        throw new MissingBotTokenError()
-      }).toThrowError("Could not find BOT_TOKEN in your environment")
-    }
+    await expect(run()).rejects.toThrow(MissingBotTokenError)
   })
 
-  it("should call migrateDb on startup", async () => {
+  it("should call migrateDb and bot.login on startup", async () => {
     vi.stubEnv("BOT_TOKEN", "test-token-123")
 
-    const { migrateDb } = await import("@/migrate")
-
-    // Simulate dev.ts startup logic
-    await migrateDb()
+    await run()
 
     expect(migrateDb).toHaveBeenCalled()
-  })
-
-  it("should load environment variables from .env.dev", () => {
-    const envFilePath = expect.stringContaining(".env.dev")
-    expect(envFilePath).toBeTruthy()
+    expect(bot.login).toHaveBeenCalledWith("test-token-123")
   })
 })

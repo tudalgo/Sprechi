@@ -4,6 +4,7 @@ import * as path from "path"
 import { dirname, resolve } from "@discordx/importer"
 import chokidar from "chokidar"
 import { DIService, MetadataStorage } from "discordx"
+import { fileURLToPath } from "url"
 
 import { bot } from "@/bot"
 import logger from "@utils/logger"
@@ -70,7 +71,16 @@ async function Reload() {
 /**
  * Initialize
  */
-async function run() {
+// ... imports ...
+
+// ... LoadFiles function ...
+
+// ... Reload function ...
+
+/**
+ * Initialize
+ */
+export async function run() {
   await migrateDb()
 
   const watcher = chokidar.watch(importPattern)
@@ -99,4 +109,6 @@ async function run() {
   }
 }
 
-void run()
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  void run()
+}

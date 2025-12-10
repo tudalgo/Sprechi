@@ -1,8 +1,18 @@
-import { describe, it, expect } from "vitest"
-import { Client, IntentsBitField, Partials } from "discord.js"
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
+import { IntentsBitField, Partials } from "discord.js"
+import { bot } from "../src/bot"
 
 describe("bot.ts", () => {
-  it("should create Discord client with correct intents", () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    process.env.BOT_TOKEN = "test-token"
+  })
+
+  afterEach(() => {
+    delete process.env.BOT_TOKEN
+  })
+
+  it("should be configured with correct intents", () => {
     const expectedIntents = [
       IntentsBitField.Flags.Guilds,
       IntentsBitField.Flags.GuildMembers,
@@ -12,9 +22,10 @@ describe("bot.ts", () => {
       IntentsBitField.Flags.MessageContent,
     ]
 
-    // Verify intents are defined (actual bot import would be circular)
+    const bitfield = new IntentsBitField(bot.options.intents)
+
     expectedIntents.forEach((intent) => {
-      expect(intent).toBeDefined()
+      expect(bitfield.has(intent)).toBe(true)
     })
   })
 
@@ -24,24 +35,12 @@ describe("bot.ts", () => {
       Partials.Message,
     ]
 
-    expectedPartials.forEach((partial) => {
-      expect(partial).toBeDefined()
-    })
+    expect(bot.options.partials).toEqual(expect.arrayContaining(expectedPartials))
   })
 
-  it("should export bot instance", async () => {
-    // We can't actually import bot.ts without side effects,
-    // but we can verify the structure would be valid
-    const mockBot = new Client({
-      intents: [
-        IntentsBitField.Flags.Guilds,
-        IntentsBitField.Flags.GuildMembers,
-      ],
-      partials: [Partials.Channel],
-    })
-
-    expect(mockBot).toBeInstanceOf(Client)
-    expect(mockBot).toHaveProperty("login")
-    expect(mockBot).toHaveProperty("on")
+  it("should attempt to login when login is called", async () => {
+    const loginSpy = vi.spyOn(bot, "login").mockResolvedValue("token")
+    await bot.login("test-token")
+    expect(loginSpy).toHaveBeenCalledWith("test-token")
   })
 })

@@ -1,10 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
+import { run } from "../src/main"
+import { bot } from "@/bot"
+import { migrateDb } from "@/migrate"
 import { MissingBotTokenError } from "@errors/ConfigErrors"
 
 // Mock dependencies
 vi.mock("@/bot", () => ({
   bot: {
     login: vi.fn(),
+    wait: vi.fn(),
   },
 }))
 
@@ -19,42 +23,21 @@ vi.mock("@discordx/importer", () => ({
 
 describe("main.ts", () => {
   beforeEach(() => {
-    vi.resetAllMocks()
+    vi.clearAllMocks()
   })
 
   it("should throw MissingBotTokenError when BOT_TOKEN is not set", async () => {
     vi.unstubAllEnvs()
     delete process.env.BOT_TOKEN
 
-    const { bot } = await import("@/bot")
-    const { migrateDb } = await import("@/migrate")
-
-    // Simulate main.ts logic
-    await migrateDb()
-
-    const hasToken = !!process.env.BOT_TOKEN
-
-    if (!hasToken) {
-      expect(() => {
-        throw new MissingBotTokenError()
-      }).toThrowError(MissingBotTokenError)
-    }
-
+    await expect(run()).rejects.toThrow(MissingBotTokenError)
     expect(bot.login).not.toHaveBeenCalled()
   })
 
   it("should call migrateDb and bot.login when BOT_TOKEN is set", async () => {
     vi.stubEnv("BOT_TOKEN", "test-token-123")
 
-    const { bot } = await import("@/bot")
-    const { migrateDb } = await import("@/migrate")
-
-    // Simulate main.ts logic
-    await migrateDb()
-
-    if (process.env.BOT_TOKEN) {
-      await bot.login(process.env.BOT_TOKEN)
-    }
+    await run()
 
     expect(migrateDb).toHaveBeenCalled()
     expect(bot.login).toHaveBeenCalledWith("test-token-123")
