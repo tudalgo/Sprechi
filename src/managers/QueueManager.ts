@@ -11,6 +11,9 @@ import {
   TutorCannotJoinQueueError,
   StudentCannotStartSessionError,
   QueueError,
+  InvalidQueueScheduleDayError,
+  InvalidTimeFormatError,
+  InvalidTimeRangeError,
 } from "../errors/QueueErrors"
 import { bot } from "../bot"
 import { EmbedBuilder, Colors, ChannelType, ActionRowBuilder, ButtonBuilder, ButtonStyle, CommandInteraction } from "discord.js"
@@ -793,6 +796,44 @@ export class QueueManager {
     )
   }
 
+  /**
+   * Parse day of week string to number (0-6)
+   */
+  parseDayOfWeek(dayInput: string): number {
+    const days: Record<string, number> = {
+      sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6,
+    }
+    const day = days[dayInput.toLowerCase()]
+    if (day === undefined) {
+      throw new InvalidQueueScheduleDayError(dayInput)
+    }
+    return day
+  }
+
+  /**
+   * Validate time format (HH:mm)
+   */
+  validateTimeFormat(time: string): void {
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
+    if (!timeRegex.test(time)) {
+      throw new InvalidTimeFormatError()
+    }
+  }
+
+  /**
+   * Validate time range (start < end)
+   */
+  validateTimeRange(start: string, end: string): void {
+    const [startH, startM] = start.split(":").map(Number)
+    const [endH, endM] = end.split(":").map(Number)
+    const startTotal = startH * 60 + startM
+    const endTotal = endH * 60 + endM
+
+    if (startTotal >= endTotal) {
+      throw new InvalidTimeRangeError()
+    }
+  }
+
   async addSchedule(guildId: string, queueName: string, day: number, start: string, end: string) {
     const queue = await this.getQueueByName(guildId, queueName)
     if (!queue) throw new QueueNotFoundError(queueName)
@@ -804,7 +845,7 @@ export class QueueManager {
     const endTotal = endH * 60 + endM
 
     if (startTotal >= endTotal) {
-      throw new QueueError("Start time must be before end time.")
+      throw new InvalidTimeRangeError()
     }
 
     await db.insert(queueSchedules)

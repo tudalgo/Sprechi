@@ -10,6 +10,7 @@ import logger from "@utils/logger"
 import { migrateDb } from "@/migrate"
 import { container } from "tsyringe"
 import { tsyringeDependencyRegistryEngine } from "discordx"
+import { MissingBotTokenError } from "@errors/ConfigErrors"
 
 // Enable DI
 DIService.engine = tsyringeDependencyRegistryEngine.setInjector(container)
@@ -79,7 +80,7 @@ async function run() {
 
   // Let's start the bot
   if (!process.env.BOT_TOKEN) {
-    throw Error("Could not find BOT_TOKEN in your environment")
+    throw new MissingBotTokenError()
   }
 
   // Log in with your bot token

@@ -53,3 +53,31 @@ export class StudentCannotStartSessionError extends QueueError {
     this.name = "StudentCannotStartSessionError"
   }
 }
+
+export class QueueScheduleValidationError extends QueueError {
+  constructor(message: string) {
+    super(message)
+    this.name = "QueueScheduleValidationError"
+  }
+}
+
+export class InvalidQueueScheduleDayError extends QueueScheduleValidationError {
+  constructor(day: string) {
+    super(`Invalid day of week: "${day}". Please use full English names (e.g. Monday).`)
+    this.name = "InvalidQueueScheduleDayError"
+  }
+}
+
+export class InvalidTimeFormatError extends QueueScheduleValidationError {
+  constructor() {
+    super("Invalid time format. Please use HH:mm (24-hour format).")
+    this.name = "InvalidTimeFormatError"
+  }
+}
+
+export class InvalidTimeRangeError extends QueueScheduleValidationError {
+  constructor() {
+    super("Start time must be before end time.")
+    this.name = "InvalidTimeRangeError"
+  }
+}

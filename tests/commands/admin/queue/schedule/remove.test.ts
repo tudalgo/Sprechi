@@ -4,7 +4,7 @@ import { AdminQueueScheduleRemoveCommand } from "@commands/admin/queue/schedule/
 import { QueueManager } from "@managers/QueueManager"
 import { CommandInteraction } from "discord.js"
 import { mockDeep } from "vitest-mock-extended"
-import { QueueNotFoundError } from "@errors/QueueErrors"
+import { QueueNotFoundError, InvalidQueueScheduleDayError } from "@errors/QueueErrors"
 
 describe("AdminQueueScheduleRemoveCommand", () => {
   let mockQueueManager: any
@@ -16,6 +16,8 @@ describe("AdminQueueScheduleRemoveCommand", () => {
     mockInteraction.guildId = "guild-123"
     mockInteraction.editReply = vi.fn()
     mockInteraction.deferReply = vi.fn()
+
+    mockQueueManager.parseDayOfWeek.mockReturnValue(1) // Monday
   })
 
   it("should remove schedule successfully", async () => {
@@ -24,6 +26,7 @@ describe("AdminQueueScheduleRemoveCommand", () => {
 
     await command.remove("test-queue", "Monday", mockInteraction)
 
+    expect(mockQueueManager.parseDayOfWeek).toHaveBeenCalledWith("Monday")
     expect(mockQueueManager.removeSchedule).toHaveBeenCalledWith("guild-123", "test-queue", 1)
     expect(mockInteraction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -40,9 +43,13 @@ describe("AdminQueueScheduleRemoveCommand", () => {
 
   it("should fail with invalid day", async () => {
     const command = new AdminQueueScheduleRemoveCommand(mockQueueManager)
+    mockQueueManager.parseDayOfWeek.mockImplementation(() => {
+      throw new InvalidQueueScheduleDayError("Funday")
+    })
 
     await command.remove("test-queue", "Funday", mockInteraction)
 
+    expect(mockQueueManager.parseDayOfWeek).toHaveBeenCalledWith("Funday")
     expect(mockQueueManager.removeSchedule).not.toHaveBeenCalled()
     expect(mockInteraction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -64,6 +71,7 @@ describe("AdminQueueScheduleRemoveCommand", () => {
 
     await command.remove("test-queue", "Monday", mockInteraction)
 
+    expect(mockQueueManager.parseDayOfWeek).toHaveBeenCalledWith("Monday")
     expect(mockQueueManager.removeSchedule).toHaveBeenCalledWith("guild-123", "test-queue", 1)
     expect(mockInteraction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -71,7 +79,7 @@ describe("AdminQueueScheduleRemoveCommand", () => {
           expect.objectContaining({
             data: expect.objectContaining({
               title: "Error",
-              description: expect.stringContaining("Queue \"test-queue\" not found"),
+              description: expect.stringContaining('Queue "test-queue" not found'),
 
             }),
           }),

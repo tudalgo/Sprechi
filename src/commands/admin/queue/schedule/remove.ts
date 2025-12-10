@@ -40,13 +40,8 @@ export class AdminQueueScheduleRemoveCommand {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 
     try {
-      const days: Record<string, number> = {
-        sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6,
-      }
-      const day = days[dayInput.toLowerCase()]
-      if (day === undefined) {
-        throw new Error("Invalid day of week. Please use full English names (e.g. Monday).")
-      }
+      // Delegate day parsing to QueueManager
+      const day = this.queueManager.parseDayOfWeek(dayInput)
 
       await this.queueManager.removeSchedule(interaction.guildId, name, day)
 

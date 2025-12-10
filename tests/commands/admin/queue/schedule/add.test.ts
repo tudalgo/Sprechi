@@ -4,7 +4,12 @@ import { AdminQueueScheduleAddCommand } from "@commands/admin/queue/schedule/add
 import { QueueManager } from "@managers/QueueManager"
 import { CommandInteraction } from "discord.js"
 import { mockDeep } from "vitest-mock-extended"
-import { QueueNotFoundError } from "@errors/QueueErrors"
+import {
+  QueueNotFoundError,
+  InvalidQueueScheduleDayError,
+  InvalidTimeFormatError,
+  InvalidTimeRangeError
+} from "@errors/QueueErrors"
 
 describe("AdminQueueScheduleAddCommand", () => {
   let mockQueueManager: any
@@ -16,6 +21,10 @@ describe("AdminQueueScheduleAddCommand", () => {
     mockInteraction.guildId = "guild-123"
     mockInteraction.editReply = vi.fn()
     mockInteraction.deferReply = vi.fn()
+
+    mockQueueManager.parseDayOfWeek.mockReturnValue(1) // Monday
+    mockQueueManager.validateTimeFormat.mockReturnValue(undefined)
+    mockQueueManager.validateTimeRange.mockReturnValue(undefined)
   })
 
   it("should add schedule successfully", async () => {
@@ -24,6 +33,10 @@ describe("AdminQueueScheduleAddCommand", () => {
 
     await command.add("test-queue", "Monday", "08:00", "20:00", mockInteraction)
 
+    expect(mockQueueManager.parseDayOfWeek).toHaveBeenCalledWith("Monday")
+    expect(mockQueueManager.validateTimeFormat).toHaveBeenCalledWith("08:00")
+    expect(mockQueueManager.validateTimeFormat).toHaveBeenCalledWith("20:00")
+    expect(mockQueueManager.validateTimeRange).toHaveBeenCalledWith("08:00", "20:00")
     expect(mockQueueManager.addSchedule).toHaveBeenCalledWith("guild-123", "test-queue", 1, "08:00", "20:00")
     expect(mockInteraction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -40,9 +53,13 @@ describe("AdminQueueScheduleAddCommand", () => {
 
   it("should fail with invalid day", async () => {
     const command = new AdminQueueScheduleAddCommand(mockQueueManager)
+    mockQueueManager.parseDayOfWeek.mockImplementation(() => {
+      throw new InvalidQueueScheduleDayError("Funday")
+    })
 
     await command.add("test-queue", "Funday", "08:00", "20:00", mockInteraction)
 
+    expect(mockQueueManager.parseDayOfWeek).toHaveBeenCalledWith("Funday")
     expect(mockQueueManager.addSchedule).not.toHaveBeenCalled()
     expect(mockInteraction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -60,9 +77,16 @@ describe("AdminQueueScheduleAddCommand", () => {
 
   it("should fail with invalid time format", async () => {
     const command = new AdminQueueScheduleAddCommand(mockQueueManager)
+    mockQueueManager.validateTimeFormat.mockImplementation((time: string) => {
+      if (time === "25:00") {
+        throw new InvalidTimeFormatError()
+      }
+    })
 
     await command.add("test-queue", "Monday", "25:00", "20:00", mockInteraction)
 
+    expect(mockQueueManager.parseDayOfWeek).toHaveBeenCalledWith("Monday")
+    expect(mockQueueManager.validateTimeFormat).toHaveBeenCalledWith("25:00")
     expect(mockQueueManager.addSchedule).not.toHaveBeenCalled()
     expect(mockInteraction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -80,9 +104,16 @@ describe("AdminQueueScheduleAddCommand", () => {
 
   it("should fail if start after end", async () => {
     const command = new AdminQueueScheduleAddCommand(mockQueueManager)
+    mockQueueManager.validateTimeRange.mockImplementation(() => {
+      throw new InvalidTimeRangeError()
+    })
 
     await command.add("test-queue", "Monday", "20:00", "08:00", mockInteraction)
 
+    expect(mockQueueManager.parseDayOfWeek).toHaveBeenCalledWith("Monday")
+    expect(mockQueueManager.validateTimeFormat).toHaveBeenCalledWith("20:00")
+    expect(mockQueueManager.validateTimeFormat).toHaveBeenCalledWith("08:00")
+    expect(mockQueueManager.validateTimeRange).toHaveBeenCalledWith("20:00", "08:00")
     expect(mockQueueManager.addSchedule).not.toHaveBeenCalled()
     expect(mockInteraction.editReply).toHaveBeenCalledWith(
       expect.objectContaining({

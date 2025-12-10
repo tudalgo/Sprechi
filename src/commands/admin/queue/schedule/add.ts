@@ -54,28 +54,11 @@ export class AdminQueueScheduleAddCommand {
     await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 
     try {
-      const days: Record<string, number> = {
-        sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6,
-      }
-      const day = days[dayInput.toLowerCase()]
-      if (day === undefined) {
-        throw new Error("Invalid day of week. Please use full English names (e.g. Monday).")
-      }
-
-      // Validate time format HH:mm
-      const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/
-      if (!timeRegex.test(start) || !timeRegex.test(end)) {
-        throw new Error("Invalid time format. Please use HH:mm (24-hour format).")
-      }
-
-      const [startH, startM] = start.split(":").map(Number)
-      const [endH, endM] = end.split(":").map(Number)
-      const startTotal = startH * 60 + startM
-      const endTotal = endH * 60 + endM
-
-      if (startTotal >= endTotal) {
-        throw new Error("Start time must be before end time.")
-      }
+      // Delegate all validation to QueueManager
+      const day = this.queueManager.parseDayOfWeek(dayInput)
+      this.queueManager.validateTimeFormat(start)
+      this.queueManager.validateTimeFormat(end)
+      this.queueManager.validateTimeRange(start, end)
 
       await this.queueManager.addSchedule(interaction.guildId, name, day, start, end)
 

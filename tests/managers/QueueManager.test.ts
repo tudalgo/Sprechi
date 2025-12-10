@@ -7,6 +7,9 @@ import { bot } from "@/bot"
 import { mockDeep } from "vitest-mock-extended"
 import { RoomManager } from "@managers/RoomManager"
 import { GuildManager } from "@managers/GuildManager"
+import { InvalidTimeRangeError } from "@errors/QueueErrors"
+import { InvalidQueueScheduleDayError } from "@errors/QueueErrors"
+import { InvalidTimeFormatError } from "@errors/QueueErrors"
 
 // Mock RoomManager
 vi.mock("@managers/RoomManager")
@@ -619,7 +622,7 @@ describe("QueueManager", () => {
       send: vi.fn(),
     }
       ; (bot.channels.fetch as any).mockResolvedValue(mockChannel)
-    ; (bot.users.fetch as any).mockResolvedValue({ send: vi.fn() })
+      ; (bot.users.fetch as any).mockResolvedValue({ send: vi.fn() })
 
     await queueManager.joinQueue("guild-123", "test-queue", "user-123")
 
@@ -894,7 +897,7 @@ describe("QueueManager", () => {
       const mockMember = { roles: { remove: vi.fn() } }
       const mockGuild = { members: { fetch: vi.fn().mockResolvedValue(mockMember) } }
         ; (bot.guilds.fetch as any).mockResolvedValue(mockGuild)
-      ; (bot.channels.fetch as any).mockResolvedValue({ send: vi.fn() }) // for logToChannel
+        ; (bot.channels.fetch as any).mockResolvedValue({ send: vi.fn() }) // for logToChannel
 
       await queueManager.endSession("guild-123", "tutor-123")
 
@@ -1316,8 +1319,8 @@ describe("QueueManager", () => {
       const setLockSpy = vi.spyOn(queueManager, "setQueueLockState").mockResolvedValue(undefined)
       // Mock getQueueByName for setQueueLockState
       vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
-      // Mock db update for setQueueLockState
-      ; (db.update as any).mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
+        // Mock db update for setQueueLockState
+        ; (db.update as any).mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
 
       await queueManager.checkSchedules()
 
@@ -1349,7 +1352,7 @@ describe("QueueManager", () => {
 
       const setLockSpy = vi.spyOn(queueManager, "setQueueLockState").mockResolvedValue(undefined)
       vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
-      ; (db.update as any).mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
+        ; (db.update as any).mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
 
       await queueManager.checkSchedules()
 
@@ -1381,13 +1384,73 @@ describe("QueueManager", () => {
 
       const setLockSpy = vi.spyOn(queueManager, "setQueueLockState").mockResolvedValue(undefined)
       vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
-      ; (db.update as any).mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
+        ; (db.update as any).mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
 
       await queueManager.checkSchedules()
 
       expect(setLockSpy).toHaveBeenCalledWith("guild-123", "test-queue", false)
 
       vi.useRealTimers()
+    })
+  })
+
+  describe("Validation Methods", () => {
+    describe("parseDayOfWeek", () => {
+      it("should parse valid days correctly", () => {
+        expect(queueManager.parseDayOfWeek("Sunday")).toBe(0)
+        expect(queueManager.parseDayOfWeek("Monday")).toBe(1)
+        expect(queueManager.parseDayOfWeek("Tuesday")).toBe(2)
+        expect(queueManager.parseDayOfWeek("Wednesday")).toBe(3)
+        expect(queueManager.parseDayOfWeek("Thursday")).toBe(4)
+        expect(queueManager.parseDayOfWeek("Friday")).toBe(5)
+        expect(queueManager.parseDayOfWeek("Saturday")).toBe(6)
+      })
+
+      it("should be case-insensitive", () => {
+        expect(queueManager.parseDayOfWeek("monday")).toBe(1)
+        expect(queueManager.parseDayOfWeek("MONDAY")).toBe(1)
+        expect(queueManager.parseDayOfWeek("MoNdAy")).toBe(1)
+      })
+
+      it("should throw InvalidQueueScheduleDayError for invalid day", async () => {
+        expect(() => queueManager.parseDayOfWeek("Funday")).toThrow(InvalidQueueScheduleDayError)
+        expect(() => queueManager.parseDayOfWeek("Funday")).toThrow('Invalid day of week: "Funday"')
+      })
+    })
+
+    describe("validateTimeFormat", () => {
+      it("should accept valid time formats", () => {
+        expect(() => queueManager.validateTimeFormat("00:00")).not.toThrow()
+        expect(() => queueManager.validateTimeFormat("12:30")).not.toThrow()
+        expect(() => queueManager.validateTimeFormat("23:59")).not.toThrow()
+        expect(() => queueManager.validateTimeFormat("9:15")).not.toThrow()
+      })
+
+      it("should throw InvalidTimeFormatError for invalid formats", () => {
+        expect(() => queueManager.validateTimeFormat("25:00")).toThrow(InvalidTimeFormatError)
+        expect(() => queueManager.validateTimeFormat("12:60")).toThrow(InvalidTimeFormatError)
+        expect(() => queueManager.validateTimeFormat("12")).toThrow(InvalidTimeFormatError)
+        expect(() => queueManager.validateTimeFormat("12:")).toThrow(InvalidTimeFormatError)
+        expect(() => queueManager.validateTimeFormat("12:3")).toThrow(InvalidTimeFormatError)
+        expect(() => queueManager.validateTimeFormat("1230")).toThrow(InvalidTimeFormatError)
+      })
+    })
+
+    describe("validateTimeRange", () => {
+      it("should accept valid time ranges", () => {
+        expect(() => queueManager.validateTimeRange("08:00", "17:00")).not.toThrow()
+        expect(() => queueManager.validateTimeRange("00:00", "23:59")).not.toThrow()
+        expect(() => queueManager.validateTimeRange("09:00", "09:01")).not.toThrow()
+      })
+
+      it("should throw InvalidTimeRangeError when start equals end", () => {
+        expect(() => queueManager.validateTimeRange("12:00", "12:00")).toThrow(InvalidTimeRangeError)
+      })
+
+      it("should throw InvalidTimeRangeError when start is after end", () => {
+        expect(() => queueManager.validateTimeRange("17:00", "08:00")).toThrow(InvalidTimeRangeError)
+        expect(() => queueManager.validateTimeRange("12:30", "12:29")).toThrow(InvalidTimeRangeError)
+      })
     })
   })
 })
