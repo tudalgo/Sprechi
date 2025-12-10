@@ -109,4 +109,19 @@ describe("VerifyCommand", () => {
     const call = mockInteraction.reply.mock.calls[0][0]
     expect(call.embeds[0].data.description).toContain("unknown error")
   })
+
+  it("should allow duplicate verification", async () => {
+    // User verifying again should succeed and update their roles
+    mockUserManager.verifyUser.mockResolvedValue(["Verified", "Tutor"])
+
+    await command.verify("test_token", mockInteraction)
+
+    expect(mockUserManager.verifyUser).toHaveBeenCalledWith(mockMember, "test_token")
+    expect(mockInteraction.reply).toHaveBeenCalled()
+
+    const call = mockInteraction.reply.mock.calls[0][0]
+    expect(call.embeds[0].data.title).toContain("✅")
+    expect(call.embeds[0].data.description).toContain("Verified")
+    expect(call.embeds[0].data.description).toContain("Tutor")
+  })
 })

@@ -150,8 +150,9 @@ describe("UserManager", () => {
         .rejects.toThrow(TokenAlreadyUsedError)
     })
 
-    it("should allow same user to re-verify with same token", async () => {
+    it("should allow same user to re-verify and preserve original verifiedAt", async () => {
       const { decryptTokenString } = await import("@utils/token")
+      const originalVerifiedAt = new Date("2024-01-01T00:00:00Z")
       const tokenData = {
         serverId: "guild-123",
         versionId: "01",
@@ -159,11 +160,27 @@ describe("UserManager", () => {
         moodleId: "moodle456",
         roles: [InternalRole.Verified],
       };
+
       (decryptTokenString as any).mockReturnValue(tokenData);
-      (db.query.users.findFirst as any).mockResolvedValue({
-        discordId: "user-123",
-        moodleId: "moodle456",
-      })
+
+      // First call checks for existing user (checkTokenUsage)
+      // Second call checks if it's a re-verification
+      // Third call is in saveUserData to get the existing verifiedAt
+      (db.query.users.findFirst as any)
+        .mockResolvedValueOnce({
+          discordId: "user-123",
+          moodleId: "moodle456",
+        })
+        .mockResolvedValueOnce({
+          discordId: "user-123",
+          moodleId: "moodle456",
+          verifiedAt: originalVerifiedAt,
+        })
+        .mockResolvedValueOnce({
+          discordId: "user-123",
+          moodleId: "moodle456",
+          verifiedAt: originalVerifiedAt,
+        })
 
       const mockRole = mockDeep<Role>()
       mockRole.name = "Verified";
@@ -177,6 +194,11 @@ describe("UserManager", () => {
       const roleNames = await userManager.verifyUser(mockMember, "encrypted_token")
 
       expect(roleNames).toEqual(["Verified"])
+
+      // Verify that onConflictDoUpdate was called with the preserved verifiedAt
+      expect(onConflictDoUpdateMock).toHaveBeenCalled()
+      const updateCall = onConflictDoUpdateMock.mock.calls[0][0]
+      expect(updateCall.set.verifiedAt).toEqual(originalVerifiedAt)
     })
 
     it("should assign multiple roles", async () => {

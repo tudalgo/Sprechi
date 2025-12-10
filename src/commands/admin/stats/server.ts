@@ -34,7 +34,6 @@ export class AdminStatsServer {
     const guild = interaction.guild;
     await guild.roles.fetch();
     const members = await guild.members.fetch();
-    const verifiedRole = guild.roles.cache.find(x => x.name.toLowerCase() === "verified");
 
     const width = 800; // px
     const height = 600; // px
@@ -69,13 +68,19 @@ export class AdminStatsServer {
       day.y++;
     }
 
-    // Verifications (from DB)
+    // Verifications (from DB) - filter by current guild
     const verifiedUsers = await db.query.users.findMany({
-      where: isNotNull(users.verifiedAt),
+      where: (table, { eq, and, isNotNull }) => and(
+        eq(table.guildId, guild.id),
+        isNotNull(table.verifiedAt),
+      ),
       columns: {
         verifiedAt: true
       }
     });
+
+    // Count of verified members from database (source of truth)
+    const verifiedMemberCount = verifiedUsers.length;
 
     for (const user of verifiedUsers) {
       if (!user.verifiedAt) continue;
@@ -178,8 +183,8 @@ export class AdminStatsServer {
       .setDescription("Server Information")
       .addFields([
         { name: "❯ Members: ", value: `${guild.memberCount}`, inline: true },
-        { name: "❯ Verified Members: ", value: `${verifiedRole?.members.size ?? 0}`, inline: true },
-        { name: "❯ Unverified Members: ", value: `${guild.memberCount - (verifiedRole?.members.size ?? 0)}`, inline: true },
+        { name: "❯ Verified Members: ", value: `${verifiedMemberCount}`, inline: true },
+        { name: "❯ Unverified Members: ", value: `${guild.memberCount - verifiedMemberCount}`, inline: true },
         { name: "❯ Channels: ", value: `${guild.channels.cache.size}`, inline: true },
         { name: "❯ Owner: ", value: `<@${guild.ownerId}>`, inline: true },
         { name: "❯ Created at: ", value: `<t:${Math.round(guild.createdAt.getTime() / 1000)}:f>`, inline: true },

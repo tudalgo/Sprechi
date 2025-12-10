@@ -42,13 +42,25 @@ export class UserManager {
     // Check if token was already used by a different user
     await this.checkTokenUsage(tokenData, member.user.id, member.guild.id)
 
+    // Check if this is a re-verification
+    const existingUser = await db.query.users.findFirst({
+      where: (table, { eq, and }) => and(
+        eq(table.discordId, member.user.id),
+        eq(table.guildId, member.guild.id),
+      ),
+    })
+
     // Save or update user in database
     await this.saveUserData(member.user.id, member.guild.id, tokenData)
 
     // Assign roles to user
     const roleNames = await this.assignRoles(member, tokenData.roles)
 
-    logger.info(`[UserManager] Verified user ${member.user.username} (${member.user.id}) in guild ${member.guild.name}`)
+    if (existingUser) {
+      logger.info(`[UserManager] Re-verified user ${member.user.username} (${member.user.id}) in guild ${member.guild.name}`)
+    } else {
+      logger.info(`[UserManager] Verified user ${member.user.username} (${member.user.id}) in guild ${member.guild.name}`)
+    }
 
     return roleNames
   }
@@ -75,8 +87,17 @@ export class UserManager {
 
   /**
    * Saves or updates user data in the database
+   * Preserves the original verifiedAt timestamp on updates to prevent duplicate counting in stats
    */
   private async saveUserData(discordId: string, guildId: string, tokenData: TokenData): Promise<void> {
+    // Check if user already exists
+    const existingUser = await db.query.users.findFirst({
+      where: (table, { eq, and }) => and(
+        eq(table.discordId, discordId),
+        eq(table.guildId, guildId),
+      ),
+    })
+
     await db.insert(users).values({
       discordId,
       guildId,
@@ -89,6 +110,9 @@ export class UserManager {
         tuId: tokenData.tuId || null,
         moodleId: tokenData.moodleId || null,
         roles: tokenData.roles,
+        // Only update verifiedAt if this is a new user (existingUser is null)
+        // This preserves the original verification timestamp for stats accuracy
+        verifiedAt: existingUser ? existingUser.verifiedAt : new Date(),
         updatedAt: new Date(),
       },
     })

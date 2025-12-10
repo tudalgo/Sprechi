@@ -80,15 +80,33 @@ describe("AdminStatsServer", () => {
     // Valid guild presence
     Object.defineProperty(interaction, 'guild', { value: mockGuild, writable: true });
 
-    // Setup DB return
+    // Setup DB return - should filter by guild ID
     const db = await import("@db");
     (db.default.query.users.findMany as unknown as import("vitest").Mock).mockResolvedValue([
-      { verifiedAt: new Date("2023-01-02") } // Mocks Drizzle return
+      { verifiedAt: new Date("2023-01-02") },
+      { verifiedAt: new Date("2023-01-03") },
+      { verifiedAt: new Date("2023-01-04") },
     ]);
 
     await command.server(true, interaction);
 
     expect(interaction.deferReply).toHaveBeenCalled();
+
+    // Verify DB query was called with guild filter
+    expect(db.default.query.users.findMany).toHaveBeenCalled();
+
+    // Verify the embed contains the correct verified member count from database (3), not from role
+    const editReplyCall = interaction.editReply.mock.calls[0][0] as any;
+    expect(editReplyCall.embeds).toBeDefined();
+    expect(editReplyCall.embeds[0].data.fields).toBeDefined();
+
+    // Find the "Verified Members" field
+    const verifiedMembersField = editReplyCall.embeds[0].data.fields.find(
+      (f: any) => f.name.includes("Verified Members")
+    );
+    expect(verifiedMembersField).toBeDefined();
+    expect(verifiedMembersField.value).toBe("3"); // Database count, not role count
+
     expect(interaction.editReply).toHaveBeenCalledWith(expect.objectContaining({
       embeds: expect.any(Array),
       files: expect.any(Array),
