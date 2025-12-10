@@ -118,4 +118,44 @@ describe("TutorVoicePermit", () => {
     await command.permit(mockTargetUser, mockInteraction)
     expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({ embeds: expect.arrayContaining([expect.objectContaining({ data: expect.objectContaining({ title: "Error" }) })]) }))
   })
+
+  it("should handle permitUser returning false", async () => {
+    mockRoomManager.isEphemeralChannel.mockResolvedValue(true)
+    mockRoomManager.permitUser.mockResolvedValue(false)
+
+    await command.permit(mockTargetUser, mockInteraction)
+
+    expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Error",
+            description: "Failed to permit the user.",
+          }),
+        }),
+      ]),
+    }))
+  })
+
+  it("should handle pickStudent throwing error", async () => {
+    mockRoomManager.isEphemeralChannel.mockResolvedValue(true)
+    mockRoomManager.permitUser.mockResolvedValue(true)
+    mockRoomManager.getSessionIdFromChannel.mockResolvedValue("session-123")
+    mockQueueManager.getQueueByUser.mockResolvedValue({ name: "queue-1" })
+    mockQueueManager.pickStudent.mockRejectedValue(new Error("Failed to pick student"))
+
+    await command.permit(mockTargetUser, mockInteraction)
+
+    // pickStudent error is caught and logged but doesn't prevent permit success
+    // The command still shows success because the permit operation succeeded
+    expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "User Permitted",
+          }),
+        }),
+      ]),
+    }))
+  })
 })

@@ -104,4 +104,53 @@ describe("TutorSessionSummary", () => {
       flags: MessageFlags.Ephemeral,
     })
   })
+
+  it("should handle DB query failure when counting students", async () => {
+    const mockSession = {
+      queue: { name: "test-queue" },
+      session: { id: "session-123", startTime: new Date().toISOString() },
+    }
+
+    mockQueueManager.getActiveSession.mockResolvedValue(mockSession);
+    ((db as any).where as any).mockRejectedValue(new Error("Database connection failed"))
+
+    await tutorSessionSummary.summary(mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Error",
+            description: "Database connection failed",
+          }),
+        }),
+      ]),
+      flags: MessageFlags.Ephemeral,
+    }))
+  })
+
+  it("should handle zero students helped", async () => {
+    const startTime = new Date()
+    const mockSession = {
+      queue: { name: "test-queue" },
+      session: { id: "session-123", startTime: startTime.toISOString() },
+    }
+
+    mockQueueManager.getActiveSession.mockResolvedValue(mockSession);
+    ((db as any).where as any).mockResolvedValue([{ count: 0 }])
+
+    await tutorSessionSummary.summary(mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            fields: expect.arrayContaining([
+              expect.objectContaining({ name: "Students Helped", value: "0" }),
+            ]),
+          }),
+        }),
+      ]),
+    }))
+  })
 })

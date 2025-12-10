@@ -89,4 +89,23 @@ describe("TutorVoiceKick", () => {
     await command.kick(mockTargetUser, mockInteraction)
     expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({ embeds: expect.arrayContaining([expect.objectContaining({ data: expect.objectContaining({ title: "Error" }) })]) }))
   })
+
+  it("should handle kickUser rejection", async () => {
+    mockRoomManager.isEphemeralChannel.mockResolvedValue(true)
+    mockRoomManager.kickUser.mockRejectedValue(new Error("Failed to kick user"))
+
+    await command.kick(mockTargetUser, mockInteraction)
+
+    expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([expect.objectContaining({ data: expect.objectContaining({ title: "Error" }) })]),
+    }))
+  })
+
+  it("should ensure responses remain ephemeral", async () => {
+    mockRoomManager.isEphemeralChannel.mockResolvedValue(true)
+
+    await command.kick(mockTargetUser, mockInteraction)
+
+    expect(mockInteraction.deferReply).toHaveBeenCalledWith({ flags: expect.any(Number) })
+  })
 })

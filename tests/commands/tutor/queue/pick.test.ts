@@ -130,4 +130,37 @@ describe("TutorQueuePick", () => {
       ]),
     }))
   })
+
+  it("should handle getQueueMember throwing database error", async () => {
+    const mockSession = { queue: { id: "queue-1", name: "test-queue" } }
+
+    mockQueueManager.getActiveSession.mockResolvedValue(mockSession)
+    mockQueueManager.getQueueMember.mockRejectedValue(new Error("Database connection failed"))
+
+    await tutorQueuePick.pick(mockUser, mockInteraction)
+
+    expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Error",
+            description: "Database connection failed",
+          }),
+        }),
+      ]),
+    }))
+  })
+
+  it("should ensure responses remain ephemeral", async () => {
+    const mockSession = { queue: { id: "queue-1", name: "test-queue" }, session: { id: "session-123" } }
+    const mockMember = { userId: "student-1" }
+
+    mockQueueManager.getActiveSession.mockResolvedValue(mockSession)
+    mockQueueManager.getQueueMember.mockResolvedValue(mockMember)
+    mockQueueManager.processStudentPick.mockResolvedValue(undefined)
+
+    await tutorQueuePick.pick(mockUser, mockInteraction)
+
+    expect(mockInteraction.deferReply).toHaveBeenCalledWith({ flags: MessageFlags.Ephemeral })
+  })
 })

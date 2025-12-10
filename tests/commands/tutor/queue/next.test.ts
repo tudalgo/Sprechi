@@ -126,4 +126,46 @@ describe("TutorQueueNext", () => {
       ]),
     }))
   })
+
+  it("should handle getQueueMembers rejection", async () => {
+    const mockSession = { queue: { name: "test-queue" } }
+
+    mockQueueManager.getActiveSession.mockResolvedValue(mockSession)
+    mockQueueManager.getQueueMembers.mockRejectedValue(new Error("Database error"))
+
+    await tutorQueueNext.next(mockInteraction)
+
+    expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Error",
+            description: "Database error",
+          }),
+        }),
+      ]),
+    }))
+  })
+
+  it("should handle room manager failures in processStudentPick", async () => {
+    const mockSession = { queue: { name: "test-queue" }, session: { id: "session-123" } }
+    const mockMembers = [{ userId: "student-1" }]
+
+    mockQueueManager.getActiveSession.mockResolvedValue(mockSession)
+    mockQueueManager.getQueueMembers.mockResolvedValue(mockMembers)
+    mockQueueManager.processStudentPick.mockRejectedValue(new Error("Failed to create voice channel"))
+
+    await tutorQueueNext.next(mockInteraction)
+
+    expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Error",
+            description: "Failed to create voice channel",
+          }),
+        }),
+      ]),
+    }))
+  })
 })

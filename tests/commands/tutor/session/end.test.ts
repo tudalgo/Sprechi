@@ -102,4 +102,22 @@ describe("TutorSessionEnd", () => {
       flags: MessageFlags.Ephemeral,
     })
   })
+
+  it("should handle specific queue errors like session already closed", async () => {
+    mockQueueManager.endSession.mockRejectedValue(new QueueError("Session already closed"))
+
+    await tutorSessionEnd.end(mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Error",
+            description: "Session already closed",
+          }),
+        }),
+      ]),
+      flags: MessageFlags.Ephemeral,
+    }))
+  })
 })

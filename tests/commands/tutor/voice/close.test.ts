@@ -74,4 +74,27 @@ describe("TutorVoiceClose", () => {
     await command.close(mockInteraction)
     expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({ embeds: expect.arrayContaining([expect.objectContaining({ data: expect.objectContaining({ title: "Error" }) })]) }))
   })
+
+  it("should handle kickAllMembers rejection", async () => {
+    mockRoomManager.isEphemeralChannel.mockResolvedValue(true)
+    mockRoomManager.kickAllMembers.mockRejectedValue(new Error("Failed to kick members"))
+
+    await command.close(mockInteraction)
+
+    expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([expect.objectContaining({ data: expect.objectContaining({ title: "Error" }) })]),
+    }))
+  })
+
+  it("should handle deleteChannel failure", async () => {
+    mockRoomManager.isEphemeralChannel.mockResolvedValue(true)
+    mockRoomManager.kickAllMembers.mockResolvedValue(undefined)
+    mockRoomManager.deleteChannel.mockRejectedValue(new Error("Failed to delete channel"))
+
+    await command.close(mockInteraction)
+
+    expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([expect.objectContaining({ data: expect.objectContaining({ title: "Error" }) })]),
+    }))
+  })
 })

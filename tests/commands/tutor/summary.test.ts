@@ -81,4 +81,36 @@ describe("TutorSummaryCommand", () => {
       content: "An error occurred while fetching your summary.",
     })
   })
+
+  it("should handle no sessions yet (zero totals)", async () => {
+    // Empty sessions array
+    ((db as any).where as any).mockResolvedValueOnce([])
+
+    await tutorSummaryCommand.summary(mockInteraction)
+
+    expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Tutor Summary",
+            fields: expect.arrayContaining([
+              expect.objectContaining({ name: "Total Sessions", value: "0" }),
+              expect.objectContaining({ name: "Total Time", value: "0h 0m" }),
+              expect.objectContaining({ name: "Students Helped", value: "0" }),
+            ]),
+          }),
+        }),
+      ]),
+    }))
+  })
+
+  it("should handle DB query rejection for sessions", async () => {
+    ((db as any).where as any).mockRejectedValue(new Error("Database connection failed"))
+
+    await tutorSummaryCommand.summary(mockInteraction)
+
+    expect(mockInteraction.editReply).toHaveBeenCalledWith({
+      content: "An error occurred while fetching your summary.",
+    })
+  })
 })

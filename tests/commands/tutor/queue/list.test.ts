@@ -108,4 +108,26 @@ describe("TutorQueueList", () => {
 
     expect(mockQueueManager.getQueueListEmbed).toHaveBeenCalledWith("guild-123", "test-queue", 10)
   })
+
+  it("should handle getQueueListEmbed rejection", async () => {
+    const mockSession = { queue: { name: "test-queue" } }
+    const { QueueNotFoundError } = await import("@errors/QueueErrors")
+
+    mockQueueManager.getActiveSession.mockResolvedValue(mockSession)
+    mockQueueManager.getQueueListEmbed.mockRejectedValue(new QueueNotFoundError("test-queue"))
+
+    await tutorQueueList.list(undefined, mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Error",
+            description: 'Queue "test-queue" not found',
+          }),
+        }),
+      ]),
+      flags: MessageFlags.Ephemeral,
+    }))
+  })
 })

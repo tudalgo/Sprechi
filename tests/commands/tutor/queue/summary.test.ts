@@ -101,4 +101,26 @@ describe("TutorQueueSummary", () => {
       flags: MessageFlags.Ephemeral,
     }))
   })
+
+  it("should handle QueueNotFoundError from getQueueSummaryEmbed", async () => {
+    const mockSession = { queue: { id: "queue-1", name: "test-queue" } }
+    const { QueueNotFoundError } = await import("@errors/QueueErrors")
+
+    mockQueueManager.getActiveSession.mockResolvedValue(mockSession)
+    mockQueueManager.getQueueSummaryEmbed.mockRejectedValue(new QueueNotFoundError("test-queue"))
+
+    await tutorQueueSummary.summary(mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Error",
+            description: 'Queue "test-queue" not found',
+          }),
+        }),
+      ]),
+      flags: MessageFlags.Ephemeral,
+    }))
+  })
 })

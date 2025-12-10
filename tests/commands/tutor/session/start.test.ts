@@ -158,4 +158,45 @@ describe("TutorSessionStart", () => {
       flags: MessageFlags.Ephemeral,
     })
   })
+
+  it("should handle multiple queues when no name provided", async () => {
+    const { QueueError } = await import("@errors/QueueErrors")
+    mockQueueManager.resolveQueue.mockRejectedValue(new QueueError("Multiple queues found. Please specify a queue name."))
+
+    await tutorSessionStart.start(undefined, mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Error",
+            description: "Multiple queues found. Please specify a queue name.",
+          }),
+        }),
+      ]),
+      flags: MessageFlags.Ephemeral,
+    }))
+  })
+
+  it("should handle createSession throwing arbitrary QueueError", async () => {
+    const queueName = "test-queue"
+    const { QueueError } = await import("@errors/QueueErrors")
+
+    mockQueueManager.resolveQueue.mockResolvedValue({ name: queueName })
+    mockQueueManager.createSession.mockRejectedValue(new QueueError("Arbitrary queue validation error"))
+
+    await tutorSessionStart.start(queueName, mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Error",
+            description: "Arbitrary queue validation error",
+          }),
+        }),
+      ]),
+      flags: MessageFlags.Ephemeral,
+    }))
+  })
 })
