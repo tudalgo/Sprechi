@@ -69,4 +69,26 @@ describe("AdminSessionTerminateCommand", () => {
 
     expect(mockInteraction.deferReply).not.toHaveBeenCalled()
   })
+
+  it("should handle pluralization for multiple sessions", async () => {
+    const command = new AdminSessionTerminateCommand(mockQueueManager)
+    const mockUser = mockDeep<User>()
+    mockUser.id = "user-123"
+    mockQueueManager.terminateSessionsByUser.mockResolvedValue(3)
+
+    await command.terminate(mockUser, mockInteraction)
+
+    const replyCall = mockInteraction.editReply.mock.calls[0][0]
+    const description = replyCall.embeds[0].data.description
+    expect(description).toContain("Successfully terminated **3** session(s)")
+  })
+
+  it("should handle manager/database errors", async () => {
+    const command = new AdminSessionTerminateCommand(mockQueueManager)
+    const mockUser = mockDeep<User>()
+    mockUser.id = "user-123"
+    mockQueueManager.terminateSessionsByUser.mockRejectedValue(new Error("Database error"))
+
+    await expect(command.terminate(mockUser, mockInteraction)).rejects.toThrow("Database error")
+  })
 })

@@ -115,4 +115,14 @@ describe("AdminMemberLookupCommand", () => {
     expect(fields.some((f: any) => f.name === "TU ID" && f.value === "Not available")).toBe(true)
     expect(fields.some((f: any) => f.name === "Moodle ID" && f.value === "Not available")).toBe(true)
   })
+
+  it("should handle getUserData throwing generic error", async () => {
+    mockUserManager.getUserData.mockRejectedValue(new Error("Database connection failed"))
+
+    await command.memberLookup(mockUser, mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalled()
+    const call = mockInteraction.reply.mock.calls[0][0]
+    expect(call.embeds[0].data.description).toContain("error occurred")
+  })
 })

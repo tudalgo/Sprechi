@@ -64,4 +64,23 @@ describe("AdminSessionTerminateAllCommand", () => {
 
     expect(mockInteraction.deferReply).not.toHaveBeenCalled()
   })
+
+  it("should handle pluralization for single session", async () => {
+    const command = new AdminSessionTerminateAllCommand(mockQueueManager)
+    mockQueueManager.terminateAllSessions.mockResolvedValue(1)
+
+    await command.terminateAll(mockInteraction)
+
+    const replyCall = mockInteraction.editReply.mock.calls[0][0]
+    const description = replyCall.embeds[0].data.description
+    expect(description).toContain("Successfully terminated **1** session(s)")
+  })
+
+  it("should handle terminateAllSessions throwing an error", async () => {
+    const command = new AdminSessionTerminateAllCommand(mockQueueManager)
+    mockQueueManager.terminateAllSessions.mockRejectedValue(new Error("Database error"))
+
+    await expect(command.terminateAll(mockInteraction)).rejects.toThrow("Database error")
+    expect(mockQueueManager.terminateAllSessions).toHaveBeenCalledWith("guild-123")
+  })
 })

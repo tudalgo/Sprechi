@@ -156,4 +156,30 @@ describe("AdminSearchCommand", () => {
     expect(fields.some((f: any) => f.name === "TU ID" && f.value === "Not available")).toBe(true)
     expect(fields.some((f: any) => f.name === "Moodle ID" && f.value === "Not available")).toBe(true)
   })
+
+  it("should handle searchUser throwing unexpected error", async () => {
+    mockUserManager.searchUser.mockRejectedValue(new Error("Database connection failed"))
+
+    await command.search(IdType.Discord, "user-123", mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalled()
+    const call = mockInteraction.reply.mock.calls[0][0]
+    expect(call.embeds[0].data.description).toContain("error occurred")
+  })
+
+  it("should handle empty identifier validation", async () => {
+    await command.search(IdType.Discord, "", mockInteraction)
+
+    expect(mockUserManager.searchUser).toHaveBeenCalledWith("guild-123", "discord", "")
+  })
+
+  it("should handle invalid identifier format", async () => {
+    mockUserManager.searchUser.mockRejectedValue(new Error("Invalid identifier format"))
+
+    await command.search(IdType.TU, "invalid-tu-id", mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalled()
+    const call = mockInteraction.reply.mock.calls[0][0]
+    expect(call.embeds[0].data.description).toContain("error occurred")
+  })
 })

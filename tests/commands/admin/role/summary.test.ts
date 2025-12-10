@@ -57,4 +57,25 @@ describe("AdminRoleSummary", () => {
     await command.summary(mockInteraction)
     expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({ content: expect.stringContaining("only be used in a server") }))
   })
+
+  it("should show all roles as unassigned when no mappings exist", async () => {
+    mockGuildManager.getAllRoles.mockResolvedValue([])
+
+    await command.summary(mockInteraction)
+
+    expect(mockGuildManager.getAllRoles).toHaveBeenCalledWith("guild-1")
+    const replyCall = mockInteraction.reply.mock.calls[0][0]
+    const description = replyCall.embeds[0].data.description
+    expect(description).toContain("**admin**: *Unassigned*")
+    expect(description).toContain("**tutor**: *Unassigned*")
+    expect(description).toContain("**verified**: *Unassigned*")
+    expect(description).toContain("**active_session**: *Unassigned*")
+  })
+
+  it("should handle getAllRoles throwing an error", async () => {
+    mockGuildManager.getAllRoles.mockRejectedValue(new Error("Database error"))
+
+    await expect(command.summary(mockInteraction)).rejects.toThrow("Database error")
+    expect(mockGuildManager.getAllRoles).toHaveBeenCalledWith("guild-1")
+  })
 })

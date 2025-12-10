@@ -74,4 +74,28 @@ describe("AdminSessionListCommand", () => {
 
     expect(mockInteraction.deferReply).not.toHaveBeenCalled()
   })
+
+  it("should handle getAllActiveSessions rejection", async () => {
+    const command = new AdminSessionListCommand(mockQueueManager)
+    mockQueueManager.getAllActiveSessions.mockRejectedValue(new Error("Database error"))
+
+    await expect(command.list(mockInteraction)).rejects.toThrow("Database error")
+    expect(mockQueueManager.getAllActiveSessions).toHaveBeenCalledWith("guild-123")
+  })
+
+  it("should handle guild.members.fetch failure", async () => {
+    const command = new AdminSessionListCommand(mockQueueManager)
+    mockQueueManager.getAllActiveSessions.mockResolvedValue([
+      {
+        id: "session-123",
+        tutorId: "tutor-123",
+        startTime: new Date(),
+        queueName: "queue-1",
+        studentCount: 2,
+      },
+    ])
+    mockInteraction.guild.members.fetch.mockRejectedValue(new Error("Failed to fetch member"))
+
+    await expect(command.list(mockInteraction)).rejects.toThrow("Failed to fetch member")
+  })
 })
