@@ -18,6 +18,8 @@
   },
   "dependencies": {
     "@discordx/importer": "^1.3.3",
+    "@napi-rs/canvas": "^0.1.84",
+    "chart.js": "^4.5.1",
     "consola": "^3.4.2",
     "crypto-js": "^4.2.0",
     "csv-parse": "^6.1.0",
@@ -25,6 +27,8 @@
     "discordx": "^11.13.2",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.44.7",
+    "moment": "^2.30.1",
+    "moment-duration-format": "^2.3.2",
     "pg": "^8.16.3",
     "reflect-metadata": "^0.2.2",
     "tsyringe": "^4.10.0"
