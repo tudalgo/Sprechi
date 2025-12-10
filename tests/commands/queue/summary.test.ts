@@ -95,4 +95,47 @@ describe("QueueSummaryCommand", () => {
 
     expect(mockInteraction.deferReply).not.toHaveBeenCalled()
   })
+
+  it("should handle getQueueMember returning null after getQueueByUser succeeds", async () => {
+    const command = new QueueSummaryCommand(mockQueueManager)
+    const mockQueue = { id: "queue-123", name: "test-queue", description: "desc" }
+
+    mockQueueManager.getQueueByUser.mockResolvedValue(mockQueue)
+    mockQueueManager.getQueuePosition.mockResolvedValue(1)
+    mockQueueManager.getQueueMembers.mockResolvedValue(["member1"])
+    mockQueueManager.getQueueMember.mockResolvedValue(null)
+
+    await command.summary(mockInteraction)
+
+    // When member is null, accessing member.joinedAt throws TypeError which gets caught
+    expect(mockInteraction.editReply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Error",
+          }),
+        }),
+      ]),
+    }))
+  })
+
+  it("should call deferReply before editReply", async () => {
+    const command = new QueueSummaryCommand(mockQueueManager)
+    const mockQueue = { id: "queue-123", name: "test-queue", description: "desc" }
+    const joinedAt = new Date()
+
+    mockQueueManager.getQueueByUser.mockResolvedValue(mockQueue)
+    mockQueueManager.getQueuePosition.mockResolvedValue(1)
+    mockQueueManager.getQueueMembers.mockResolvedValue(["member1"])
+    mockQueueManager.getQueueMember.mockResolvedValue({ joinedAt })
+
+    await command.summary(mockInteraction)
+
+    expect(mockInteraction.deferReply).toHaveBeenCalled()
+    expect(mockInteraction.editReply).toHaveBeenCalled()
+    // Ensure deferReply was called before editReply
+    const deferOrder = mockInteraction.deferReply.mock.invocationCallOrder[0]
+    const editOrder = mockInteraction.editReply.mock.invocationCallOrder[0]
+    expect(deferOrder).toBeLessThan(editOrder)
+  })
 })

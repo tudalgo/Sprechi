@@ -146,4 +146,44 @@ describe("QueueLeave", () => {
       flags: MessageFlags.Ephemeral,
     })
   })
+
+  it("should handle getQueueByUser rejection", async () => {
+    mockQueueManager.getQueueByUser.mockRejectedValue(new Error("Database error"))
+
+    await queueLeave.leave(undefined, mockInteraction)
+
+    expect(mockQueueManager.getQueueByUser).toHaveBeenCalledWith("guild-123", "user-123")
+    expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Error",
+            description: "Failed to leave queue.",
+          }),
+        }),
+      ]),
+      flags: MessageFlags.Ephemeral,
+    }))
+  })
+
+  it("should handle leaveQueue throwing generic QueueError", async () => {
+    const queueName = "test-queue"
+    const { QueueError } = await import("@errors/QueueErrors")
+
+    mockQueueManager.leaveQueue.mockRejectedValue(new QueueError("Generic queue error"))
+
+    await queueLeave.leave(queueName, mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Error",
+            description: "Generic queue error",
+          }),
+        }),
+      ]),
+      flags: MessageFlags.Ephemeral,
+    }))
+  })
 })

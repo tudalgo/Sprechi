@@ -155,4 +155,39 @@ describe("QueueJoin", () => {
       flags: MessageFlags.Ephemeral,
     })
   })
+
+  it("should auto-resolve single queue when name not provided", async () => {
+    const queueName = "single-queue"
+    const mockQueue = { name: queueName }
+
+    mockQueueManager.resolveQueue.mockResolvedValue(mockQueue)
+    mockQueueManager.joinQueue.mockResolvedValue(undefined)
+
+    await queueJoin.join(undefined, mockInteraction)
+
+    expect(mockQueueManager.resolveQueue).toHaveBeenCalledWith("guild-123", undefined)
+    expect(mockQueueManager.joinQueue).toHaveBeenCalledWith("guild-123", queueName, "user-123")
+  })
+
+  it("should handle generic QueueError", async () => {
+    const queueName = "test-queue"
+    const { QueueError } = await import("@errors/QueueErrors")
+
+    mockQueueManager.resolveQueue.mockResolvedValue({ name: queueName })
+    mockQueueManager.joinQueue.mockRejectedValue(new QueueError("Generic queue error"))
+
+    await queueJoin.join(queueName, mockInteraction)
+
+    expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({
+      embeds: expect.arrayContaining([
+        expect.objectContaining({
+          data: expect.objectContaining({
+            title: "Error",
+            description: "Generic queue error",
+          }),
+        }),
+      ]),
+      flags: MessageFlags.Ephemeral,
+    }))
+  })
 })

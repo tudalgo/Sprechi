@@ -90,4 +90,11 @@ describe("QueueList", () => {
       flags: MessageFlags.Ephemeral,
     })
   })
+
+  it("should handle listQueues rejection", async () => {
+    mockQueueManager.listQueues.mockRejectedValue(new Error("Database error"))
+
+    await expect(queueList.list(mockInteraction)).rejects.toThrow("Database error")
+    expect(mockQueueManager.listQueues).toHaveBeenCalledWith("guild-123")
+  })
 })
