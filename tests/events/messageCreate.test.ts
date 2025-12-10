@@ -5,7 +5,6 @@ import { UserManager } from "@managers/UserManager"
 import { Message, Guild, GuildMember, User, ChannelType } from "discord.js"
 import { mockDeep } from "vitest-mock-extended"
 import {
-  InvalidTokenError,
   TokenAlreadyUsedError,
   UserNotInGuildError,
 } from "@errors/UserErrors"
