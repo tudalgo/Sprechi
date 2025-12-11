@@ -1,7 +1,9 @@
 import { ArgsOf, Discord, On } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
+import { DmManager } from "@managers/DmManager"
 import logger from "@utils/logger"
-import { AlreadyInQueueError, NotInQueueError, TutorCannotJoinQueueError } from "../errors/QueueErrors"
+import { AlreadyInQueueError, NotInQueueError, TutorCannotJoinQueueError, QueueLockedError } from "../errors/QueueErrors"
+import { EmbedBuilder, Colors } from "discord.js"
 import db from "@db"
 import { sessionStudents } from "@db/schema"
 import { eq, and, isNull } from "drizzle-orm"
@@ -13,6 +15,7 @@ import { injectable, inject } from "tsyringe"
 export class VoiceStateUpdate {
   constructor(
     @inject(QueueManager) private queueManager: QueueManager,
+    @inject(DmManager) private dmManager: DmManager,
   ) { }
 
   @On()
@@ -32,8 +35,30 @@ export class VoiceStateUpdate {
           logger.info(`User ${newState.member?.user.username} (${userId}) auto-joined queue '${queue.name}' by entering waiting room`)
         }
       } catch (error: unknown) {
+        // Handle QueueLockedError specially: disconnect user and send DM
+        if (error instanceof QueueLockedError) {
+          try {
+            // Disconnect user from voice channel
+            await newState.disconnect()
+            logger.info(`Disconnected user ${newState.member?.user.username} (${userId}) from locked queue waiting room`)
+
+            // Send DM to user with embed
+            const embed = new EmbedBuilder()
+              .setTitle("Queue Locked")
+              .setDescription("The queue you tried to join is currently locked. Please try again later.")
+              .setColor(Colors.Red)
+
+            await this.dmManager.sendDm(
+              newState.client,
+              userId,
+              embed
+            )
+          } catch (dmError) {
+            logger.warn(`Failed to disconnect or DM user ${userId} for locked queue:`, dmError)
+          }
+        }
         // If they are already in the queue or are a tutor with an active session, we can ignore it or log it
-        if (!(error instanceof AlreadyInQueueError) && !(error instanceof TutorCannotJoinQueueError)) {
+        else if (!(error instanceof AlreadyInQueueError) && !(error instanceof TutorCannotJoinQueueError)) {
           logger.error(`Failed to auto-join queue for user ${userId}:`, error)
         }
       }
