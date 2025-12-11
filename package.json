@@ -15,6 +15,7 @@
     "test": "vitest",
     "test:coverage": "vitest --coverage",
     "test:coverage:ui": "vitest --coverage --ui",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix"
   },
