@@ -1453,4 +1453,251 @@ describe("QueueManager", () => {
       })
     })
   })
+
+  describe("Helper Methods", () => {
+    describe("getQueueListEmbed", () => {
+      it("should return empty queue embed when queue has no members", async () => {
+        const mockQueue = { id: "queue-123", name: "test-queue" }
+        vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+        vi.spyOn(queueManager, "getQueueMembers").mockResolvedValue([])
+
+        const embed = await queueManager.getQueueListEmbed("guild-123", "test-queue")
+
+        expect(embed.data.title).toBe("Queue: test-queue")
+        expect(embed.data.description).toBe("The queue is empty.")
+        expect(embed.data.footer?.text).toBe("Total: 0")
+      })
+
+      it("should return formatted list embed with members", async () => {
+        const mockQueue = { id: "queue-123", name: "test-queue" }
+        const mockMembers = [
+          { userId: "user-1" },
+          { userId: "user-2" },
+          { userId: "user-3" },
+        ]
+        vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+        vi.spyOn(queueManager, "getQueueMembers").mockResolvedValue(mockMembers as any)
+
+        const embed = await queueManager.getQueueListEmbed("guild-123", "test-queue")
+
+        expect(embed.data.title).toBe("Queue: test-queue")
+        expect(embed.data.description).toContain("1. <@user-1>")
+        expect(embed.data.description).toContain("2. <@user-2>")
+        expect(embed.data.description).toContain("3. <@user-3>")
+        expect(embed.data.footer?.text).toBe("Showing top 3 members")
+      })
+
+      it("should respect limit parameter", async () => {
+        const mockQueue = { id: "queue-123", name: "test-queue" }
+        const mockMembers = [{ userId: "user-1" }, { userId: "user-2" }]
+        vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+        vi.spyOn(queueManager, "getQueueMembers").mockResolvedValue(mockMembers as any)
+
+        await queueManager.getQueueListEmbed("guild-123", "test-queue", 10)
+
+        expect(queueManager.getQueueMembers).toHaveBeenCalledWith("guild-123", "test-queue", 10)
+      })
+
+      it("should throw QueueNotFoundError when queue doesn't exist", async () => {
+        vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(null as any)
+
+        await expect(queueManager.getQueueListEmbed("guild-123", "nonexistent"))
+          .rejects.toThrow('Queue "nonexistent" not found')
+      })
+    })
+
+    describe("getQueueSummaryEmbed", () => {
+      it("should return summary embed with stats", async () => {
+        const mockQueue = {
+          id: "queue-123",
+          name: "test-queue",
+          description: "Test queue description",
+          isLocked: false,
+        }
+        const mockQueueStats = {
+          ...mockQueue,
+          memberCount: 5,
+          sessionCount: 2,
+        }
+        vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+        vi.spyOn(queueManager, "listQueues").mockResolvedValue([mockQueueStats] as any)
+
+        const embed = await queueManager.getQueueSummaryEmbed("guild-123", "test-queue")
+
+        expect(embed.data.title).toBe("Queue Summary: test-queue")
+        expect(embed.data.description).toBe("Test queue description")
+        expect(embed.data.fields).toHaveLength(3)
+        expect(embed.data.fields?.[0]).toEqual({ name: "Students in Queue", value: "5", inline: true })
+        expect(embed.data.fields?.[1]).toEqual({ name: "Active Sessions", value: "2", inline: true })
+        expect(embed.data.fields?.[2]).toEqual({ name: "Locked", value: "No", inline: true })
+        expect(embed.data.footer?.text).toBe("Queue ID: queue-123")
+      })
+
+      it("should show 'No description' when description is null", async () => {
+        const mockQueue = { id: "queue-123", name: "test-queue", description: null, isLocked: true }
+        const mockQueueStats = { ...mockQueue, memberCount: 0, sessionCount: 0 }
+        vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+        vi.spyOn(queueManager, "listQueues").mockResolvedValue([mockQueueStats] as any)
+
+        const embed = await queueManager.getQueueSummaryEmbed("guild-123", "test-queue")
+
+        expect(embed.data.description).toBe("No description.")
+        expect(embed.data.fields?.[2]).toEqual({ name: "Locked", value: "Yes", inline: true })
+      })
+
+      it("should throw QueueNotFoundError when queue doesn't exist", async () => {
+        vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(null as any)
+
+        await expect(queueManager.getQueueSummaryEmbed("guild-123", "nonexistent"))
+          .rejects.toThrow('Queue "nonexistent" not found')
+      })
+    })
+
+    describe("logToPublicChannel", () => {
+      it("should log to public channel when publicLogChannelId is set", async () => {
+        const mockQueue = { publicLogChannelId: "channel-123", name: "test-queue" }
+        const mockChannel = {
+          type: 0, // GuildText (ChannelType.GuildText)
+          send: vi.fn().mockResolvedValue({}),
+        };
+        (bot.channels.fetch as any).mockResolvedValue(mockChannel)
+
+        // Access private method via any cast for testing
+        await (queueManager as any).logToPublicChannel(mockQueue, "Test message")
+
+        expect(bot.channels.fetch).toHaveBeenCalledWith("channel-123")
+        expect(mockChannel.send).toHaveBeenCalled()
+        const call = mockChannel.send.mock.calls[0][0]
+        expect(call.embeds[0].data.title).toBe("Sprechstundensystem: test-queue")
+        expect(call.embeds[0].data.description).toBe("Test message")
+      })
+
+      it("should do nothing when publicLogChannelId is null", async () => {
+        const mockQueue = { publicLogChannelId: null, name: "test-queue" }
+
+        await (queueManager as any).logToPublicChannel(mockQueue, "Test message")
+
+        expect(bot.channels.fetch).not.toHaveBeenCalled()
+      })
+
+      it("should handle channel fetch failure gracefully", async () => {
+        const mockQueue = { publicLogChannelId: "channel-123", name: "test-queue" };
+        (bot.channels.fetch as any).mockRejectedValue(new Error("Channel not found"))
+
+        // Should not throw
+        await expect((queueManager as any).logToPublicChannel(mockQueue, "Test")).resolves.not.toThrow()
+      })
+
+      it("should skip when channel is not a text channel", async () => {
+        const mockQueue = { publicLogChannelId: "channel-123", name: "test-queue" }
+        const mockChannel = {
+          type: 2, // GuildVoice
+          send: vi.fn(),
+        };
+        (bot.channels.fetch as any).mockResolvedValue(mockChannel)
+
+        await (queueManager as any).logToPublicChannel(mockQueue, "Test message")
+
+        expect(mockChannel.send).not.toHaveBeenCalled()
+      })
+    })
+
+    describe("logToChannel (private logging)", () => {
+      it("should log to private channel with stats", async () => {
+        const mockQueue = {
+          id: "queue-123",
+          privateLogChannelId: "channel-456",
+          name: "test-queue",
+          guildId: "guild-123",
+        }
+        const mockChannel = {
+          type: 0, // GuildText
+          send: vi.fn().mockResolvedValue({}),
+        };
+        (bot.channels.fetch as any).mockResolvedValue(mockChannel)
+
+        // Mock DB queries for stats
+        const memberCountResult = [{ count: 3 }]
+        const sessionCountResult = [{ count: 1 }]
+        const whereMock = vi.fn()
+          .mockResolvedValueOnce(memberCountResult)
+          .mockResolvedValueOnce(sessionCountResult)
+        const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+        (db.select as any).mockReturnValue({ from: fromMock })
+
+        mockGuildManager.getRole.mockResolvedValue(null)
+
+        await (queueManager as any).logToChannel(mockQueue, "Test update")
+
+        expect(bot.channels.fetch).toHaveBeenCalledWith("channel-456")
+        expect(mockChannel.send).toHaveBeenCalled()
+        const call = mockChannel.send.mock.calls[0][0]
+        expect(call.embeds[0].data.title).toBe("Queue Update: test-queue")
+        expect(call.embeds[0].data.description).toBe("Test update")
+        expect(call.embeds[0].data.fields).toHaveLength(2)
+      })
+
+      it("should do nothing when privateLogChannelId is null", async () => {
+        const mockQueue = { privateLogChannelId: null, name: "test-queue" }
+
+        await (queueManager as any).logToChannel(mockQueue, "Test message")
+
+        expect(bot.channels.fetch).not.toHaveBeenCalled()
+      })
+
+      it("should handle channel fetch failure gracefully", async () => {
+        const mockQueue = {
+          id: "queue-123",
+          privateLogChannelId: "channel-456",
+          name: "test-queue",
+        };
+        (bot.channels.fetch as any).mockRejectedValue(new Error("Channel not found"))
+
+        await expect((queueManager as any).logToChannel(mockQueue, "Test")).resolves.not.toThrow()
+      })
+
+      it("should handle DB query failure gracefully", async () => {
+        const mockQueue = {
+          id: "queue-123",
+          privateLogChannelId: "channel-456",
+          name: "test-queue",
+          guildId: "guild-123",
+        }
+        const mockChannel = { type: 4, send: vi.fn() };
+        (bot.channels.fetch as any).mockResolvedValue(mockChannel);
+        (db.select as any).mockImplementation(() => {
+          throw new Error("DB error")
+        })
+
+        await expect((queueManager as any).logToChannel(mockQueue, "Test")).resolves.not.toThrow()
+        expect(mockChannel.send).not.toHaveBeenCalled()
+      })
+
+      it("should include role mention prefix when active_session role exists", async () => {
+        const mockQueue = {
+          id: "queue-123",
+          privateLogChannelId: "channel-456",
+          name: "test-queue",
+          guildId: "guild-123",
+        }
+        const mockChannel = { type: 0, send: vi.fn().mockResolvedValue({}) };
+        (bot.channels.fetch as any).mockResolvedValue(mockChannel)
+
+        const memberCountResult = [{ count: 0 }]
+        const sessionCountResult = [{ count: 0 }]
+        const whereMock = vi.fn()
+          .mockResolvedValueOnce(memberCountResult)
+          .mockResolvedValueOnce(sessionCountResult)
+        const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+        (db.select as any).mockReturnValue({ from: fromMock })
+
+        mockGuildManager.getRole.mockResolvedValue("role-789")
+
+        await (queueManager as any).logToChannel(mockQueue, "Test update")
+
+        const call = mockChannel.send.mock.calls[0][0]
+        expect(call.content).toBe("<@&role-789> ")
+      })
+    })
+  })
 })

@@ -38,4 +38,13 @@ describe("GuildCreateEvent", () => {
 
     expect(mockGuildManager.addGuild).toHaveBeenCalledWith(mockGuild)
   })
+
+  it("should propagate errors from addGuild", async () => {
+    const error = new Error("Database error")
+    mockGuildManager.addGuild.mockRejectedValue(error)
+
+    // The event handler doesn't catch errors, so they should propagate
+    await expect(guildCreateEvent.onGuildJoin([mockGuild])).rejects.toThrow("Database error")
+    expect(mockGuildManager.addGuild).toHaveBeenCalledWith(mockGuild)
+  })
 })

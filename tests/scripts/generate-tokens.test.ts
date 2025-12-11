@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest"
 import * as fs from "fs"
 import * as path from "path"
 import { InternalRole } from "@db/schema"
+import { encryptTokenString } from "@utils/token"
+import { parse } from "csv-parse"
 
 // Mock dotenv
 vi.mock("dotenv", () => ({
@@ -46,10 +48,7 @@ describe("generate-tokens script", () => {
   })
 
   it("should generate tokens for all students when no backup exists", async () => {
-    // Dynamically import and execute the script logic
-    const { encryptTokenString } = await import("@utils/token")
-    const parse = (await import("csv-parse")).parse
-
+    // Parse CSV file
     const fileContent = fs.readFileSync(csvPath, { encoding: "utf-8" })
     const students: any[] = []
 
@@ -104,9 +103,6 @@ describe("generate-tokens script", () => {
     ]
     fs.writeFileSync(backupPath, JSON.stringify(existingTokens, null, 2))
 
-    const { encryptTokenString } = await import("@utils/token")
-    const parse = (await import("csv-parse")).parse
-
     const fileContent = fs.readFileSync(csvPath, { encoding: "utf-8" })
     const students: any[] = []
 
@@ -160,9 +156,6 @@ describe("generate-tokens script", () => {
     // Create CSV with invalid IDs
     const csvContent = "id_tu,id_moodle\ntu123,1001\ntu456,invalid\ntu789,1003\n"
     fs.writeFileSync(csvPath, csvContent)
-
-    const { encryptTokenString } = await import("@utils/token")
-    const parse = (await import("csv-parse")).parse
 
     const fileContent = fs.readFileSync(csvPath, { encoding: "utf-8" })
     const students: any[] = []

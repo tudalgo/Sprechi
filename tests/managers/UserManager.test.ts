@@ -368,4 +368,44 @@ describe("UserManager", () => {
         .rejects.toThrow(UserNotInGuildError)
     })
   })
+
+  describe("role handling edge cases", () => {
+    it("should skip adding role when GuildManager.getRole returns null", async () => {
+      const { decryptTokenString } = await import("@utils/token")
+      const tokenData = {
+        serverId: "guild-123",
+        versionId: "01",
+        tuId: "tu123",
+        moodleId: "moodle456",
+        roles: [InternalRole.Verified],
+      };
+
+      (decryptTokenString as any).mockReturnValue(tokenData);
+      (db.query.users.findFirst as any).mockResolvedValue(null);
+
+      // Return null for role mapping
+      (mockGuildManager.getRole as any).mockResolvedValue(null)
+
+      const onConflictDoUpdateMock = vi.fn().mockResolvedValue([])
+      const valuesMock = vi.fn().mockReturnValue({ onConflictDoUpdate: onConflictDoUpdateMock });
+      (db.insert as any).mockReturnValue({ values: valuesMock })
+
+      const roleNames = await userManager.verifyUser(mockMember, "encrypted_token")
+
+      // Should return empty as role was skipped
+      expect(roleNames).toEqual([])
+      // roles.add is not called when rolesToAssign is empty (line 138-140 in implementation)
+    })
+
+    it("should propagate error when decryptTokenString throws", async () => {
+      const { decryptTokenString } = await import("@utils/token");
+      (decryptTokenString as any).mockImplementation(() => {
+        throw new Error("Decryption failed")
+      })
+
+      // The implementation doesn't catch errors from decryptTokenString (line 32), so they propagate
+      await expect(userManager.verifyUser(mockMember, "encrypted_token"))
+        .rejects.toThrow("Decryption failed")
+    })
+  })
 })

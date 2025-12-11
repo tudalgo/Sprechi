@@ -196,4 +196,39 @@ describe("QueueButtons", () => {
       })
     })
   })
+
+  describe("malformed custom IDs", () => {
+    it("should handle malformed refresh custom ID gracefully", async () => {
+      mockInteraction.customId = "queue_refresh_" // No queue ID
+
+      await queueButtons.refresh(mockInteraction)
+
+      // Should return early without calling any manager methods
+      expect(mockQueueManager.getQueueById).not.toHaveBeenCalled()
+      expect(mockInteraction.editReply).not.toHaveBeenCalled()
+      expect(mockInteraction.followUp).not.toHaveBeenCalled()
+    })
+
+    it("should handle malformed leave custom ID gracefully", async () => {
+      mockInteraction.customId = "invalid_format" // Doesn't match pattern
+
+      await queueButtons.leave(mockInteraction)
+
+      // Should return early without calling any manager methods
+      expect(mockQueueManager.getQueueById).not.toHaveBeenCalled()
+      expect(mockInteraction.editReply).not.toHaveBeenCalled()
+      expect(mockInteraction.followUp).not.toHaveBeenCalled()
+    })
+
+    it("should handle malformed rejoin custom ID gracefully", async () => {
+      mockInteraction.customId = "queue_rejoin" // Missing underscore and ID
+
+      await queueButtons.rejoin(mockInteraction)
+
+      // Should return early without calling any manager methods
+      expect(mockQueueManager.joinQueue).not.toHaveBeenCalled()
+      expect(mockInteraction.editReply).not.toHaveBeenCalled()
+      expect(mockInteraction.followUp).not.toHaveBeenCalled()
+    })
+  })
 })

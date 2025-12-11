@@ -8,6 +8,8 @@ import {
   TokenAlreadyUsedError,
   UserNotInGuildError,
 } from "@errors/UserErrors"
+import { decryptTokenString } from "@utils/token"
+import { bot } from "@/bot"
 
 // Mock logger
 vi.mock("@utils/logger", () => ({
@@ -83,7 +85,6 @@ describe("MessageCreateEvent", () => {
   })
 
   it("should handle invalid token", async () => {
-    const { decryptTokenString } = await import("@utils/token");
     (decryptTokenString as any).mockReturnValue(null)
 
     await messageCreateEvent.onMessage([mockMessage])
@@ -95,14 +96,12 @@ describe("MessageCreateEvent", () => {
   })
 
   it("should handle guild not found", async () => {
-    const { decryptTokenString } = await import("@utils/token");
     (decryptTokenString as any).mockReturnValue({
       serverId: "guild-123",
       versionId: "01",
       roles: ["verified"],
-    })
+    });
 
-    const { bot } = await import("@/bot");
     (bot.guilds.fetch as any).mockResolvedValue(null)
 
     await messageCreateEvent.onMessage([mockMessage])
@@ -114,14 +113,12 @@ describe("MessageCreateEvent", () => {
   })
 
   it("should verify user successfully via DM", async () => {
-    const { decryptTokenString } = await import("@utils/token");
     (decryptTokenString as any).mockReturnValue({
       serverId: "guild-123",
       versionId: "01",
       roles: ["verified"],
-    })
+    });
 
-    const { bot } = await import("@/bot");
     (bot.guilds.fetch as any).mockResolvedValue(mockGuild);
     (mockGuild.members.fetch as any).mockResolvedValue(mockMember);
     (mockUserManager.verifyUser as any).mockResolvedValue(["Verified"])
@@ -138,14 +135,12 @@ describe("MessageCreateEvent", () => {
   })
 
   it("should handle user not in guild", async () => {
-    const { decryptTokenString } = await import("@utils/token");
     (decryptTokenString as any).mockReturnValue({
       serverId: "guild-123",
       versionId: "01",
       roles: ["verified"],
-    })
+    });
 
-    const { bot } = await import("@/bot");
     (bot.guilds.fetch as any).mockResolvedValue(mockGuild);
     (mockGuild.members.fetch as any).mockResolvedValue(mockMember);
     // UserManager throws UserNotInGuildError
@@ -160,14 +155,12 @@ describe("MessageCreateEvent", () => {
   })
 
   it("should handle token already used error", async () => {
-    const { decryptTokenString } = await import("@utils/token");
     (decryptTokenString as any).mockReturnValue({
       serverId: "guild-123",
       versionId: "01",
       roles: ["verified"],
-    })
+    });
 
-    const { bot } = await import("@/bot");
     (bot.guilds.fetch as any).mockResolvedValue(mockGuild);
     (mockGuild.members.fetch as any).mockResolvedValue(mockMember);
     (mockUserManager.verifyUser as any).mockRejectedValue(new TokenAlreadyUsedError())
@@ -181,14 +174,12 @@ describe("MessageCreateEvent", () => {
   })
 
   it("should allow duplicate verification via DM", async () => {
-    const { decryptTokenString } = await import("@utils/token");
     (decryptTokenString as any).mockReturnValue({
       serverId: "guild-123",
       versionId: "01",
       roles: ["verified", "tutor"],
-    })
+    });
 
-    const { bot } = await import("@/bot");
     (bot.guilds.fetch as any).mockResolvedValue(mockGuild);
     (mockGuild.members.fetch as any).mockResolvedValue(mockMember);
     (mockUserManager.verifyUser as any).mockResolvedValue(["Verified", "Tutor"])
@@ -202,5 +193,17 @@ describe("MessageCreateEvent", () => {
     expect(call.embeds[0].data.title).toContain("✅")
     expect(call.embeds[0].data.description).toContain("Verified")
     expect(call.embeds[0].data.description).toContain("Tutor")
+  })
+
+  it("should propagate errors when decryptTokenString throws", async () => {
+    const error = new Error("Decryption failed");
+    (decryptTokenString as any).mockImplementation(() => {
+      throw error
+    })
+
+    // Currently, the handler doesn't wrap decryptTokenString in try-catch
+    // so the error propagates and crashes the handler
+    await expect(messageCreateEvent.onMessage([mockMessage])).rejects.toThrow("Decryption failed")
+    expect(mockMessage.reply).not.toHaveBeenCalled()
   })
 })

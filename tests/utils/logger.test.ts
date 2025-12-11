@@ -23,4 +23,16 @@ describe("Logger Utility", () => {
     expect(() => logger.warn("test warning")).not.toThrow()
     expect(() => logger.error("test error")).not.toThrow()
   })
+
+  it("should support tag scoping with withTag", () => {
+    const taggedLogger = logger.withTag("CustomTag")
+
+    expect(taggedLogger).toBeDefined()
+    expect(taggedLogger).toHaveProperty("info")
+    expect(taggedLogger).toHaveProperty("warn")
+    expect(taggedLogger).toHaveProperty("error")
+
+    // Should not throw when calling methods on tagged logger
+    expect(() => taggedLogger.info("tagged message")).not.toThrow()
+  })
 })

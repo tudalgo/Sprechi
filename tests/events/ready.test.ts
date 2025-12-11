@@ -59,12 +59,11 @@ describe("ReadyEvent", () => {
     // Should call checkSchedules initially
     expect(mockQueueManager.checkSchedules).toHaveBeenCalledTimes(1)
 
-    // Clear all pending timers from the first call
-    vi.clearAllTimers()
+    // Clear mock call history but keep the timer
     mockQueueManager.checkSchedules.mockClear()
 
-    // Advance timers to trigger interval (every hour = 3600000ms)
-    await vi.advanceTimersByTimeAsync(3600000)
+    // Advance timers to trigger interval (every minute = 60000ms)
+    await vi.advanceTimersByTimeAsync(60000)
 
     // Should be called once by the interval
     expect(mockQueueManager.checkSchedules).toHaveBeenCalledTimes(1)

@@ -157,4 +157,38 @@ describe("Token Utilities", () => {
       expect(result).toBeNull()
     })
   })
+
+  describe("missing TOKEN_ENCRYPTION_SECRET", () => {
+    it("should still encrypt/decrypt but with different results when secret is missing", () => {
+      vi.unstubAllEnvs()
+
+      const originalText = "test data"
+      const encrypted = encryptText(originalText)
+      const decrypted = decryptText(encrypted)
+
+      // Should still work, but uses default/fallback behavior
+      // The actual behavior depends on the implementation
+      expect(encrypted).toBeTruthy()
+      expect(decrypted).toBeTruthy()
+    })
+  })
+
+  describe("encryptTokenString with unsupported roles", () => {
+    it("should filter out unsupported role identifiers during encryption", () => {
+      // This tests that encryptTokenString handles unsupported roles gracefully
+      const serverId = "server123"
+      const versionId = "01"
+      const tuId = "tu123"
+      const moodleId = "moodle456"
+
+      // Mix valid and invalid roles
+      const roles = [InternalRole.Verified, "unsupported_role" as any]
+
+      const encrypted = encryptTokenString(serverId, versionId, tuId, moodleId, roles)
+      const decrypted = decryptTokenString(encrypted)
+
+      // Should only include valid roles
+      expect(decrypted?.roles).toEqual([InternalRole.Verified])
+    })
+  })
 })

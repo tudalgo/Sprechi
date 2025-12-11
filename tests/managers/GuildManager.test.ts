@@ -118,6 +118,19 @@ describe("GuildManager", () => {
         memberCount: mockGuild.memberCount,
       })
     })
+
+    it("should propagate errors when db.insert fails", async () => {
+      const mockGuild = { id: "guild-123", name: "Test Guild", memberCount: 10 } as unknown as Guild
+      const dbError = new Error("Database connection failed")
+
+      // Mock db.insert to throw
+      const onConflictDoNothingMock = vi.fn().mockRejectedValue(dbError)
+      const valuesMock = vi.fn().mockReturnValue({ onConflictDoNothing: onConflictDoNothingMock });
+      (db.insert as any).mockReturnValue({ values: valuesMock })
+
+      // Should propagate the error
+      await expect(guildManager.addGuild(mockGuild)).rejects.toThrow("Database connection failed")
+    })
   })
 
   describe("setRole", () => {
