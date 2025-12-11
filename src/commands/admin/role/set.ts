@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder, MessageFlags, Role, Colors } from "discord.js"
+import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder, Role, Colors } from "discord.js"
 import { Discord, Slash, SlashChoice, SlashGroup, SlashOption } from "discordx"
 import { inject, injectable } from "tsyringe"
 import { GuildManager } from "@managers/GuildManager"
@@ -43,7 +43,7 @@ export class AdminRoleSet {
         .setDescription(`Mapped internal role **${roleType}** to server role ${role.toString()}`)
         .setColor(Colors.Green)
 
-      await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
+      await interaction.reply({ embeds: [embed] })
       logger.info(`Updated role mapping for ${roleType} to ${role.name} (${role.id}) in guild ${interaction.guild.id}`)
     } catch (error) {
       logger.error(`Failed to set role mapping: ${error}`)
@@ -54,7 +54,6 @@ export class AdminRoleSet {
             .setDescription("An error occurred while setting the role mapping.")
             .setColor(Colors.Red),
         ],
-        flags: MessageFlags.Ephemeral,
       })
     }
   }

@@ -1,4 +1,4 @@
-import { CommandInteraction, EmbedBuilder, MessageFlags, Colors } from "discord.js"
+import { CommandInteraction, EmbedBuilder, Colors } from "discord.js"
 import { Discord, Slash, SlashGroup } from "discordx"
 import { inject, injectable } from "tsyringe"
 import { GuildManager } from "@managers/GuildManager"
@@ -31,6 +31,6 @@ export class AdminRoleSummary {
       .setDescription(description)
       .setColor(Colors.Blue)
 
-    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
+    await interaction.reply({ embeds: [embed] })
   }
 }

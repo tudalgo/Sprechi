@@ -2,7 +2,6 @@ import {
   CommandInteraction,
   EmbedBuilder,
   Colors,
-  MessageFlags,
 } from "discord.js"
 import { Discord, Slash, SlashGroup } from "discordx"
 import logger from "@utils/logger"
@@ -81,7 +80,6 @@ export class AdminHelp {
 
       await interaction.reply({
         embeds: [embed],
-        flags: MessageFlags.Ephemeral,
       })
     } catch (error) {
       logger.error("Error displaying admin help:", error)
@@ -92,7 +90,6 @@ export class AdminHelp {
             .setDescription("Failed to display help information.")
             .setColor(Colors.Red),
         ],
-        flags: MessageFlags.Ephemeral,
       })
     }
   }

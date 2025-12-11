@@ -3,7 +3,6 @@ import {
   Colors,
   CommandInteraction,
   EmbedBuilder,
-  MessageFlags,
 } from "discord.js"
 import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
@@ -50,7 +49,6 @@ export class AdminQueueCreate {
         logger.warn(`Failed to create queue '${name}': Queue already exists in guild '${interaction.guild.id}'`)
         await interaction.reply({
           embeds: [this.queueAlreadyExistsEmbed(name)],
-          flags: MessageFlags.Ephemeral,
         })
         return
       }
@@ -65,13 +63,11 @@ export class AdminQueueCreate {
 
       await interaction.reply({
         embeds: [this.queueCreatedEmbed(newQueue.name, newQueue.description)],
-        flags: MessageFlags.Ephemeral,
       })
     } catch (error) {
       logger.error("Error creating queue:", error)
       await interaction.reply({
         embeds: [this.queueCreateFailedEmbed(name)],
-        flags: MessageFlags.Ephemeral,
       })
     }
   }

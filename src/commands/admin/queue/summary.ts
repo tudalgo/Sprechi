@@ -1,5 +1,5 @@
 import { Discord, Slash, SlashOption, SlashGroup } from "discordx"
-import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder, Colors, MessageFlags } from "discord.js"
+import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder, Colors } from "discord.js"
 import { injectable, inject } from "tsyringe"
 import { QueueManager } from "@managers/QueueManager"
 import logger from "@utils/logger"
@@ -33,7 +33,6 @@ export class AdminQueueSummary {
 
       await interaction.reply({
         embeds: [embed],
-        flags: MessageFlags.Ephemeral,
       })
       logger.info(`Admin ${interaction.user.username} viewed summary for queue '${queueName}'`)
     } catch (error: unknown) {
@@ -46,7 +45,6 @@ export class AdminQueueSummary {
             .setDescription(message)
             .setColor(Colors.Red),
         ],
-        flags: MessageFlags.Ephemeral,
       })
     }
   }

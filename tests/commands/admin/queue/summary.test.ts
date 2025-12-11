@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest"
 import { AdminQueueSummary } from "@/commands/admin/queue/summary"
 import { QueueManager } from "@managers/QueueManager"
 import { mockDeep } from "vitest-mock-extended"
-import { CommandInteraction, MessageFlags, EmbedBuilder } from "discord.js"
+import { CommandInteraction, EmbedBuilder } from "discord.js"
 
 // Mock QueueManager
 vi.mock("@managers/QueueManager")
@@ -50,7 +50,6 @@ describe("AdminQueueSummary", () => {
 
     expect(mockInteraction.reply).toHaveBeenCalledWith({
       embeds: [expect.any(EmbedBuilder)],
-      flags: MessageFlags.Ephemeral,
     })
     const callArgs = mockInteraction.reply.mock.calls[0][0]
     expect(callArgs.embeds[0].data.description).toContain("Queue not found")

@@ -3,7 +3,6 @@ import {
   CommandInteraction,
   EmbedBuilder,
   Colors,
-  MessageFlags,
   ChannelType,
   TextChannel,
 } from "discord.js"
@@ -55,7 +54,6 @@ export class AdminQueueLogChannelPrivate {
             .setDescription(`Private log channel for queue **${name}** set to <#${channel.id}>.`)
             .setColor(Colors.Green),
         ],
-        flags: MessageFlags.Ephemeral,
       })
     } catch (error: unknown) {
       let errorMessage = "Failed to set log channel."
@@ -73,7 +71,6 @@ export class AdminQueueLogChannelPrivate {
             .setDescription(errorMessage)
             .setColor(Colors.Red),
         ],
-        flags: MessageFlags.Ephemeral,
       })
     }
   }

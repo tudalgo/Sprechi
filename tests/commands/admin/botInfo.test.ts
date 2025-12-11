@@ -1,7 +1,7 @@
 import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { AdminBotInfo } from "@commands/admin/botinfo"
-import { CommandInteraction, Client, MessageFlags } from "discord.js"
+import { CommandInteraction, Client } from "discord.js"
 import { mockDeep } from "vitest-mock-extended"
 
 describe("AdminBotInfo", () => {
@@ -37,7 +37,7 @@ describe("AdminBotInfo", () => {
     expect(fields.some((f: any) => f.name === "Memory Usage")).toBe(true)
     expect(fields.some((f: any) => f.name === "Guilds" && f.value === "5")).toBe(true)
     expect(fields.some((f: any) => f.name === "Version")).toBe(true)
-    expect(call.flags).toBe(MessageFlags.Ephemeral)
+    expect(call.flags).toBeUndefined()
   })
 
   it("should handle reply failure", async () => {

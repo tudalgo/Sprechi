@@ -1,7 +1,7 @@
 import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { AdminHelp } from "@commands/admin/help"
-import { CommandInteraction, MessageFlags } from "discord.js"
+import { CommandInteraction } from "discord.js"
 import { mockDeep } from "vitest-mock-extended"
 
 describe("AdminHelp", () => {
@@ -25,7 +25,7 @@ describe("AdminHelp", () => {
     expect(call.embeds[0].data.title).toBe("⚙️ Admin Help - Server Setup Guide")
     expect(call.embeds[0].data.fields).toBeDefined()
     expect(call.embeds[0].data.fields.length).toBe(6)
-    expect(call.flags).toBe(MessageFlags.Ephemeral)
+    expect(call.flags).toBeUndefined()
   })
 
   it("should contain role configuration commands", async () => {

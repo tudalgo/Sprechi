@@ -1,5 +1,5 @@
 import { Discord, Slash, SlashOption, SlashGroup } from "discordx"
-import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder, Colors, MessageFlags } from "discord.js"
+import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder, Colors } from "discord.js"
 import { injectable, inject } from "tsyringe"
 import { QueueManager } from "@managers/QueueManager"
 import logger from "@utils/logger"
@@ -41,7 +41,6 @@ export class AdminQueueList {
 
       await interaction.reply({
         embeds: [embed],
-        flags: MessageFlags.Ephemeral,
       })
       logger.info(`Admin ${interaction.user.username} listed members for queue '${queueName}'`)
     } catch (error: unknown) {
@@ -54,7 +53,6 @@ export class AdminQueueList {
             .setDescription(message)
             .setColor(Colors.Red),
         ],
-        flags: MessageFlags.Ephemeral,
       })
     }
   }

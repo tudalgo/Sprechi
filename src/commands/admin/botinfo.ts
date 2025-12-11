@@ -1,4 +1,4 @@
-import { CommandInteraction, EmbedBuilder, MessageFlags, Colors, version as djsVersion } from "discord.js"
+import { CommandInteraction, EmbedBuilder, Colors, version as djsVersion } from "discord.js"
 import { Discord, Slash, SlashGroup } from "discordx"
 import { injectable } from "tsyringe"
 
@@ -29,6 +29,6 @@ export class AdminBotInfo {
       )
       .setColor(Colors.Blue)
 
-    await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
+    await interaction.reply({ embeds: [embed] })
   }
 }

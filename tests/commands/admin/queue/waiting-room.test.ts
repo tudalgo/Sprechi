@@ -2,7 +2,7 @@ import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { AdminQueueWaitingRoom } from "@commands/admin/queue/waiting-room"
 import { QueueManager } from "@managers/QueueManager"
-import { CommandInteraction, MessageFlags, Colors, VoiceChannel } from "discord.js"
+import { CommandInteraction, Colors, VoiceChannel } from "discord.js"
 import { mockDeep } from "vitest-mock-extended"
 import { QueueNotFoundError } from "@errors/QueueErrors"
 
@@ -60,7 +60,6 @@ describe("AdminQueueWaitingRoom", () => {
           }),
         }),
       ]),
-      flags: MessageFlags.Ephemeral,
     }))
   })
 
@@ -80,7 +79,6 @@ describe("AdminQueueWaitingRoom", () => {
           }),
         }),
       ]),
-      flags: MessageFlags.Ephemeral,
     }))
   })
 
@@ -100,7 +98,6 @@ describe("AdminQueueWaitingRoom", () => {
           }),
         }),
       ]),
-      flags: MessageFlags.Ephemeral,
     }))
   })
 

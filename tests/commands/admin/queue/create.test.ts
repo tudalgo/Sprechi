@@ -2,7 +2,7 @@ import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { AdminQueueCreate } from "@commands/admin/queue/create"
 import { QueueManager } from "@managers/QueueManager"
-import { CommandInteraction, MessageFlags } from "discord.js"
+import { CommandInteraction } from "discord.js"
 import { mockDeep } from "vitest-mock-extended"
 
 // Mock QueueManager
@@ -63,7 +63,6 @@ describe("AdminQueueCreate", () => {
           }),
         }),
       ]),
-      flags: MessageFlags.Ephemeral,
     }))
   })
 
@@ -85,7 +84,6 @@ describe("AdminQueueCreate", () => {
           }),
         }),
       ]),
-      flags: MessageFlags.Ephemeral,
     }))
   })
 
@@ -106,7 +104,6 @@ describe("AdminQueueCreate", () => {
           }),
         }),
       ]),
-      flags: MessageFlags.Ephemeral,
     }))
   })
 
@@ -136,7 +133,6 @@ describe("AdminQueueCreate", () => {
           }),
         }),
       ]),
-      flags: MessageFlags.Ephemeral,
     }))
   })
 })

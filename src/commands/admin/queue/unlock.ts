@@ -1,4 +1,4 @@
-import { CommandInteraction, ApplicationCommandOptionType, EmbedBuilder, Colors, MessageFlags } from "discord.js"
+import { CommandInteraction, ApplicationCommandOptionType, EmbedBuilder, Colors } from "discord.js"
 import { Discord, Slash, SlashOption, SlashGroup } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { inject, injectable } from "tsyringe"
@@ -24,7 +24,7 @@ export class AdminQueueUnlockCommand {
   ) {
     if (!interaction.guildId) return
 
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral })
+    await interaction.deferReply()
 
     try {
       await this.queueManager.setScheduleEnabled(interaction.guildId, name, false)

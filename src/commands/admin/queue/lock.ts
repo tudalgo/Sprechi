@@ -3,7 +3,6 @@ import {
   CommandInteraction,
   EmbedBuilder,
   Colors,
-  MessageFlags,
 } from "discord.js"
 import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
@@ -30,7 +29,7 @@ export class AdminQueueLockCommand {
   ): Promise<void> {
     if (!interaction.guildId) return
 
-    await interaction.deferReply({ flags: MessageFlags.Ephemeral })
+    await interaction.deferReply()
 
     try {
       await this.queueManager.setScheduleEnabled(interaction.guildId, name, false)
