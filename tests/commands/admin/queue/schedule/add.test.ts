@@ -8,7 +8,7 @@ import {
   QueueNotFoundError,
   InvalidQueueScheduleDayError,
   InvalidTimeFormatError,
-  InvalidTimeRangeError
+  InvalidTimeRangeError,
 } from "@errors/QueueErrors"
 
 describe("AdminQueueScheduleAddCommand", () => {

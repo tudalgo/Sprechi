@@ -79,9 +79,6 @@ describe("DmManager", () => {
     const embed1 = new EmbedBuilder().setTitle("Embed 1")
     const embed2 = new EmbedBuilder().setTitle("Embed 2")
 
-    // For multi-embeds, we need to pass an array
-    const embedArray = [embed1, embed2]
-
     // Since the implementation only handles a single embed, we'll test sending them individually
     // This tests that the implementation can be called multiple times successfully
     const result1 = await dmManager.sendDm(mockClient, userId, embed1)

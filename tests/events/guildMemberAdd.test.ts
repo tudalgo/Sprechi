@@ -2,7 +2,7 @@ import "reflect-metadata"
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { GuildMemberAddEvent } from "@events/guildMemberAdd"
 import { UserManager } from "@managers/UserManager"
-import { GuildMember, User, Guild, EmbedBuilder } from "discord.js"
+import { GuildMember, User, Guild } from "discord.js"
 import { mockDeep } from "vitest-mock-extended"
 
 // Mock logger
@@ -126,7 +126,7 @@ describe("GuildMemberAddEvent", () => {
 
       const logger = await import("@utils/logger")
       expect(logger.default.info).toHaveBeenCalledWith(
-        expect.stringContaining("Sent welcome message to testuser")
+        expect.stringContaining("Sent welcome message to testuser"),
       )
     })
   })

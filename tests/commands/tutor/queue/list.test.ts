@@ -123,7 +123,7 @@ describe("TutorQueueList", () => {
         expect.objectContaining({
           data: expect.objectContaining({
             title: "Error",
-            description: 'Queue "test-queue" not found',
+            description: "Queue \"test-queue\" not found",
           }),
         }),
       ]),

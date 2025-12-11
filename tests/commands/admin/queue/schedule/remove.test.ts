@@ -79,7 +79,7 @@ describe("AdminQueueScheduleRemoveCommand", () => {
           expect.objectContaining({
             data: expect.objectContaining({
               title: "Error",
-              description: expect.stringContaining('Queue "test-queue" not found'),
+              description: expect.stringContaining("Queue \"test-queue\" not found"),
 
             }),
           }),

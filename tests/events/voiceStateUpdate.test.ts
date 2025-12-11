@@ -48,7 +48,7 @@ describe("VoiceStateUpdate", () => {
       return mockQueueManager
     })
 
-    mockDmManager = mockDeep();
+    mockDmManager = mockDeep()
 
     voiceStateUpdate = new VoiceStateUpdate(mockQueueManager, mockDmManager)
 
@@ -147,7 +147,7 @@ describe("VoiceStateUpdate", () => {
             title: "Queue Locked",
             description: expect.stringContaining("locked"),
           }),
-        })
+        }),
       )
     })
   })

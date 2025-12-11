@@ -92,7 +92,7 @@ describe("migrate.ts", () => {
     await migrateDb()
 
     expect(Client).toHaveBeenCalledWith({
-      connectionString: undefined
+      connectionString: undefined,
     })
   })
 })

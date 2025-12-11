@@ -98,8 +98,8 @@ describe("AdminRoleSet", () => {
       embeds: expect.arrayContaining([expect.objectContaining({
         data: expect.objectContaining({
           title: "Error",
-          description: "An error occurred while setting the role mapping."
-        })
+          description: "An error occurred while setting the role mapping.",
+        }),
       })]),
     }))
   })

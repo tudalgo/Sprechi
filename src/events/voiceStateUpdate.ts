@@ -51,14 +51,13 @@ export class VoiceStateUpdate {
             await this.dmManager.sendDm(
               newState.client,
               userId,
-              embed
+              embed,
             )
           } catch (dmError) {
             logger.warn(`Failed to disconnect or DM user ${userId} for locked queue:`, dmError)
           }
-        }
-        // If they are already in the queue or are a tutor with an active session, we can ignore it or log it
-        else if (!(error instanceof AlreadyInQueueError) && !(error instanceof TutorCannotJoinQueueError)) {
+        } else if (!(error instanceof AlreadyInQueueError) && !(error instanceof TutorCannotJoinQueueError)) {
+          // If they are already in the queue or are a tutor with an active session, we can ignore it or log it
           logger.error(`Failed to auto-join queue for user ${userId}:`, error)
         }
       }
