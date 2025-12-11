@@ -1,36 +1,47 @@
-## build runner
-FROM node:lts-alpine as build-runner
+# Build stage
+FROM node:24-alpine AS builder
 
-# Set temp directory
-WORKDIR /tmp/app
+# Enable pnpm
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 
-# Move package.json
-COPY package.json .
-
-# Install dependencies
-RUN npm install
-
-# Move source files
-COPY src ./src
-COPY tsconfig.json   .
-
-# Build project
-RUN npm run build
-
-## production runner
-FROM node:lts-alpine as prod-runner
-
-# Set work directory
 WORKDIR /app
 
-# Copy package.json from build-runner
-COPY --from=build-runner /tmp/app/package.json /app/package.json
+# Copy configuration files
+COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies
-RUN npm install --omit=dev
+# Install dependencies with frozen lockfile
+RUN pnpm install --frozen-lockfile
 
-# Move build files
-COPY --from=build-runner /tmp/app/build /app/build
+# Copy source code
+COPY . .
 
-# Start bot
-CMD [ "npm", "run", "start" ]
+# Build the application
+RUN pnpm run build
+
+# Prune development dependencies
+RUN pnpm prune --prod
+
+# Production stage
+FROM node:24-alpine AS runner
+
+# Install dumb-init for signal handling
+RUN apk add --no-cache dumb-init
+
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+# Don't run as root
+USER node
+
+# Copy necessary files from builder
+COPY --from=builder --chown=node:node /app/package.json ./
+COPY --from=builder --chown=node:node /app/node_modules/ ./node_modules
+COPY --from=builder --chown=node:node /app/build ./build
+
+# Basic signal handling via dumb-init
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+
+CMD ["node", "build/src/main.js"]
