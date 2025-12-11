@@ -109,17 +109,6 @@ describe("AdminSearchCommand", () => {
     expect(call.embeds[0].data.description).toContain("No user found")
   })
 
-  it("should handle command used outside of guild", async () => {
-    mockInteraction.guild = null
-
-    await command.search(IdType.Discord, "user-123", mockInteraction)
-
-    expect(mockUserManager.searchUser).not.toHaveBeenCalled()
-    expect(mockInteraction.reply).toHaveBeenCalled()
-    const call = mockInteraction.reply.mock.calls[0][0]
-    expect(call.embeds[0].data.description).toContain("only be used in a server")
-  })
-
   it("should handle failed Discord user fetch", async () => {
     const userData = {
       discordId: "user-123",

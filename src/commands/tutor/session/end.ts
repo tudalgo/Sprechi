@@ -18,19 +18,12 @@ export class TutorSessionEnd {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "end", description: "End your tutoring session" })
+  @Slash({ name: "end", description: "End your tutoring session", dmPermission: false })
   @SlashGroup("session", "tutor")
   async end(interaction: CommandInteraction): Promise<void> {
+    if (!interaction.guild) return
+
     logger.info(`Command 'tutor session end' triggered by ${interaction.user.username} (${interaction.user.id})`)
-
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
-
     try {
       await this.queueManager.endSession(interaction.guild.id, interaction.user.id)
 

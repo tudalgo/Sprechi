@@ -15,7 +15,7 @@ export class AdminQueueList {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "list", description: "List users in a specific queue" })
+  @Slash({ name: "list", description: "List users in a specific queue", dmPermission: false })
   async list(
     @SlashOption({
       description: "Name of the queue",
@@ -33,13 +33,7 @@ export class AdminQueueList {
     maxEntries: number | undefined,
     interaction: CommandInteraction,
   ) {
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
+    if (!interaction.guild) return
 
     try {
       const limit = maxEntries ?? 5

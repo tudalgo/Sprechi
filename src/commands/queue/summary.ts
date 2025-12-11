@@ -11,7 +11,7 @@ export class QueueSummaryCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "summary", description: "Show summary of your current queue" })
+  @Slash({ name: "summary", description: "Show summary of your current queue", dmPermission: false })
   @SlashGroup("queue")
   async summary(interaction: CommandInteraction) {
     if (!interaction.guildId) return

@@ -23,7 +23,7 @@ export class QueueLeave {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "leave", description: "Leave a queue" })
+  @Slash({ name: "leave", description: "Leave a queue", dmPermission: false })
   async leave(
     @SlashOption({
       name: "name",
@@ -36,13 +36,7 @@ export class QueueLeave {
   ): Promise<void> {
     logger.info(`Command 'leave queue' triggered by ${interaction.user.username} (${interaction.user.id}) for queue '${name ?? "auto-detect"}'`)
 
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
+    if (!interaction.guild) return
 
     try {
       let queueName = name

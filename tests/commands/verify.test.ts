@@ -99,10 +99,7 @@ describe("VerifyCommand", () => {
     await command.verify("test_token", mockInteraction)
 
     expect(mockUserManager.verifyUser).not.toHaveBeenCalled()
-    expect(mockInteraction.reply).toHaveBeenCalled()
-    const call = mockInteraction.reply.mock.calls[0][0]
-    expect(call.embeds[0].data.description).toContain("only be used in a server")
-    expect(call.flags).toBe(MessageFlags.Ephemeral)
+    expect(mockInteraction.reply).not.toHaveBeenCalled()
   })
 
   it("should handle member fetch failure", async () => {

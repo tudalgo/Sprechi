@@ -97,10 +97,7 @@ describe("TutorSessionEnd", () => {
 
     await tutorSessionEnd.end(mockInteraction)
 
-    expect(mockInteraction.reply).toHaveBeenCalledWith({
-      content: "This command can only be used in a server.",
-      flags: MessageFlags.Ephemeral,
-    })
+    expect(mockInteraction.reply).not.toHaveBeenCalled()
   })
 
   it("should handle specific queue errors like session already closed", async () => {

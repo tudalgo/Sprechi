@@ -12,17 +12,9 @@ import { injectable } from "tsyringe"
 @injectable()
 @SlashGroup("admin")
 export class AdminHelp {
-  @Slash({ name: "help", description: "Get help with admin commands and server setup" })
+  @Slash({ name: "help", description: "Get help with admin commands and server setup", dmPermission: false })
   async help(interaction: CommandInteraction): Promise<void> {
     logger.info(`Command 'admin help' triggered by ${interaction.user.username} (${interaction.user.id})`)
-
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
 
     try {
       const embed = new EmbedBuilder()

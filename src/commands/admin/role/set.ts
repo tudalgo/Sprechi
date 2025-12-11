@@ -13,7 +13,7 @@ export class AdminRoleSet {
     @inject(GuildManager) private guildManager: GuildManager,
   ) { }
 
-  @Slash({ name: "set", description: "Set an internal role mapping" })
+  @Slash({ name: "set", description: "Set an internal role mapping", dmPermission: false })
   @SlashGroup("role", "admin")
   async set(
     @SlashOption({
@@ -33,13 +33,7 @@ export class AdminRoleSet {
     role: Role,
     interaction: CommandInteraction,
   ): Promise<void> {
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
+    if (!interaction.guild) return
 
     try {
       await this.guildManager.setRole(interaction.guild.id, roleType, role.id)

@@ -18,7 +18,7 @@ export class AdminQueueAutoLockCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "auto-lock", description: "Enable automatic locking based on schedule" })
+  @Slash({ name: "auto-lock", description: "Enable automatic locking based on schedule", dmPermission: false })
   async autoLock(
     @SlashOption({
       name: "name",

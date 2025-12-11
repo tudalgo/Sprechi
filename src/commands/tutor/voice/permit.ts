@@ -23,7 +23,7 @@ export class TutorVoicePermit {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "permit", description: "Permit a user to join the current temporary voice channel" })
+  @Slash({ name: "permit", description: "Permit a user to join the current temporary voice channel", dmPermission: false })
   async permit(
     @SlashOption({
       name: "user",
@@ -36,13 +36,7 @@ export class TutorVoicePermit {
   ): Promise<void> {
     logger.info(`Command 'tutor voice permit' triggered by ${interaction.user.username} (${interaction.user.id}) targeting ${user.username} (${user.id})`)
 
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
+    if (!interaction.guild) return
 
     const member = interaction.member as GuildMember
     const channel = member.voice.channel as VoiceChannel

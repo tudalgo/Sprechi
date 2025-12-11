@@ -76,15 +76,4 @@ describe("AdminStatsSessions", () => {
       files: expect.arrayContaining([expect.anything(), expect.anything()]),
     }))
   })
-
-  it("should handle error if not in guild", async () => {
-    Object.defineProperty(interaction, "guild", {
-      value: null,
-      writable: true,
-    })
-    await command.sessions(interaction)
-    expect(interaction.reply).toHaveBeenCalledWith(expect.objectContaining({
-      content: expect.stringContaining("can only be used in a guild"),
-    }))
-  })
 })

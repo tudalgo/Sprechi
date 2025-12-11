@@ -112,12 +112,4 @@ describe("AdminStatsServer", () => {
       files: expect.any(Array),
     }))
   })
-
-  it("should handle error if not in guild", async () => {
-    Object.defineProperty(interaction, "guild", { value: null, writable: true })
-    await command.server(true, interaction)
-    expect(interaction.reply).toHaveBeenCalledWith(expect.objectContaining({
-      content: expect.stringContaining("can only be used in a guild"),
-    }))
-  })
 })

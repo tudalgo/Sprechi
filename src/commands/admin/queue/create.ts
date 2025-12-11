@@ -19,7 +19,7 @@ export class AdminQueueCreate {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "create", description: "Create a new queue" })
+  @Slash({ name: "create", description: "Create a new queue", dmPermission: false })
   @SlashGroup("queue", "admin")
   async create(
     @SlashOption({
@@ -40,13 +40,7 @@ export class AdminQueueCreate {
   ): Promise<void> {
     logger.info(`Command 'create queue' triggered by ${interaction.user.username} (${interaction.user.id}) for queue '${name}'`)
 
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
+    if (!interaction.guild) return
 
     const guildId = interaction.guild.id
 

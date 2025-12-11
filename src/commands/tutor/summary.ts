@@ -10,18 +10,9 @@ import { injectable } from "tsyringe"
 @injectable()
 @SlashGroup("tutor")
 export class TutorSummaryCommand {
-  @Slash({ name: "summary", description: "Get an overview of your tutoring sessions" })
+  @Slash({ name: "summary", description: "Get an overview of your tutoring sessions", dmPermission: false })
   async summary(interaction: CommandInteraction): Promise<void> {
     logger.info(`Command 'tutor summary' triggered by ${interaction.user.username} (${interaction.user.id})`)
-
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
-
     await interaction.deferReply({ flags: MessageFlags.Ephemeral })
 
     try {

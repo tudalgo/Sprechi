@@ -11,7 +11,7 @@ export class AdminSessionListCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "list", description: "List all active sessions" })
+  @Slash({ name: "list", description: "List all active sessions", dmPermission: false })
   @SlashGroup("session", "admin")
   async list(interaction: CommandInteraction) {
     if (!interaction.guildId) return

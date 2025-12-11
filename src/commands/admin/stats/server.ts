@@ -1,4 +1,4 @@
-import { ApplicationCommandOptionType, AttachmentBuilder, CommandInteraction, EmbedBuilder, MessageFlags } from "discord.js"
+import { ApplicationCommandOptionType, AttachmentBuilder, CommandInteraction, EmbedBuilder } from "discord.js"
 import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { injectable } from "tsyringe"
 import { createCanvas } from "@napi-rs/canvas"
@@ -12,7 +12,7 @@ Chart.register(...registerables)
 @SlashGroup({ name: "stats", description: "Admin statistics commands", root: "admin" })
 @SlashGroup("stats", "admin")
 export class AdminStatsServer {
-  @Slash({ name: "server", description: "Shows general server information and activity graphs" })
+  @Slash({ name: "server", description: "Shows general server information and activity graphs", dmPermission: false })
   async server(
     @SlashOption({
       name: "show-empty-days",
@@ -23,10 +23,7 @@ export class AdminStatsServer {
     showEmptyDays: boolean | undefined,
     interaction: CommandInteraction,
   ): Promise<void> {
-    if (!interaction.guild) {
-      await interaction.reply({ content: "This command can only be used in a guild.", flags: MessageFlags.Ephemeral })
-      return
-    }
+    if (!interaction.guild) return
 
     await interaction.deferReply()
 

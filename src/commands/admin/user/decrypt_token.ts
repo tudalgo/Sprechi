@@ -8,7 +8,7 @@ import logger from "@utils/logger"
 @injectable()
 @SlashGroup("admin")
 export class AdminDecryptTokenCommand {
-  @Slash({ name: "decrypt-token", description: "Decrypt a token to view its contents" })
+  @Slash({ name: "decrypt-token", description: "Decrypt a token to view its contents", dmPermission: false })
   async decryptToken(
     @SlashOption({
       name: "token",

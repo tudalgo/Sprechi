@@ -18,7 +18,7 @@ export class QueueHelp {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "help", description: "Get help with queue commands" })
+  @Slash({ name: "help", description: "Get help with queue commands", dmPermission: false })
   async help(
     @SlashOption({
       name: "queue",
@@ -31,13 +31,7 @@ export class QueueHelp {
   ): Promise<void> {
     logger.info(`Command 'queue help' triggered by ${interaction.user.username} (${interaction.user.id})`)
 
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
+    if (!interaction.guild) return
 
     try {
       const embed = new EmbedBuilder()

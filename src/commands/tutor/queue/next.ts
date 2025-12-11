@@ -21,7 +21,7 @@ export class TutorQueueNext {
     @inject(RoomManager) private roomManager: RoomManager,
   ) { }
 
-  @Slash({ name: "next", description: "Pick the next student from the queue" })
+  @Slash({ name: "next", description: "Pick the next student from the queue", dmPermission: false })
   @SlashGroup("queue", "tutor")
   async next(interaction: CommandInteraction): Promise<void> {
     logger.info(`Command 'tutor queue next' triggered by ${interaction.user.username} (${interaction.user.id})`)

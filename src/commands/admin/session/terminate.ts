@@ -11,7 +11,7 @@ export class AdminSessionTerminateCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "terminate", description: "Terminate all sessions for a specific user" })
+  @Slash({ name: "terminate", description: "Terminate all sessions for a specific user", dmPermission: false })
   async terminate(
     @SlashOption({
       name: "user",

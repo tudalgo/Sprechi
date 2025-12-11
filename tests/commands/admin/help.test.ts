@@ -107,17 +107,6 @@ describe("AdminHelp", () => {
     expect(otherField.value).toContain("/admin botinfo")
   })
 
-  it("should handle missing guild", async () => {
-    mockInteraction.guild = null
-
-    await command.help(mockInteraction)
-
-    expect(mockInteraction.reply).toHaveBeenCalledWith({
-      content: "This command can only be used in a server.",
-      flags: MessageFlags.Ephemeral,
-    })
-  })
-
   it("should have helpful footer text", async () => {
     await command.help(mockInteraction)
 

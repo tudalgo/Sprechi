@@ -17,7 +17,7 @@ export class AdminQueueScheduleAddCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "schedule-add", description: "Add a schedule to a queue" })
+  @Slash({ name: "schedule-add", description: "Add a schedule to a queue", dmPermission: false })
   async add(
     @SlashOption({
       name: "name",

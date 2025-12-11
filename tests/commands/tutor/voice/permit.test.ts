@@ -104,7 +104,7 @@ describe("TutorVoicePermit", () => {
   it("should fail if not in a server", async () => {
     mockInteraction.guild = null
     await command.permit(mockTargetUser, mockInteraction)
-    expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({ content: expect.stringContaining("only be used in a server") }))
+    expect(mockInteraction.reply).not.toHaveBeenCalled()
   })
 
   it("should fail if user not in voice", async () => {

@@ -21,18 +21,11 @@ export class TutorSessionSummary {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "summary", description: "Get summary of the current session" })
+  @Slash({ name: "summary", description: "Get summary of the current session", dmPermission: false })
   async summary(interaction: CommandInteraction): Promise<void> {
+    if (!interaction.guild) return
+
     logger.info(`Command 'tutor session summary' triggered by ${interaction.user.username} (${interaction.user.id})`)
-
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
-
     try {
       const activeSession = await this.queueManager.getActiveSession(interaction.guild.id, interaction.user.id)
       if (!activeSession) {

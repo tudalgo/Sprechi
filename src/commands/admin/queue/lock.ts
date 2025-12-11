@@ -17,7 +17,7 @@ export class AdminQueueLockCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "lock", description: "Lock a queue" })
+  @Slash({ name: "lock", description: "Lock a queue", dmPermission: false })
   async lock(
     @SlashOption({
       name: "name",

@@ -22,7 +22,7 @@ export class TutorQueuePick {
     @inject(RoomManager) private roomManager: RoomManager,
   ) { }
 
-  @Slash({ name: "pick", description: "Pick a specific student from the queue" })
+  @Slash({ name: "pick", description: "Pick a specific student from the queue", dmPermission: false })
   async pick(
     @SlashOption({
       name: "user",

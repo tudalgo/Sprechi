@@ -153,10 +153,7 @@ describe("TutorSessionStart", () => {
 
     await tutorSessionStart.start("name", mockInteraction)
 
-    expect(mockInteraction.reply).toHaveBeenCalledWith({
-      content: "This command can only be used in a server.",
-      flags: MessageFlags.Ephemeral,
-    })
+    expect(mockInteraction.reply).not.toHaveBeenCalled()
   })
 
   it("should handle multiple queues when no name provided", async () => {

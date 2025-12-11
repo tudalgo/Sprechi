@@ -17,7 +17,7 @@ export class AdminQueueScheduleSummaryCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "schedule-summary", description: "View all configured schedules for a queue" })
+  @Slash({ name: "schedule-summary", description: "View all configured schedules for a queue", dmPermission: false })
   async summary(
     @SlashOption({
       name: "name",

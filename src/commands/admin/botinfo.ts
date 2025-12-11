@@ -6,7 +6,7 @@ import { injectable } from "tsyringe"
 @injectable()
 @SlashGroup("admin")
 export class AdminBotInfo {
-  @Slash({ name: "botinfo", description: "Display bot information" })
+  @Slash({ name: "botinfo", description: "Display bot information", dmPermission: false })
   async botinfo(interaction: CommandInteraction): Promise<void> {
     const memory = process.memoryUsage()
     const uptime = process.uptime()

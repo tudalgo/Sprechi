@@ -21,7 +21,7 @@ export class TutorVoiceKick {
     @inject(RoomManager) private roomManager: RoomManager,
   ) { }
 
-  @Slash({ name: "kick", description: "Kick a user from the current voice channel" })
+  @Slash({ name: "kick", description: "Kick a user from the current voice channel", dmPermission: false })
   async kick(
     @SlashOption({
       name: "user",
@@ -34,13 +34,7 @@ export class TutorVoiceKick {
   ): Promise<void> {
     logger.info(`Command 'tutor voice kick' triggered by ${interaction.user.username} (${interaction.user.id}) targeting ${user.username} (${user.id})`)
 
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
+    if (!interaction.guild) return
 
     const member = interaction.member as GuildMember
     const channel = member.voice.channel as VoiceChannel

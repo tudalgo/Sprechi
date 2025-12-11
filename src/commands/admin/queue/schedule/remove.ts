@@ -17,7 +17,7 @@ export class AdminQueueScheduleRemoveCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "schedule-remove", description: "Remove a schedule from a queue" })
+  @Slash({ name: "schedule-remove", description: "Remove a schedule from a queue", dmPermission: false })
   async remove(
     @SlashOption({
       name: "name",

@@ -99,10 +99,7 @@ describe("TutorSessionSummary", () => {
 
     await tutorSessionSummary.summary(mockInteraction)
 
-    expect(mockInteraction.reply).toHaveBeenCalledWith({
-      content: "This command can only be used in a server.",
-      flags: MessageFlags.Ephemeral,
-    })
+    expect(mockInteraction.reply).not.toHaveBeenCalled()
   })
 
   it("should handle DB query failure when counting students", async () => {

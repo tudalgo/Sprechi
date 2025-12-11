@@ -17,19 +17,12 @@ export class QueueList {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "list", description: "List all available queues" })
+  @Slash({ name: "list", description: "List all available queues", dmPermission: false })
   @SlashGroup("queue")
   async list(interaction: CommandInteraction): Promise<void> {
+    if (!interaction.guild) return
+
     logger.info(`Command 'list queues' triggered by ${interaction.user.username} (${interaction.user.id})`)
-
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
-
     const queues = await this.queueManager.listQueues(interaction.guild.id)
     logger.info(`Listed ${queues.length} queues for guild '${interaction.guild.name}' (${interaction.guild.id})`)
 

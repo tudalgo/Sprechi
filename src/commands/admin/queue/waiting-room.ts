@@ -21,7 +21,7 @@ export class AdminQueueWaitingRoom {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "waiting-room", description: "Set the waiting room for a queue" })
+  @Slash({ name: "waiting-room", description: "Set the waiting room for a queue", dmPermission: false })
   async setWaitingRoom(
     @SlashOption({
       name: "name",
@@ -42,14 +42,7 @@ export class AdminQueueWaitingRoom {
   ): Promise<void> {
     logger.info(`Command 'waiting-room' triggered by ${interaction.user.username} (${interaction.user.id}) for queue '${name}'`)
 
-    if (!interaction.guild) {
-      logger.warn(`Command 'waiting-room' used outside of a guild by ${interaction.user.username}`)
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
+    if (!interaction.guild) return
 
     try {
       await this.queueManager.setWaitingRoom(interaction.guild.id, name, channel.id)

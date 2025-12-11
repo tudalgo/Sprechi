@@ -66,7 +66,7 @@ describe("TutorVoiceKick", () => {
   it("should fail if not in a server", async () => {
     mockInteraction.guild = null
     await command.kick(mockTargetUser, mockInteraction)
-    expect(mockInteraction.reply).toHaveBeenCalledWith(expect.objectContaining({ content: expect.stringContaining("only be used in a server") }))
+    expect(mockInteraction.reply).not.toHaveBeenCalled()
   })
 
   it("should fail if user not in voice", async () => {

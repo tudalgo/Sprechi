@@ -21,7 +21,7 @@ export class AdminQueueLogChannelPublic {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "set-public-log-channel", description: "Set the public log channel for a queue" })
+  @Slash({ name: "set-public-log-channel", description: "Set the public log channel for a queue", dmPermission: false })
   async setPublicLogChannel(
     @SlashOption({
       name: "name",
@@ -42,14 +42,7 @@ export class AdminQueueLogChannelPublic {
   ): Promise<void> {
     logger.info(`Command 'set-public-log-channel' triggered by ${interaction.user.username} (${interaction.user.id}) for queue '${name}'`)
 
-    if (!interaction.guild) {
-      logger.warn(`Command 'set-public-log-channel' used outside of a guild by ${interaction.user.username}`)
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
+    if (!interaction.guild) return
 
     try {
       await this.queueManager.setPublicLogChannel(interaction.guild.id, name, channel.id)

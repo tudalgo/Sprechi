@@ -19,7 +19,7 @@ export class AdminSearchCommand {
     @inject(UserManager) private userManager: UserManager,
   ) { }
 
-  @Slash({ name: "user-search", description: "Search for a user by their ID" })
+  @Slash({ name: "user-search", description: "Search for a user by their ID", dmPermission: false })
   async search(
     @SlashChoice({ name: "Discord ID", value: IdType.Discord })
     @SlashChoice({ name: "TU ID", value: IdType.TU })
@@ -42,12 +42,6 @@ export class AdminSearchCommand {
   ): Promise<void> {
     try {
       if (!interaction.guild) {
-        const embed = new EmbedBuilder()
-          .setTitle("❌ Error")
-          .setDescription("This command can only be used in a server")
-          .setColor(Colors.Red)
-
-        await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
         return
       }
 

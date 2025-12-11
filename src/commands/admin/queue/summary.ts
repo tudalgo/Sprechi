@@ -15,7 +15,7 @@ export class AdminQueueSummary {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "summary", description: "Show a summary of a specific queue" })
+  @Slash({ name: "summary", description: "Show a summary of a specific queue", dmPermission: false })
   async summary(
     @SlashOption({
       description: "Name of the queue",
@@ -26,13 +26,7 @@ export class AdminQueueSummary {
     queueName: string,
     interaction: CommandInteraction,
   ) {
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
+    if (!interaction.guild) return
 
     try {
       const embed = await this.queueManager.getQueueSummaryEmbed(interaction.guild.id, queueName)

@@ -79,10 +79,7 @@ describe("AdminQueueLogChannelPrivate", () => {
 
     await command.setPrivateLogChannel("test-queue", mockChannel, mockInteraction)
 
-    expect(mockInteraction.reply).toHaveBeenCalledWith({
-      content: "This command can only be used in a server.",
-      flags: expect.any(Number),
-    })
+    expect(mockInteraction.reply).not.toHaveBeenCalled()
     expect(mockQueueManager.setPrivateLogChannel).not.toHaveBeenCalled()
   })
 

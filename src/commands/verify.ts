@@ -17,7 +17,7 @@ export class VerifyCommand {
     @inject(UserManager) private userManager: UserManager,
   ) { }
 
-  @Slash({ name: "verify", description: "Verify your account with a token" })
+  @Slash({ name: "verify", description: "Verify your account with a token", dmPermission: false })
   async verify(
     @SlashOption({
       name: "token",
@@ -29,13 +29,7 @@ export class VerifyCommand {
     interaction: CommandInteraction,
   ): Promise<void> {
     try {
-      if (!interaction.guild || !interaction.member) {
-        const embed = new EmbedBuilder()
-          .setTitle("❌ Error")
-          .setDescription("This command can only be used in a server")
-          .setColor(Colors.Red)
-
-        await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
+      if (!interaction.guild) {
         return
       }
 

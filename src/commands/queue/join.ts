@@ -25,7 +25,7 @@ export class QueueJoin {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "join", description: "Join a queue" })
+  @Slash({ name: "join", description: "Join a queue", dmPermission: false })
   async join(
     @SlashOption({
       name: "name",
@@ -38,13 +38,7 @@ export class QueueJoin {
   ): Promise<void> {
     logger.info(`Command 'join queue' triggered by ${interaction.user.username} (${interaction.user.id}) for queue '${name ?? "default"}'`)
 
-    if (!interaction.guild) {
-      await interaction.reply({
-        content: "This command can only be used in a server.",
-        flags: MessageFlags.Ephemeral,
-      })
-      return
-    }
+    if (!interaction.guild) return
 
     try {
       const queue = await this.queueManager.resolveQueue(interaction.guild.id, name)

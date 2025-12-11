@@ -13,7 +13,7 @@ export class AdminMemberLookupCommand {
     @inject(UserManager) private userManager: UserManager,
   ) { }
 
-  @Slash({ name: "member-lookup", description: "Look up information about a verified user" })
+  @Slash({ name: "member-lookup", description: "Look up information about a verified user", dmPermission: false })
   async memberLookup(
     @SlashOption({
       name: "user",
@@ -26,12 +26,6 @@ export class AdminMemberLookupCommand {
   ): Promise<void> {
     try {
       if (!interaction.guild) {
-        const embed = new EmbedBuilder()
-          .setTitle("❌ Error")
-          .setDescription("This command can only be used in a server")
-          .setColor(Colors.Red)
-
-        await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
         return
       }
 

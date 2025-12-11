@@ -87,10 +87,7 @@ describe("QueueHelp", () => {
 
     await command.help(undefined, mockInteraction)
 
-    expect(mockInteraction.reply).toHaveBeenCalledWith({
-      content: "This command can only be used in a server.",
-      flags: MessageFlags.Ephemeral,
-    })
+    expect(mockInteraction.reply).not.toHaveBeenCalled()
   })
 
   it("should handle waiting room channel fetch failure gracefully", async () => {

@@ -11,7 +11,7 @@ export class AdminSessionTerminateAllCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "terminate-all", description: "Terminate ALL sessions on this server" })
+  @Slash({ name: "terminate-all", description: "Terminate ALL sessions on this server", dmPermission: false })
   async terminateAll(interaction: CommandInteraction) {
     if (!interaction.guildId) return
 

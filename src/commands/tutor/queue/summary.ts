@@ -18,7 +18,7 @@ export class TutorQueueSummary {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "summary", description: "Show summary of the active session's queue" })
+  @Slash({ name: "summary", description: "Show summary of the active session's queue", dmPermission: false })
   async summary(interaction: CommandInteraction): Promise<void> {
     logger.info(`Command 'tutor queue summary' triggered by ${interaction.user.username} (${interaction.user.id})`)
 

@@ -109,9 +109,6 @@ describe("AdminQueueWaitingRoom", () => {
 
     await adminQueueWaitingRoom.setWaitingRoom("name", mockChannel, mockInteraction)
 
-    expect(mockInteraction.reply).toHaveBeenCalledWith({
-      content: "This command can only be used in a server.",
-      flags: MessageFlags.Ephemeral,
-    })
+    expect(mockInteraction.reply).not.toHaveBeenCalled()
   })
 })

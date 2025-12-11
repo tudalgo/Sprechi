@@ -88,17 +88,6 @@ describe("AdminMemberLookupCommand", () => {
     expect(call.embeds[0].data.description).toContain("not verified")
   })
 
-  it("should handle command used outside of guild", async () => {
-    mockInteraction.guild = null
-
-    await command.memberLookup(mockUser, mockInteraction)
-
-    expect(mockUserManager.getUserData).not.toHaveBeenCalled()
-    expect(mockInteraction.reply).toHaveBeenCalled()
-    const call = mockInteraction.reply.mock.calls[0][0]
-    expect(call.embeds[0].data.description).toContain("only be used in a server")
-  })
-
   it("should display 'Not available' for missing data", async () => {
     const userData = {
       discordId: "user-123",

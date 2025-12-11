@@ -150,10 +150,7 @@ describe("QueueJoin", () => {
 
     await queueJoin.join("name", mockInteraction)
 
-    expect(mockInteraction.reply).toHaveBeenCalledWith({
-      content: "This command can only be used in a server.",
-      flags: MessageFlags.Ephemeral,
-    })
+    expect(mockInteraction.reply).not.toHaveBeenCalled()
   })
 
   it("should auto-resolve single queue when name not provided", async () => {

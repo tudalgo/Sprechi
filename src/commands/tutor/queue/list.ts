@@ -19,7 +19,7 @@ export class TutorQueueList {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "list", description: "List members in the active session's queue" })
+  @Slash({ name: "list", description: "List members in the active session's queue", dmPermission: false })
   async list(
     @SlashOption({
       name: "max_entries",

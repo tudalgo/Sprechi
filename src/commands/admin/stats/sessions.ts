@@ -1,4 +1,4 @@
-import { AttachmentBuilder, CommandInteraction, EmbedBuilder, MessageFlags } from "discord.js"
+import { AttachmentBuilder, CommandInteraction, EmbedBuilder } from "discord.js"
 import { Discord, Slash, SlashGroup } from "discordx"
 import { injectable } from "tsyringe"
 import { createCanvas } from "@napi-rs/canvas"
@@ -12,14 +12,11 @@ Chart.register(...registerables)
 @injectable()
 @SlashGroup("stats", "admin")
 export class AdminStatsSessions {
-  @Slash({ name: "sessions", description: "Shows statistics about tutoring sessions and queues" })
+  @Slash({ name: "sessions", description: "Shows statistics about tutoring sessions and queues", dmPermission: false })
   async sessions(
     interaction: CommandInteraction,
   ): Promise<void> {
-    if (!interaction.guild) {
-      await interaction.reply({ content: "This command can only be used in a guild.", flags: MessageFlags.Ephemeral })
-      return
-    }
+    if (!interaction.guild) return
 
     await interaction.deferReply()
 

@@ -17,7 +17,7 @@ export class AdminQueueScheduleShiftCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "schedule-shift", description: "Set start/end time shift" })
+  @Slash({ name: "schedule-shift", description: "Set start/end time shift", dmPermission: false })
   async shift(
     @SlashOption({
       name: "name",
