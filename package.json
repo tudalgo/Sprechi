@@ -13,6 +13,8 @@
     "db:migrate": "tsx src/apply-migration.ts",
     "generate-tokens": "tsx src/scripts/generate-tokens.ts",
     "test": "vitest",
+    "test:coverage": "vitest --coverage",
+    "test:coverage:ui": "vitest --coverage --ui",
     "lint": "eslint . --ext .ts",
     "lint:fix": "eslint . --ext .ts --fix"
   },
@@ -39,6 +41,8 @@
     "@types/crypto-js": "^4.2.2",
     "@types/node": "^24.10.1",
     "@types/pg": "^8.15.6",
+    "@vitest/coverage-v8": "^4.0.15",
+    "@vitest/ui": "4.0.15",
     "chokidar": "^4.0.3",
     "drizzle-kit": "^0.31.7",
     "eslint": "^9.39.1",

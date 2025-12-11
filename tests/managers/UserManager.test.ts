@@ -408,4 +408,38 @@ describe("UserManager", () => {
         .rejects.toThrow("Decryption failed")
     })
   })
+
+  describe("checkTokenUsage edge cases", () => {
+    it("should skip check when token has no moodleId", async () => {
+      const { decryptTokenString } = await import("@utils/token")
+      const tokenData = {
+        serverId: "guild-123",
+        versionId: "01",
+        tuId: "tu123",
+        moodleId: undefined, // No moodleId
+        roles: [InternalRole.Verified],
+      };
+
+      (decryptTokenString as any).mockReturnValue(tokenData);
+      (db.query.users.findFirst as any).mockResolvedValue(null)
+
+      const mockRole = mockDeep<Role>()
+      mockRole.name = "Verified";
+      (mockGuild.roles.cache.get as any).mockReturnValue(mockRole);
+      (mockGuildManager.getRole as any).mockResolvedValue("role-123")
+
+      const onConflictDoUpdateMock = vi.fn().mockResolvedValue([])
+      const valuesMock = vi.fn().mockReturnValue({ onConflictDoUpdate: onConflictDoUpdateMock });
+      (db.insert as any).mockReturnValue({ values: valuesMock })
+
+      // Should not throw TokenAlreadyUsedError even if another user exists
+      // because checkTokenUsage returns early when tokenData.moodleId is falsy
+      const roleNames = await userManager.verifyUser(mockMember, "encrypted_token")
+
+      expect(roleNames).toEqual(["Verified"])
+      // Verify that findFirst was only called twice (for re-verification check and saveUserData)
+      // and NOT for checkTokenUsage
+      expect(db.query.users.findFirst).toHaveBeenCalledTimes(2)
+    })
+  })
 })

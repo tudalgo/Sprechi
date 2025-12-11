@@ -280,4 +280,54 @@ describe("RoomManager", () => {
       await expect(roomManager.kickAllMembers(channel)).resolves.not.toThrow()
     })
   })
+
+  describe("additional edge cases", () => {
+    it("should handle member fetch failure during channel creation", async () => {
+      const baseName = "test-room"
+      const userIds = ["user-1", "user-2"]
+      const mockChannel = { id: "channel-123", name: baseName }
+
+      mockGuild.channels.cache.some = vi.fn().mockReturnValue(false)
+      mockGuild.channels.create.mockResolvedValue(mockChannel)
+
+      // First user succeeds, second fails
+      mockGuild.members.fetch
+        .mockResolvedValueOnce({
+          voice: { channel: true, setChannel: vi.fn() },
+        })
+        .mockRejectedValueOnce(new Error("Member not found"))
+
+      const result = await roomManager.createEphemeralChannel(mockGuild, baseName, userIds, undefined)
+
+      // Should still create channel even if member fetch fails
+      expect(result).toEqual(mockChannel)
+      expect(mockGuild.members.fetch).toHaveBeenCalledTimes(2)
+    })
+
+    it("should handle database error in isEphemeralChannel", async () => {
+      const channelId = "channel-123"
+
+      const whereMock = vi.fn().mockRejectedValue(new Error("Database error"))
+      const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+      (db.select as any).mockReturnValue({ from: fromMock })
+
+      const result = await roomManager.isEphemeralChannel(channelId)
+
+      // Should return false on error
+      expect(result).toBe(false)
+    })
+
+    it("should handle database error in getSessionIdFromChannel", async () => {
+      const channelId = "channel-123"
+
+      const whereMock = vi.fn().mockRejectedValue(new Error("Database error"))
+      const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+      (db.select as any).mockReturnValue({ from: fromMock })
+
+      const result = await roomManager.getSessionIdFromChannel(channelId)
+
+      // Should return null on error
+      expect(result).toBeNull()
+    })
+  })
 })
