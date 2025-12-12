@@ -30,7 +30,17 @@ jobs:
       - name: Run tests with coverage
         run: pnpm test:coverage
 
-      - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v5
+      - name: Generate coverage badge
+        if: github.ref == 'refs/heads/main'
+        run: |
+          COVERAGE=$(cat coverage/coverage-summary.json | jq -r '.total.lines.pct')
+          echo "Coverage: ${COVERAGE}%"
+          mkdir -p badges
+          echo "{\"schemaVersion\":1,\"label\":\"coverage\",\"message\":\"${COVERAGE}%\",\"color\":\"brightgreen\"}" > badges/coverage.json
+
+      - name: Upload coverage badge
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          name: coverage-badge
+          path: badges/coverage.json
