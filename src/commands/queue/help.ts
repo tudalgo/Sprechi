@@ -9,6 +9,7 @@ import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import logger from "@utils/logger"
 import { inject, injectable } from "tsyringe"
+import { queueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -18,11 +19,11 @@ export class QueueHelp {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "help", description: "Get help with queue commands", dmPermission: false })
+  @Slash({ name: "help", description: queueCommands.help.description, dmPermission: false })
   async help(
     @SlashOption({
       name: "queue",
-      description: "The name of the queue to get waiting room info for (optional)",
+      description: queueCommands.help.optionQueue,
       required: false,
       type: ApplicationCommandOptionType.String,
     })
@@ -35,28 +36,28 @@ export class QueueHelp {
 
     try {
       const embed = new EmbedBuilder()
-        .setTitle("📚 Queue Help - Student Commands")
-        .setDescription("Here are the available commands for managing your queue membership:")
+        .setTitle(queueCommands.help.embed.title)
+        .setDescription(queueCommands.help.embed.description)
         .setColor(Colors.Blue)
         .addFields(
           {
-            name: "📝 Join a Queue",
-            value: "`/queue join [name]`\nJoin a queue. If no name is provided, you'll join the default queue.",
+            name: queueCommands.help.embed.fields.join.name,
+            value: queueCommands.help.embed.fields.join.value,
             inline: false,
           },
           {
-            name: "🚪 Leave a Queue",
-            value: "`/queue leave`\nLeave the queue you're currently in.",
+            name: queueCommands.help.embed.fields.leave.name,
+            value: queueCommands.help.embed.fields.leave.value,
             inline: false,
           },
           {
-            name: "📋 List Queues",
-            value: "`/queue list`\nView all available queues and their current status.",
+            name: queueCommands.help.embed.fields.list.name,
+            value: queueCommands.help.embed.fields.list.value,
             inline: false,
           },
           {
-            name: "📊 Queue Summary",
-            value: "`/queue summary [name]`\nView detailed information about a specific queue, including members and wait times.",
+            name: queueCommands.help.embed.fields.summary.name,
+            value: queueCommands.help.embed.fields.summary.value,
             inline: false,
           },
         )
@@ -67,9 +68,10 @@ export class QueueHelp {
         if (queue.waitingRoomId) {
           const waitingRoomChannel = await interaction.guild.channels.fetch(queue.waitingRoomId)
           if (waitingRoomChannel) {
+            const field = queueCommands.help.embed.fields.waitingRoom(queue.name, queue.waitingRoomId)
             embed.addFields({
-              name: "🎤 Waiting Room",
-              value: `You can also join the queue **${queue.name}** by joining the waiting room voice channel: <#${queue.waitingRoomId}>`,
+              name: field.name,
+              value: field.value,
               inline: false,
             })
           }
@@ -88,8 +90,8 @@ export class QueueHelp {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
-            .setDescription("Failed to display help information.")
+            .setTitle(queueCommands.help.errors.title)
+            .setDescription(queueCommands.help.errors.description)
             .setColor(Colors.Red),
         ],
         flags: MessageFlags.Ephemeral,

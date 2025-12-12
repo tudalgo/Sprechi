@@ -2,6 +2,7 @@ import { CommandInteraction, EmbedBuilder, Colors, MessageFlags } from "discord.
 import { Discord, Slash, SlashGroup } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { inject, injectable } from "tsyringe"
+import { adminSessionCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -11,7 +12,7 @@ export class AdminSessionTerminateAllCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "terminate-all", description: "Terminate ALL sessions on this server", dmPermission: false })
+  @Slash({ name: "terminate-all", description: adminSessionCommands.terminateAll.description, dmPermission: false })
   async terminateAll(interaction: CommandInteraction) {
     if (!interaction.guildId) return
 
@@ -23,8 +24,8 @@ export class AdminSessionTerminateAllCommand {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Terminate All Sessions")
-            .setDescription("No active sessions found on this server.")
+            .setTitle(adminSessionCommands.terminateAll.emptyState.title)
+            .setDescription(adminSessionCommands.terminateAll.emptyState.description)
             .setColor(Colors.Blue),
         ],
       })
@@ -34,8 +35,8 @@ export class AdminSessionTerminateAllCommand {
     await interaction.editReply({
       embeds: [
         new EmbedBuilder()
-          .setTitle("Terminate All Sessions")
-          .setDescription(`Successfully terminated **${count}** session(s) on this server.`)
+          .setTitle(adminSessionCommands.terminateAll.success.title)
+          .setDescription(adminSessionCommands.terminateAll.success.description(count))
           .setColor(Colors.Green),
       ],
     })

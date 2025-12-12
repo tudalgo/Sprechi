@@ -3,6 +3,7 @@ import { Discord, Slash, SlashGroup } from "discordx"
 import { inject, injectable } from "tsyringe"
 import { GuildManager } from "@managers/GuildManager"
 import { InternalRole } from "@db"
+import { adminRoleCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -12,7 +13,7 @@ export class AdminRoleSummary {
     @inject(GuildManager) private guildManager: GuildManager,
   ) { }
 
-  @Slash({ name: "summary", description: "Show role mappings summary", dmPermission: false })
+  @Slash({ name: "summary", description: adminRoleCommands.summary.description, dmPermission: false })
   async summary(interaction: CommandInteraction): Promise<void> {
     if (!interaction.guild) return
 
@@ -22,12 +23,12 @@ export class AdminRoleSummary {
     const allTypes = Object.values(InternalRole)
     const description = allTypes.map((type) => {
       const roleId = roleMap.get(type)
-      const roleMention = roleId ? `<@&${roleId}>` : "*Unassigned*"
-      return `**${type}**: ${roleMention}`
+      const roleMention = roleId ? `<@&${roleId}>` : adminRoleCommands.summary.unassigned
+      return adminRoleCommands.summary.line(type, roleMention)
     }).join("\n")
 
     const embed = new EmbedBuilder()
-      .setTitle("Role Mappings Summary")
+      .setTitle(adminRoleCommands.summary.title)
       .setDescription(description)
       .setColor(Colors.Blue)
 

@@ -8,6 +8,7 @@ import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import logger from "@utils/logger"
 import { inject, injectable } from "tsyringe"
+import { adminQueueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -18,19 +19,19 @@ export class AdminQueueCreate {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "create", description: "Create a new queue", dmPermission: false })
+  @Slash({ name: "create", description: adminQueueCommands.create.description, dmPermission: false })
   @SlashGroup("queue", "admin")
   async create(
     @SlashOption({
       name: "name",
-      description: "The name of the queue",
+      description: adminQueueCommands.create.optionName,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
     name: string,
     @SlashOption({
       name: "description",
-      description: "The description of the queue",
+      description: adminQueueCommands.create.optionDescription,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
@@ -74,22 +75,22 @@ export class AdminQueueCreate {
 
   private queueCreatedEmbed(queueName: string, description: string): EmbedBuilder {
     return new EmbedBuilder()
-      .setTitle(":white_check_mark: Queue Created")
-      .setDescription(`**${queueName}**\n${description}`)
+      .setTitle(adminQueueCommands.create.success.title)
+      .setDescription(adminQueueCommands.create.success.description(queueName, description))
       .setColor(Colors.Green)
   }
 
   private queueAlreadyExistsEmbed(queueName: string): EmbedBuilder {
     return new EmbedBuilder()
-      .setTitle(":x: Queue Already Exists")
-      .setDescription(`A queue named **${queueName}** already exists in this server.`)
+      .setTitle(adminQueueCommands.create.duplicateQueue.title)
+      .setDescription(adminQueueCommands.create.duplicateQueue.description(queueName))
       .setColor(Colors.Red)
   }
 
   private queueCreateFailedEmbed(queueName: string): EmbedBuilder {
     return new EmbedBuilder()
-      .setTitle(":x: Queue Creation Failed")
-      .setDescription(`Failed to create the queue **${queueName}**.`)
+      .setTitle(adminQueueCommands.create.failure.title)
+      .setDescription(adminQueueCommands.create.failure.description(queueName))
       .setColor(Colors.Red)
   }
 }

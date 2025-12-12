@@ -7,6 +7,7 @@ import {
 import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { inject, injectable } from "tsyringe"
+import { adminQueueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -16,32 +17,32 @@ export class AdminQueueScheduleAddCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "schedule-add", description: "Add a schedule to a queue", dmPermission: false })
+  @Slash({ name: "schedule-add", description: adminQueueCommands.schedule.add.description, dmPermission: false })
   async add(
     @SlashOption({
       name: "name",
-      description: "The name of the queue",
+      description: adminQueueCommands.schedule.add.optionName,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
     name: string,
     @SlashOption({
       name: "day",
-      description: "Day of the week (e.g. Monday)",
+      description: adminQueueCommands.schedule.add.optionDay,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
     dayInput: string,
     @SlashOption({
       name: "start",
-      description: "Start time (HH:mm)",
+      description: adminQueueCommands.schedule.add.optionStart,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
     start: string,
     @SlashOption({
       name: "end",
-      description: "End time (HH:mm)",
+      description: adminQueueCommands.schedule.add.optionEnd,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
@@ -64,8 +65,8 @@ export class AdminQueueScheduleAddCommand {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Schedule Added")
-            .setDescription(`Added schedule for queue **${name}** on **${dayInput}**: ${start} - ${end}.`)
+            .setTitle(adminQueueCommands.schedule.add.success.title)
+            .setDescription(adminQueueCommands.schedule.add.success.description(name, dayInput, start, end))
             .setColor(Colors.Green),
         ],
       })
@@ -74,7 +75,7 @@ export class AdminQueueScheduleAddCommand {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(adminQueueCommands.schedule.add.errors.title)
             .setDescription(message)
             .setColor(Colors.Red),
         ],

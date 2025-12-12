@@ -2,6 +2,7 @@ import { CommandInteraction, EmbedBuilder, Colors, ApplicationCommandOptionType,
 import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { inject, injectable } from "tsyringe"
+import { adminSessionCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -11,11 +12,11 @@ export class AdminSessionTerminateCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "terminate", description: "Terminate all sessions for a specific user", dmPermission: false })
+  @Slash({ name: "terminate", description: adminSessionCommands.terminate.description, dmPermission: false })
   async terminate(
     @SlashOption({
       name: "user",
-      description: "The user whose sessions to terminate",
+      description: adminSessionCommands.terminate.optionUser,
       required: true,
       type: ApplicationCommandOptionType.User,
     })
@@ -32,8 +33,8 @@ export class AdminSessionTerminateCommand {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Terminate Session")
-            .setDescription(`No active sessions found for <@${user.id}>.`)
+            .setTitle(adminSessionCommands.terminate.emptyState.title)
+            .setDescription(adminSessionCommands.terminate.emptyState.description(user.id))
             .setColor(Colors.Red),
         ],
       })
@@ -43,8 +44,8 @@ export class AdminSessionTerminateCommand {
     await interaction.editReply({
       embeds: [
         new EmbedBuilder()
-          .setTitle("Terminate Session")
-          .setDescription(`Successfully terminated **${count}** session(s) for <@${user.id}>.`)
+          .setTitle(adminSessionCommands.terminate.success.title)
+          .setDescription(adminSessionCommands.terminate.success.description(count, user.id))
           .setColor(Colors.Green),
       ],
     })

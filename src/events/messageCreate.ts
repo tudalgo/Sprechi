@@ -9,6 +9,7 @@ import {
   TokenAlreadyUsedError,
   UserNotInGuildError,
 } from "@errors/UserErrors"
+import { events } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -30,8 +31,8 @@ export class MessageCreateEvent {
     const tokenData = decryptTokenString(token)
     if (!tokenData) {
       const embed = new EmbedBuilder()
-        .setTitle("❌ Invalid Token")
-        .setDescription("The token you provided is invalid. Please check your token and try again.")
+        .setTitle(events.messageCreate.invalidToken.title)
+        .setDescription(events.messageCreate.invalidToken.description)
         .setColor(Colors.Red)
 
       await message.reply({ embeds: [embed] })
@@ -46,8 +47,8 @@ export class MessageCreateEvent {
     const guild = await bot.guilds.fetch(tokenData.serverId)
     if (!guild) {
       const embed = new EmbedBuilder()
-        .setTitle("❌ Server Not Found")
-        .setDescription("The server for this token could not be found. The bot may not be in that server anymore.")
+        .setTitle(events.messageCreate.missingServer.title)
+        .setDescription(events.messageCreate.missingServer.description)
         .setColor(Colors.Red)
 
       await message.reply({ embeds: [embed] })
@@ -61,28 +62,25 @@ export class MessageCreateEvent {
       const roleNames = await this.userManager.verifyUser(member, token)
 
       const embed = new EmbedBuilder()
-        .setTitle("✅ Verification Successful")
-        .setDescription(
-          `You have been verified in **${guild.name}**!\n\n`
-          + `**Roles granted:**\n${roleNames.map(r => `• ${r}`).join("\n")}`,
-        )
+        .setTitle(events.messageCreate.success.title)
+        .setDescription(events.messageCreate.success.description(guild.name, roleNames))
         .setColor(Colors.Green)
 
       await message.reply({ embeds: [embed] })
       logger.info(`[MessageCreate] User ${message.author.username} verified via DM in guild ${guild.name}`)
     } catch (error) {
-      let description = "❌ An error occurred during verification. Please try again or contact an admin."
+      let description = events.messageCreate.errors.defaultDescription
 
       if (error instanceof InvalidTokenError) {
-        description = "❌ Invalid token. Please check your token and try again."
+        description = events.messageCreate.errors.invalidToken
       } else if (error instanceof TokenAlreadyUsedError) {
-        description = "❌ This token has already been used by another user."
+        description = events.messageCreate.errors.tokenAlreadyUsed
       } else if (error instanceof UserNotInGuildError) {
-        description = `❌ You are not a member of **${guild.name}**. Please join the server first, then verify.`
+        description = events.messageCreate.errors.userNotInGuild(guild.name)
       }
 
       const embed = new EmbedBuilder()
-        .setTitle("Verification Failed")
+        .setTitle(events.messageCreate.errors.title)
         .setDescription(description)
         .setColor(Colors.Red)
 

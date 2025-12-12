@@ -7,6 +7,7 @@ import {
 import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { inject, injectable } from "tsyringe"
+import { adminQueueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -16,18 +17,18 @@ export class AdminQueueScheduleRemoveCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "schedule-remove", description: "Remove a schedule from a queue", dmPermission: false })
+  @Slash({ name: "schedule-remove", description: adminQueueCommands.schedule.remove.description, dmPermission: false })
   async remove(
     @SlashOption({
       name: "name",
-      description: "The name of the queue",
+      description: adminQueueCommands.schedule.remove.optionName,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
     name: string,
     @SlashOption({
       name: "day",
-      description: "Day of the week (e.g. Monday)",
+      description: adminQueueCommands.schedule.remove.optionDay,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
@@ -47,8 +48,8 @@ export class AdminQueueScheduleRemoveCommand {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Schedule Removed")
-            .setDescription(`Removed schedule for queue **${name}** on **${dayInput}**.`)
+            .setTitle(adminQueueCommands.schedule.remove.success.title)
+            .setDescription(adminQueueCommands.schedule.remove.success.description(name, dayInput))
             .setColor(Colors.Green),
         ],
       })
@@ -57,7 +58,7 @@ export class AdminQueueScheduleRemoveCommand {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(adminQueueCommands.schedule.remove.errors.title)
             .setDescription(message)
             .setColor(Colors.Red),
         ],

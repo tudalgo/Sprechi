@@ -2,6 +2,7 @@ import { CommandInteraction, ApplicationCommandOptionType, EmbedBuilder, Colors 
 import { Discord, Slash, SlashOption, SlashGroup } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { inject, injectable } from "tsyringe"
+import { adminQueueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -11,11 +12,11 @@ export class AdminQueueUnlockCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "unlock", description: "Unlock a queue", dmPermission: false })
+  @Slash({ name: "unlock", description: adminQueueCommands.unlock.description, dmPermission: false })
   async unlock(
     @SlashOption({
       name: "name",
-      description: "The name of the queue to unlock",
+      description: adminQueueCommands.unlock.optionName,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
@@ -33,8 +34,8 @@ export class AdminQueueUnlockCommand {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Queue Unlocked")
-            .setDescription(`Queue **${name}** has been unlocked.`)
+            .setTitle(adminQueueCommands.unlock.success.title)
+            .setDescription(adminQueueCommands.unlock.success.description(name))
             .setColor(Colors.Green),
         ],
       })
@@ -43,7 +44,7 @@ export class AdminQueueUnlockCommand {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(adminQueueCommands.unlock.errors.title)
             .setDescription(message)
             .setColor(Colors.Red),
         ],

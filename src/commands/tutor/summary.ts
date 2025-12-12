@@ -5,12 +5,13 @@ import { sessions, sessionStudents } from "@db/schema"
 import { eq, sql } from "drizzle-orm"
 import logger from "@utils/logger"
 import { injectable } from "tsyringe"
+import { tutorCommands } from "@config/messages"
 
 @Discord()
 @injectable()
 @SlashGroup("tutor")
 export class TutorSummaryCommand {
-  @Slash({ name: "summary", description: "Get an overview of your tutoring sessions", dmPermission: false })
+  @Slash({ name: "summary", description: tutorCommands.summary.description, dmPermission: false })
   async summary(interaction: CommandInteraction): Promise<void> {
     logger.info(`Command 'tutor summary' triggered by ${interaction.user.username} (${interaction.user.id})`)
     await interaction.deferReply({ flags: MessageFlags.Ephemeral })
@@ -45,12 +46,12 @@ export class TutorSummaryCommand {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Tutor Summary")
-            .setDescription("Overview of your tutoring stats.")
+            .setTitle(tutorCommands.summary.embed.title)
+            .setDescription(tutorCommands.summary.embed.description)
             .addFields(
-              { name: "Total Sessions", value: String(totalSessions), inline: true },
-              { name: "Total Time", value: `${totalHours}h ${totalMinutes}m`, inline: true },
-              { name: "Students Helped", value: String(totalStudentsHelped), inline: true },
+              { name: tutorCommands.summary.embed.fields.totalSessions, value: String(totalSessions), inline: true },
+              { name: tutorCommands.summary.embed.fields.totalTime, value: `${totalHours}h ${totalMinutes}m`, inline: true },
+              { name: tutorCommands.summary.embed.fields.studentsHelped, value: String(totalStudentsHelped), inline: true },
             )
             .setColor(Colors.Blue)
             .setTimestamp(),
@@ -60,7 +61,7 @@ export class TutorSummaryCommand {
       const message = error instanceof Error ? error.message : "Failed to get tutor summary."
       logger.error(`Failed to get tutor summary for ${interaction.user.username}: ${message}`)
       await interaction.editReply({
-        content: "An error occurred while fetching your summary.",
+        content: tutorCommands.summary.errors.reply,
       })
     }
   }

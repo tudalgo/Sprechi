@@ -7,12 +7,13 @@ import db, { sessions, queues, sessionStudents } from "@db"
 import { eq, sql, desc } from "drizzle-orm"
 
 Chart.register(...registerables)
+import { adminStatsCommands } from "@config/messages"
 
 @Discord()
 @injectable()
 @SlashGroup("stats", "admin")
 export class AdminStatsSessions {
-  @Slash({ name: "sessions", description: "Shows statistics about tutoring sessions and queues", dmPermission: false })
+  @Slash({ name: "sessions", description: adminStatsCommands.sessions.description, dmPermission: false })
   async sessions(
     interaction: CommandInteraction,
   ): Promise<void> {
@@ -83,7 +84,7 @@ export class AdminStatsSessions {
       data: {
         labels: studentsPerQueue.map(x => x.queueName),
         datasets: [{
-          label: "Total Students",
+          label: adminStatsCommands.sessions.datasetLabel,
           data: studentsPerQueue.map(x => x.count),
           backgroundColor: "rgba(54, 162, 235, 0.7)",
           borderColor: "rgba(54, 162, 235, 1)",
@@ -96,7 +97,7 @@ export class AdminStatsSessions {
         plugins: {
           title: {
             display: true,
-            text: "Queue Popularity (Students Tutored)",
+            text: adminStatsCommands.sessions.charts.queuePopularity,
           },
           legend: { display: false },
         },
@@ -121,7 +122,7 @@ export class AdminStatsSessions {
         plugins: {
           title: {
             display: true,
-            text: "Student Activity by Hour & Day",
+            text: adminStatsCommands.sessions.charts.studentActivity,
           },
           legend: {
             display: true,
@@ -150,16 +151,16 @@ export class AdminStatsSessions {
     const totalStudents = studentsPerQueue.reduce((acc, curr) => acc + curr.count, 0)
 
     const embed = new EmbedBuilder()
-      .setTitle("Session Statistics")
-      .setDescription(`Total Students Tutored: **${totalStudents}**`)
+      .setTitle(adminStatsCommands.sessions.embed.sessionStats.title)
+      .setDescription(adminStatsCommands.sessions.embed.sessionStats.description(totalStudents))
       .setImage("attachment://popularity.png")
       .setColor("#0099ff")
 
     // Using two embeds for two images
     const embed2 = new EmbedBuilder()
-      .setTitle("Weekly Activity")
+      .setTitle(adminStatsCommands.sessions.embed.weeklyActivity.title)
       .setImage("attachment://activity.png")
-      .setDescription("Student count by day of the week and hour.")
+      .setDescription(adminStatsCommands.sessions.embed.weeklyActivity.description)
       .setColor("#ff0000")
 
     await interaction.editReply({

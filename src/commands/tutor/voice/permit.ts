@@ -13,6 +13,7 @@ import { RoomManager } from "@managers/RoomManager"
 import { inject, injectable } from "tsyringe"
 import logger from "@utils/logger"
 import { QueueManager } from "@managers/QueueManager"
+import { tutorVoiceCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -23,11 +24,11 @@ export class TutorVoicePermit {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "permit", description: "Permit a user to join the current temporary voice channel", dmPermission: false })
+  @Slash({ name: "permit", description: tutorVoiceCommands.permit.description, dmPermission: false })
   async permit(
     @SlashOption({
       name: "user",
-      description: "The user to permit",
+      description: tutorVoiceCommands.permit.optionUser,
       required: true,
       type: ApplicationCommandOptionType.User,
     })
@@ -45,8 +46,8 @@ export class TutorVoicePermit {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
-            .setDescription("You must be in a voice channel to use this command.")
+            .setTitle(tutorVoiceCommands.permit.errors.title)
+            .setDescription(tutorVoiceCommands.permit.errors.missingVoiceChannel)
             .setColor(Colors.Red),
         ],
         flags: MessageFlags.Ephemeral,
@@ -60,8 +61,8 @@ export class TutorVoicePermit {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
-            .setDescription("This command can only be used in a temporary Tutor voice channel.")
+            .setTitle(tutorVoiceCommands.permit.errors.title)
+            .setDescription(tutorVoiceCommands.permit.errors.nonEphemeralChannel)
             .setColor(Colors.Red),
         ],
         flags: MessageFlags.Ephemeral,
@@ -79,7 +80,7 @@ export class TutorVoicePermit {
       const success = await this.roomManager.permitUser(channel, user.id)
 
       if (success) {
-        let description = `Permitted **${user.displayName}** to join **${channel.name}**.`
+        let description = tutorVoiceCommands.permit.success.description(user.displayName, channel.name)
 
         if (queue && sessionId) {
           // Treated as a pick
@@ -92,7 +93,7 @@ export class TutorVoicePermit {
               interaction.user.id,
               channel.id,
             )
-            description += `\nAlso picked from queue **${queue.name}**.`
+            description += `\n${tutorVoiceCommands.permit.success.queuePickSuffix(queue.name)}`
           } catch (err) {
             logger.warn(`Failed to pick permitted user ${user.id} from queue:`, err)
           }
@@ -101,7 +102,7 @@ export class TutorVoicePermit {
         await interaction.editReply({
           embeds: [
             new EmbedBuilder()
-              .setTitle("User Permitted")
+              .setTitle(tutorVoiceCommands.permit.success.title)
               .setDescription(description)
               .setColor(Colors.Green),
           ],
@@ -110,8 +111,8 @@ export class TutorVoicePermit {
         await interaction.editReply({
           embeds: [
             new EmbedBuilder()
-              .setTitle("Error")
-              .setDescription("Failed to permit the user.")
+              .setTitle(tutorVoiceCommands.permit.errors.title)
+              .setDescription(tutorVoiceCommands.permit.errors.description)
               .setColor(Colors.Red),
           ],
         })
@@ -121,8 +122,8 @@ export class TutorVoicePermit {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
-            .setDescription("Failed to permit the user.")
+            .setTitle(tutorVoiceCommands.permit.errors.title)
+            .setDescription(tutorVoiceCommands.permit.errors.description)
             .setColor(Colors.Red),
         ],
       })

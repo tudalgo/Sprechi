@@ -4,6 +4,7 @@ import { QueueManager } from "@managers/QueueManager"
 import logger from "@utils/logger"
 import { NotInQueueError, TutorCannotJoinQueueError } from "../errors/QueueErrors"
 import { inject, injectable } from "tsyringe"
+import { events } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -36,7 +37,7 @@ export class QueueButtons {
       const member = await this.queueManager.getQueueMember(queue.id, interaction.user.id)
       if (!member) {
         await interaction.followUp({
-          content: "You are not in this queue anymore.",
+          content: events.queueButtons.errors.notInQueueAnymore,
           flags: MessageFlags.Ephemeral,
         })
         return
@@ -45,8 +46,8 @@ export class QueueButtons {
       const position = await this.queueManager.getQueuePosition(queue.id, interaction.user.id)
 
       const embed = new EmbedBuilder()
-        .setTitle(`Joined Queue: ${queue.name}`)
-        .setDescription(`You have joined the queue **${queue.name}**.\n\n**Position:** ${position}\n**Joined:** <t:${Math.floor(member.joinedAt.getTime() / 1000)}:R>`)
+        .setTitle(events.queueButtons.joinedQueue.title(queue.name))
+        .setDescription(events.queueButtons.joinedQueue.description(queue.name, position, Math.floor(member.joinedAt.getTime() / 1000)))
         .setColor(Colors.Green)
         .setTimestamp()
 
@@ -79,8 +80,8 @@ export class QueueButtons {
       await this.queueManager.leaveQueue(queue.guildId, queue.name, interaction.user.id)
 
       const embed = new EmbedBuilder()
-        .setTitle("Left Queue")
-        .setDescription(`You have left the queue **${queue.name}**.`)
+        .setTitle(events.queueButtons.leftQueue.title)
+        .setDescription(events.queueButtons.leftQueue.description(queue.name))
         .setColor(Colors.Yellow)
         .setTimestamp()
 
@@ -92,7 +93,7 @@ export class QueueButtons {
     } catch (error) {
       if (error instanceof NotInQueueError) {
         await interaction.followUp({
-          content: "You are not in the queue.",
+          content: events.queueButtons.errors.notInQueue,
           flags: MessageFlags.Ephemeral,
         })
       } else {
@@ -124,8 +125,8 @@ export class QueueButtons {
       await this.queueManager.joinQueue(queue.guildId, queue.name, interaction.user.id)
 
       const embed = new EmbedBuilder()
-        .setTitle("Rejoined Queue")
-        .setDescription(`You have rejoined the queue **${queue.name}**.`)
+        .setTitle(events.queueButtons.rejoinedQueue.title)
+        .setDescription(events.queueButtons.rejoinedQueue.description(queue.name))
         .setColor(Colors.Green)
         .setTimestamp()
 
@@ -135,9 +136,9 @@ export class QueueButtons {
         components: [],
       })
     } catch (error) {
-      let message = "Failed to rejoin queue."
+      let message = events.queueButtons.errors.failedToRejoin
       if (error instanceof TutorCannotJoinQueueError) {
-        message = "You cannot join a queue while you have an active tutor session."
+        message = events.queueButtons.errors.tutorSessionConflict
       } else if (error instanceof Error) {
         message = error.message
       }
@@ -145,7 +146,7 @@ export class QueueButtons {
       await interaction.followUp({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(events.queueButtons.errors.title)
             .setDescription(message)
             .setColor(Colors.Red),
         ],

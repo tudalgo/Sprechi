@@ -4,21 +4,22 @@ import { inject, injectable } from "tsyringe"
 import { GuildManager } from "@managers/GuildManager"
 import { InternalRole } from "@db"
 import logger from "@utils/logger"
+import { adminRoleCommands } from "@config/messages"
 
 @Discord()
 @injectable()
-@SlashGroup({ name: "role", description: "Role management commands", root: "admin" })
+@SlashGroup({ name: "role", description: adminRoleCommands.groupDescription, root: "admin" })
 export class AdminRoleSet {
   constructor(
     @inject(GuildManager) private guildManager: GuildManager,
   ) { }
 
-  @Slash({ name: "set", description: "Set an internal role mapping", dmPermission: false })
+  @Slash({ name: "set", description: adminRoleCommands.set.description, dmPermission: false })
   @SlashGroup("role", "admin")
   async set(
     @SlashOption({
       name: "internal_role",
-      description: "The internal role to map",
+      description: adminRoleCommands.set.optionInternalRole,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
@@ -26,7 +27,7 @@ export class AdminRoleSet {
     roleType: InternalRole,
     @SlashOption({
       name: "server_role",
-      description: "The server role to assign",
+      description: adminRoleCommands.set.optionServerRole,
       required: true,
       type: ApplicationCommandOptionType.Role,
     })
@@ -39,8 +40,8 @@ export class AdminRoleSet {
       await this.guildManager.setRole(interaction.guild.id, roleType, role.id)
 
       const embed = new EmbedBuilder()
-        .setTitle("Role Mapping Updated")
-        .setDescription(`Mapped internal role **${roleType}** to server role ${role.toString()}`)
+        .setTitle(adminRoleCommands.set.success.title)
+        .setDescription(adminRoleCommands.set.success.description(roleType, role.toString()))
         .setColor(Colors.Green)
 
       await interaction.reply({ embeds: [embed] })
@@ -50,8 +51,8 @@ export class AdminRoleSet {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
-            .setDescription("An error occurred while setting the role mapping.")
+            .setTitle(adminRoleCommands.set.errors.title)
+            .setDescription(adminRoleCommands.set.errors.description)
             .setColor(Colors.Red),
         ],
       })

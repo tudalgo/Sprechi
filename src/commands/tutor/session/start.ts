@@ -15,6 +15,7 @@ import {
 } from "../../../errors/QueueErrors"
 import logger from "@utils/logger"
 import { inject, injectable } from "tsyringe"
+import { tutorSessionCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -24,11 +25,11 @@ export class TutorSessionStart {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "start", description: "Start a tutoring session", dmPermission: false })
+  @Slash({ name: "start", description: tutorSessionCommands.start.description, dmPermission: false })
   async start(
     @SlashOption({
       name: "queue",
-      description: "The name of the queue (optional)",
+      description: tutorSessionCommands.start.optionQueue,
       required: false,
       type: ApplicationCommandOptionType.String,
     })
@@ -48,8 +49,8 @@ export class TutorSessionStart {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Session Started")
-            .setDescription(`You have started a session on queue **${queue.name}**.`)
+            .setTitle(tutorSessionCommands.start.success.title)
+            .setDescription(tutorSessionCommands.start.success.description(queue.name))
             .setColor(Colors.Green),
         ],
         flags: MessageFlags.Ephemeral,
@@ -57,13 +58,13 @@ export class TutorSessionStart {
     } catch (error: unknown) {
       let errorMessage = "Failed to start session."
       if (error instanceof QueueNotFoundError) {
-        errorMessage = `Queue **${name}** not found.`
+        errorMessage = tutorSessionCommands.start.errors.notFound(name!)
         logger.warn(`Failed to start session: Queue '${name}' not found in guild '${interaction.guild.id}'`)
       } else if (error instanceof SessionAlreadyActiveError) {
-        errorMessage = "You already have an active session."
+        errorMessage = tutorSessionCommands.start.errors.alreadyActive
         logger.warn(`Failed to start session: Tutor ${interaction.user.username} already has an active session in guild '${interaction.guild.id}'`)
       } else if (error instanceof StudentCannotStartSessionError) {
-        errorMessage = "You cannot start a session while you are in a queue."
+        errorMessage = tutorSessionCommands.start.errors.studentInQueue
         logger.warn(`Failed to start session: User ${interaction.user.username} is in a queue in guild '${interaction.guild.id}'`)
       } else if (error instanceof QueueError) {
         errorMessage = error.message
@@ -75,7 +76,7 @@ export class TutorSessionStart {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(tutorSessionCommands.start.errors.title)
             .setDescription(errorMessage)
             .setColor(Colors.Red),
         ],

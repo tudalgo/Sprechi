@@ -3,6 +3,7 @@ import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder, Colors 
 import { injectable, inject } from "tsyringe"
 import { QueueManager } from "@managers/QueueManager"
 import logger from "@utils/logger"
+import { adminQueueCommands } from "@config/messages"
 
 /**
  * Command to list users in a specific queue (Admin).
@@ -15,17 +16,17 @@ export class AdminQueueList {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "list", description: "List users in a specific queue", dmPermission: false })
+  @Slash({ name: "list", description: adminQueueCommands.list.description, dmPermission: false })
   async list(
     @SlashOption({
-      description: "Name of the queue",
+      description: adminQueueCommands.list.optionName,
       name: "name",
       required: true,
       type: ApplicationCommandOptionType.String,
     })
     queueName: string,
     @SlashOption({
-      description: "Max number of users to show (default: 5)",
+      description: adminQueueCommands.list.optionMaxEntries,
       name: "max_entries",
       required: false,
       type: ApplicationCommandOptionType.Integer,
@@ -49,7 +50,7 @@ export class AdminQueueList {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(adminQueueCommands.list.errors.title)
             .setDescription(message)
             .setColor(Colors.Red),
         ],

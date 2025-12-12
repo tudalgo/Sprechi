@@ -8,6 +8,7 @@ import { Discord, Slash, SlashGroup } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import logger from "@utils/logger"
 import { inject, injectable } from "tsyringe"
+import { tutorSessionCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -18,7 +19,7 @@ export class TutorSessionEnd {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "end", description: "End your tutoring session", dmPermission: false })
+  @Slash({ name: "end", description: tutorSessionCommands.end.description, dmPermission: false })
   @SlashGroup("session", "tutor")
   async end(interaction: CommandInteraction): Promise<void> {
     if (!interaction.guild) return
@@ -30,8 +31,8 @@ export class TutorSessionEnd {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Session Ended")
-            .setDescription("You have ended your session.")
+            .setTitle(tutorSessionCommands.end.success.title)
+            .setDescription(tutorSessionCommands.end.success.description)
             .setColor(Colors.Yellow),
         ],
         flags: MessageFlags.Ephemeral,
@@ -43,7 +44,7 @@ export class TutorSessionEnd {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(tutorSessionCommands.end.errors.title)
             .setDescription(message)
             .setColor(Colors.Red),
         ],

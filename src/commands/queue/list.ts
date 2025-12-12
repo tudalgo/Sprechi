@@ -8,16 +8,17 @@ import { Discord, Slash, SlashGroup } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import logger from "@utils/logger"
 import { inject, injectable } from "tsyringe"
+import { queueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
-@SlashGroup({ name: "queue", description: "Queue commands" })
+@SlashGroup({ name: "queue", description: queueCommands.list.groupDescription })
 export class QueueList {
   constructor(
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "list", description: "List all available queues", dmPermission: false })
+  @Slash({ name: "list", description: queueCommands.list.description, dmPermission: false })
   @SlashGroup("queue")
   async list(interaction: CommandInteraction): Promise<void> {
     if (!interaction.guild) return
@@ -30,8 +31,8 @@ export class QueueList {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("No Queues Found")
-            .setDescription("There are no queues in this server.")
+            .setTitle(queueCommands.list.emptyState.title)
+            .setDescription(queueCommands.list.emptyState.description)
             .setColor(Colors.Yellow),
         ],
         flags: MessageFlags.Ephemeral,
@@ -40,13 +41,13 @@ export class QueueList {
     }
 
     const embed = new EmbedBuilder()
-      .setTitle("Available Queues")
+      .setTitle(queueCommands.list.listTitle)
       .setColor(Colors.Blue)
       .setDescription(
         queues
           .map(
             q =>
-              `**${q.name}** ${q.isLocked ? "🔒" : ""}\n${q.description}\nMembers: ${q.memberCount}`,
+              queueCommands.list.queueEntry(q.name, q.isLocked, q.description, q.memberCount),
           )
           .join("\n\n"),
       )

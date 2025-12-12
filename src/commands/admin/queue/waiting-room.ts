@@ -11,6 +11,7 @@ import { QueueManager } from "@managers/QueueManager"
 import { QueueNotFoundError } from "../../../errors/QueueErrors"
 import logger from "@utils/logger"
 import { inject, injectable } from "tsyringe"
+import { adminQueueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -20,18 +21,18 @@ export class AdminQueueWaitingRoom {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "waiting-room", description: "Set the waiting room for a queue", dmPermission: false })
+  @Slash({ name: "waiting-room", description: adminQueueCommands.waitingRoom.description, dmPermission: false })
   async setWaitingRoom(
     @SlashOption({
       name: "name",
-      description: "The name of the queue",
+      description: adminQueueCommands.waitingRoom.optionName,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
     name: string,
     @SlashOption({
       name: "channel",
-      description: "The voice channel to use as waiting room",
+      description: adminQueueCommands.waitingRoom.optionChannel,
       required: true,
       type: ApplicationCommandOptionType.Channel,
       channelTypes: [ChannelType.GuildVoice],
@@ -50,15 +51,15 @@ export class AdminQueueWaitingRoom {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Waiting Room Set")
-            .setDescription(`Waiting room for queue **${name}** set to <#${channel.id}>.`)
+            .setTitle(adminQueueCommands.waitingRoom.success.title)
+            .setDescription(adminQueueCommands.waitingRoom.success.description(name, channel.id))
             .setColor(Colors.Green),
         ],
       })
     } catch (error: unknown) {
       let errorMessage = "Failed to set waiting room."
       if (error instanceof QueueNotFoundError) {
-        errorMessage = `Queue **${name}** not found.`
+        errorMessage = adminQueueCommands.waitingRoom.errors.notFound(name)
         logger.warn(`Failed to set waiting room: Queue '${name}' not found in guild '${interaction.guild.id}'`)
       } else {
         logger.error(`Error setting waiting room for queue '${name}':`, error)
@@ -67,7 +68,7 @@ export class AdminQueueWaitingRoom {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(adminQueueCommands.waitingRoom.errors.title)
             .setDescription(errorMessage)
             .setColor(Colors.Red),
         ],

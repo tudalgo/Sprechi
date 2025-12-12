@@ -12,6 +12,7 @@ import { RoomManager } from "@managers/RoomManager"
 import { QueueError } from "@errors/QueueErrors"
 import logger from "@utils/logger"
 import { inject, injectable } from "tsyringe"
+import { tutorQueueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -22,11 +23,11 @@ export class TutorQueuePick {
     @inject(RoomManager) private roomManager: RoomManager,
   ) { }
 
-  @Slash({ name: "pick", description: "Pick a specific student from the queue", dmPermission: false })
+  @Slash({ name: "pick", description: tutorQueueCommands.pick.description, dmPermission: false })
   async pick(
     @SlashOption({
       name: "user",
-      description: "The user to pick",
+      description: tutorQueueCommands.pick.optionUser,
       required: true,
       type: ApplicationCommandOptionType.User,
     })
@@ -70,7 +71,7 @@ export class TutorQueuePick {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(tutorQueueCommands.pick.errors.title)
             .setDescription(message)
             .setColor(Colors.Red),
         ],

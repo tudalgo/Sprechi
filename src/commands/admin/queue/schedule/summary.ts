@@ -7,6 +7,7 @@ import {
 import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { inject, injectable } from "tsyringe"
+import { adminQueueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -16,18 +17,18 @@ export class AdminQueueScheduleSummaryCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "schedule-summary", description: "View all configured schedules for a queue", dmPermission: false })
+  @Slash({ name: "schedule-summary", description: adminQueueCommands.schedule.summary.description, dmPermission: false })
   async summary(
     @SlashOption({
       name: "name",
-      description: "The name of the queue",
+      description: adminQueueCommands.schedule.summary.optionName,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
     name: string,
     @SlashOption({
       name: "hide-private-info",
-      description: "Hide private information",
+      description: adminQueueCommands.schedule.summary.optionHidePrivateInfo,
       required: false,
       type: ApplicationCommandOptionType.Boolean,
     })
@@ -42,14 +43,14 @@ export class AdminQueueScheduleSummaryCommand {
       const queue = await this.queueManager.getQueueByName(interaction.guildId, name)
       const schedules = await this.queueManager.getSchedules(interaction.guildId, name)
 
-      const autoLockInfo = hidePrivateInfo ? "" : `**Auto-Lock:** ${queue.scheduleEnabled ? "✅ Enabled" : "❌ Disabled"}`
+      const autoLockInfo = hidePrivateInfo ? "" : adminQueueCommands.schedule.summary.autoLockInfo(queue.scheduleEnabled)
 
       if (schedules.length === 0) {
         await interaction.editReply({
           embeds: [
             new EmbedBuilder()
-              .setTitle(`Schedule Summary: ${name}`)
-              .setDescription(`${autoLockInfo}\n\nNo schedules configured for this queue.`)
+              .setTitle(adminQueueCommands.schedule.summary.emptySchedule.title(name))
+              .setDescription(adminQueueCommands.schedule.summary.emptySchedule.description(autoLockInfo))
               .setColor(Colors.Orange),
           ],
         })
@@ -62,14 +63,14 @@ export class AdminQueueScheduleSummaryCommand {
       ).join("\n")
 
       const shiftInfo = queue.scheduleShiftMinutes !== 0
-        ? `\n**Time Shift:** ${queue.scheduleShiftMinutes > 0 ? "-" : "+"}${queue.scheduleShiftMinutes} minutes`
+        ? `\n${adminQueueCommands.schedule.summary.shiftInfo(queue.scheduleShiftMinutes)}`
         : ""
 
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle(`Schedule Summary: ${name}`)
-            .setDescription(`${autoLockInfo}${shiftInfo}\n\n${scheduleLines}`)
+            .setTitle(adminQueueCommands.schedule.summary.emptySchedule.title(name))
+            .setDescription(adminQueueCommands.schedule.summary.populatedDescription(autoLockInfo, shiftInfo, scheduleLines))
             .setColor(Colors.Blue),
         ],
       })
@@ -78,7 +79,7 @@ export class AdminQueueScheduleSummaryCommand {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(adminQueueCommands.schedule.summary.errors.title)
             .setDescription(message)
             .setColor(Colors.Red),
         ],

@@ -11,6 +11,7 @@ import { QueueManager } from "@managers/QueueManager"
 import { QueueNotFoundError } from "@errors/QueueErrors"
 import logger from "@utils/logger"
 import { inject, injectable } from "tsyringe"
+import { adminQueueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -20,18 +21,18 @@ export class AdminQueueLogChannelPrivate {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "set-private-log-channel", description: "Set the private log channel for a queue", dmPermission: false })
+  @Slash({ name: "set-private-log-channel", description: adminQueueCommands.logChannel.setPrivate.description, dmPermission: false })
   async setPrivateLogChannel(
     @SlashOption({
       name: "name",
-      description: "The name of the queue",
+      description: adminQueueCommands.logChannel.setPrivate.optionName,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
     name: string,
     @SlashOption({
       name: "channel",
-      description: "The text channel to use for logs",
+      description: adminQueueCommands.logChannel.setPrivate.optionChannel,
       required: true,
       type: ApplicationCommandOptionType.Channel,
       channelTypes: [ChannelType.GuildText],
@@ -50,15 +51,15 @@ export class AdminQueueLogChannelPrivate {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Private Log Channel Set")
-            .setDescription(`Private log channel for queue **${name}** set to <#${channel.id}>.`)
+            .setTitle(adminQueueCommands.logChannel.setPrivate.success.title)
+            .setDescription(adminQueueCommands.logChannel.setPrivate.success.description(name, channel.id))
             .setColor(Colors.Green),
         ],
       })
     } catch (error: unknown) {
       let errorMessage = "Failed to set log channel."
       if (error instanceof QueueNotFoundError) {
-        errorMessage = `Queue **${name}** not found.`
+        errorMessage = adminQueueCommands.logChannel.setPrivate.errors.notFound(name)
         logger.warn(`Failed to set log channel: Queue '${name}' not found in guild '${interaction.guild.id}'`)
       } else {
         logger.error(`Error setting log channel for queue '${name}':`, error)
@@ -67,7 +68,7 @@ export class AdminQueueLogChannelPrivate {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(adminQueueCommands.logChannel.setPrivate.errors.title)
             .setDescription(errorMessage)
             .setColor(Colors.Red),
         ],

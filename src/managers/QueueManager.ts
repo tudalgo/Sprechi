@@ -20,6 +20,7 @@ import { EmbedBuilder, Colors, ChannelType, ActionRowBuilder, ButtonBuilder, But
 import { RoomManager } from "./RoomManager"
 import { GuildManager } from "./GuildManager"
 import { inject } from "tsyringe"
+import { managers } from "@config/messages"
 
 export interface QueueData {
   guildId: string
@@ -121,7 +122,7 @@ export class QueueManager {
           .set({ leftAt: null })
           .where(eq(queueMembers.id, existingMember.id))
 
-        await this.logToChannel(queue, `User <@${userId}> rejoined the queue (restored position).`)
+        await this.logToChannel(queue, managers.queue.logs.userRejoined(userId))
         await this.sendJoinDm(queue, userId)
         logger.info(`[Rejoin Queue] User ${userId} rejoined queue "${queue.name}" (${queue.id}) in guild ${guildId} (restored position).`)
         return
@@ -136,7 +137,7 @@ export class QueueManager {
       userId,
     })
 
-    await this.logToChannel(queue, `User <@${userId}> joined the queue.`)
+    await this.logToChannel(queue, managers.queue.logs.userJoined(userId))
     await this.sendJoinDm(queue, userId)
     logger.info(`[Join Queue] User ${userId} joined queue "${queue.name}" (${queue.id}) in guild ${guildId}.`)
   }
@@ -149,8 +150,8 @@ export class QueueManager {
       const member = await this.getQueueMember(queue.id, userId)
 
       const embed = new EmbedBuilder()
-        .setTitle(`Joined Queue: ${queue.name}`)
-        .setDescription(`You have joined the queue **${queue.name}**.\n\n**Position:** ${position}\n**Joined:** <t:${Math.floor(member.joinedAt.getTime() / 1000)}:R>`)
+        .setTitle(managers.queue.dms.joinedQueue.title(queue.name))
+        .setDescription(managers.queue.dms.joinedQueue.description(queue.name, position, Math.floor(member.joinedAt.getTime() / 1000)))
         .setColor(Colors.Green)
         .setTimestamp()
 
@@ -158,11 +159,11 @@ export class QueueManager {
         .addComponents(
           new ButtonBuilder()
             .setCustomId(`queue_refresh_${queue.id}`)
-            .setLabel("Refresh Status")
+            .setLabel(managers.queue.dms.joinedQueue.buttons.refreshStatus)
             .setStyle(ButtonStyle.Primary),
           new ButtonBuilder()
             .setCustomId(`queue_leave_${queue.id}`)
-            .setLabel("Leave Queue")
+            .setLabel(managers.queue.dms.joinedQueue.buttons.leaveQueue)
             .setStyle(ButtonStyle.Danger),
         )
 
@@ -190,7 +191,7 @@ export class QueueManager {
       .set({ leftAt: new Date() })
       .where(eq(queueMembers.id, member.id))
 
-    await this.logToChannel(queue, `User <@${userId}> left the queue (grace period started).`)
+    await this.logToChannel(queue, managers.queue.logs.userLeftGracePeriod(userId))
     logger.info(`[Leave Queue] User ${userId} left queue "${queue.name}" (${queue.id}) in guild ${guildId}`)
 
     // Remove from waiting room voice channel
@@ -199,7 +200,7 @@ export class QueueManager {
         const guild = await bot.guilds.fetch(guildId)
         const member = await guild.members.fetch(userId)
         if (member.voice.channelId === queue.waitingRoomId) {
-          await member.voice.disconnect("Left the queue")
+          await member.voice.disconnect(managers.queue.disconnectReason)
         }
       } catch (error) {
         logger.error(`Failed to disconnect user ${userId} from waiting room:`, error)
@@ -210,8 +211,8 @@ export class QueueManager {
     try {
       const user = await bot.users.fetch(userId)
       const embed = new EmbedBuilder()
-        .setTitle("Left Queue")
-        .setDescription(`You have left the queue **${queue.name}**.\n\nYou have **1 minute** to rejoin without losing your spot.`)
+        .setTitle(managers.queue.dms.leftQueue.title)
+        .setDescription(managers.queue.dms.leftQueue.description(queue.name))
         .setColor(Colors.Yellow)
         .setTimestamp()
 
@@ -219,7 +220,7 @@ export class QueueManager {
         .addComponents(
           new ButtonBuilder()
             .setCustomId(`queue_rejoin_${queue.id}`)
-            .setLabel("Rejoin Queue")
+            .setLabel(managers.queue.dms.leftQueue.button)
             .setStyle(ButtonStyle.Success),
         )
 
@@ -240,7 +241,7 @@ export class QueueManager {
           if (diff >= 60000) {
             await db.delete(queueMembers).where(eq(queueMembers.id, member.id))
 
-            await this.logToChannel(queue, `User <@${userId}> left the queue.`)
+            await this.logToChannel(queue, managers.queue.logs.userLeft(userId))
           }
         }
       } catch (error) {
@@ -282,7 +283,7 @@ export class QueueManager {
       channelId,
     })
 
-    await this.logToChannel(queue, `User <@${userId}> was picked by <@${tutorId}>.`)
+    await this.logToChannel(queue, managers.queue.logs.userPicked(userId, tutorId))
     logger.info(`[Pick Student] Tutor ${tutorId} picked student ${userId} from queue "${queue.name}" (${queue.id}). Session: ${sessionId}`)
 
     // DM Student
@@ -291,8 +292,8 @@ export class QueueManager {
       await user.send({
         embeds: [
           new EmbedBuilder()
-            .setTitle("You have been picked!")
-            .setDescription(`You have been picked by <@${tutorId}> for a tutoring session.\nPlease join the voice channel: <#${channelId}>`)
+            .setTitle(managers.queue.dms.picked.title)
+            .setDescription(managers.queue.dms.picked.description(tutorId, channelId))
             .setColor(Colors.Green),
         ],
       })
@@ -349,7 +350,7 @@ export class QueueManager {
     )
 
     if (!channel) {
-      throw new QueueError("Failed to create session room.")
+      throw new QueueError(managers.queue.errors.roomCreationFailed)
     }
 
     // Move tutor
@@ -375,8 +376,8 @@ export class QueueManager {
     await interaction.editReply({
       embeds: [
         new EmbedBuilder()
-          .setTitle("Student Picked")
-          .setDescription(`Picked <@${studentId}>. Created room <#${channel.id}>.`)
+          .setTitle(managers.queue.studentPicked.title)
+          .setDescription(managers.queue.studentPicked.description(studentId, channel.id))
           .setColor(Colors.Green),
       ],
     })
@@ -450,7 +451,7 @@ export class QueueManager {
       tutorId,
     })
 
-    await this.logToChannel(queue, `Tutor <@${tutorId}> started a session.`)
+    await this.logToChannel(queue, managers.queue.logs.tutorStarted(tutorId))
     logger.info(`[Create Session] Tutor ${tutorId} started session on queue "${queueName}" in guild ${guildId}.`)
 
     // Assign active_session role
@@ -480,7 +481,7 @@ export class QueueManager {
       .returning()
 
     if (result.length > 0) {
-      await this.logToChannel(queue, `Tutor <@${tutorId}> ended their session.`)
+      await this.logToChannel(queue, managers.queue.logs.tutorEnded(tutorId))
       logger.info(`[End Session] Tutor ${tutorId} ended session in guild ${guildId}.`)
 
       // Remove active_session role
@@ -506,12 +507,12 @@ export class QueueManager {
 
     const allQueues = await this.listQueues(guildId)
     if (allQueues.length === 0) {
-      throw new QueueError("No queues found in this server.")
+      throw new QueueError(managers.queue.errors.noQueues)
     }
     if (allQueues.length === 1) {
       return allQueues[0]
     }
-    throw new QueueError("Multiple queues found. Please specify a queue name.")
+    throw new QueueError(managers.queue.errors.multipleQueues)
   }
 
   async getQueueByUser(guildId: string, userId: string) {
@@ -556,11 +557,11 @@ export class QueueManager {
         const prefix = activeSessionRole ? `<@&${activeSessionRole}> ` : ""
 
         const embed = new EmbedBuilder()
-          .setTitle(`Queue Update: ${queue.name}`)
+          .setTitle(managers.queue.embeds.queueLog.title(queue.name))
           .setDescription(message)
           .addFields(
-            { name: "Members in Queue", value: String(memberCount?.count ?? 0), inline: true },
-            { name: "Active Sessions", value: String(sessionCount?.count ?? 0), inline: true },
+            { name: managers.queue.embeds.queueLog.fields.membersInQueue, value: String(memberCount?.count ?? 0), inline: true },
+            { name: managers.queue.embeds.queueLog.fields.activeSessions, value: String(sessionCount?.count ?? 0), inline: true },
           )
           .setColor(Colors.Blue)
           .setTimestamp()
@@ -579,7 +580,7 @@ export class QueueManager {
       const channel = await bot.channels.fetch(queue.publicLogChannelId)
       if (channel && channel.type === ChannelType.GuildText) {
         const embed = new EmbedBuilder()
-          .setTitle(`Sprechstundensystem: ${queue.name}`)
+          .setTitle(managers.queue.embeds.publicLog.title(queue.name))
           .setDescription(message)
           .setColor(color)
           .setTimestamp()
@@ -601,15 +602,15 @@ export class QueueManager {
     if (!queueStats) throw new QueueError("Queue not found.")
 
     return new EmbedBuilder()
-      .setTitle(`Queue Summary: ${queue.name}`)
-      .setDescription(queue.description || "No description.")
+      .setTitle(managers.queue.embeds.queueSummary.title(queue.name))
+      .setDescription(queue.description || managers.queue.embeds.queueSummary.descriptionFallback)
       .addFields(
-        { name: "Students in Queue", value: String(queueStats.memberCount), inline: true },
-        { name: "Active Sessions", value: String(queueStats.sessionCount), inline: true },
-        { name: "Locked", value: queue.isLocked ? "Yes" : "No", inline: true },
+        { name: managers.queue.embeds.queueSummary.fields.studentsInQueue, value: String(queueStats.memberCount), inline: true },
+        { name: managers.queue.embeds.queueSummary.fields.activeSessions, value: String(queueStats.sessionCount), inline: true },
+        { name: managers.queue.embeds.queueSummary.fields.locked, value: queue.isLocked ? "Yes" : "No", inline: true },
       )
       .setColor(Colors.Blue)
-      .setFooter({ text: `Queue ID: ${queue.id}` })
+      .setFooter({ text: managers.queue.embeds.queueSummary.footer(queue.id) })
   }
 
   async getQueueListEmbed(guildId: string, queueName: string, limit: number = 5) {
@@ -620,17 +621,17 @@ export class QueueManager {
 
     if (members.length === 0) {
       return new EmbedBuilder()
-        .setTitle(`Queue: ${queue.name}`)
-        .setDescription("The queue is empty.")
+        .setTitle(managers.queue.embeds.queueList.title(queue.name))
+        .setDescription(managers.queue.embeds.queueList.emptyDescription)
         .setColor(Colors.Blue)
-        .setFooter({ text: "Total: 0" })
+        .setFooter({ text: managers.queue.embeds.queueList.emptyFooter })
     }
 
     return new EmbedBuilder()
-      .setTitle(`Queue: ${queue.name}`)
+      .setTitle(managers.queue.embeds.queueList.title(queue.name))
       .setDescription(members.map((m, i) => `${i + 1}. <@${m.userId}>`).join("\n"))
       .setColor(Colors.Blue)
-      .setFooter({ text: `Showing top ${members.length} members` })
+      .setFooter({ text: managers.queue.embeds.queueList.footer(members.length) })
   }
 
   async getQueuePosition(queueId: string, userId: string): Promise<number> {
@@ -704,7 +705,7 @@ export class QueueManager {
 
     // Log for each session
     for (const { session, queue } of activeSessions) {
-      await this.logToChannel(queue, `Session for <@${session.tutorId}> was forcefully terminated by admin.`)
+      await this.logToChannel(queue, managers.queue.logs.sessionTerminatedAdmin(session.tutorId))
       logger.info(`[Terminate Session] Session ${session.id} for tutor ${session.tutorId} terminated by admin in guild ${guildId}.`)
 
       // Remove active_session role
@@ -748,7 +749,7 @@ export class QueueManager {
 
     // Log for each session
     for (const { session, queue } of activeSessions) {
-      await this.logToChannel(queue, `Session for <@${session.tutorId}> was forcefully terminated by admin (Terminate All).`)
+      await this.logToChannel(queue, managers.queue.logs.sessionTerminatedAll(session.tutorId))
       logger.info(`[Terminate All Sessions] Session ${session.id} for tutor ${session.tutorId} terminated by admin in guild ${guildId}.`)
 
       // Remove active_session role
@@ -774,7 +775,7 @@ export class QueueManager {
     }
 
     if (queue.isLocked === isLocked) {
-      throw new QueueError(`Queue "${queueName}" is already ${isLocked ? "locked" : "unlocked"}.`)
+      throw new QueueError(managers.queue.errors.alreadyLocked(queueName, isLocked))
     }
 
     await db.update(queues)
@@ -787,12 +788,12 @@ export class QueueManager {
     // Log to public log channel with appropriate color (Red for locked, Green for unlocked)
     await this.logToPublicChannel(
       queue,
-      `Queue **${queueName}** is now **${lockStateStr}**.`,
+      managers.queue.logs.queueLockState(queueName, lockStateStr),
       isLocked ? Colors.Red : Colors.Green,
     )
     await this.logToChannel(
       queue,
-      `Queue **${queueName}** is now **${lockStateStr}**.`,
+      managers.queue.logs.queueLockState(queueName, lockStateStr),
     )
   }
 

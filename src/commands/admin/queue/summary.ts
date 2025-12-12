@@ -3,6 +3,7 @@ import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder, Colors 
 import { injectable, inject } from "tsyringe"
 import { QueueManager } from "@managers/QueueManager"
 import logger from "@utils/logger"
+import { adminQueueCommands } from "@config/messages"
 
 /**
  * Command to show a summary of a specific queue (Admin).
@@ -15,10 +16,10 @@ export class AdminQueueSummary {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "summary", description: "Show a summary of a specific queue", dmPermission: false })
+  @Slash({ name: "summary", description: adminQueueCommands.summary.description, dmPermission: false })
   async summary(
     @SlashOption({
-      description: "Name of the queue",
+      description: adminQueueCommands.summary.optionName,
       name: "name",
       required: true,
       type: ApplicationCommandOptionType.String,
@@ -41,7 +42,7 @@ export class AdminQueueSummary {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(adminQueueCommands.summary.errors.title)
             .setDescription(message)
             .setColor(Colors.Red),
         ],

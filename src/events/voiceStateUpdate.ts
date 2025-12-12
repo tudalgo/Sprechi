@@ -7,6 +7,7 @@ import { EmbedBuilder, Colors } from "discord.js"
 import db from "@db"
 import { sessionStudents } from "@db/schema"
 import { eq, and, isNull } from "drizzle-orm"
+import { events } from "@config/messages"
 
 import { injectable, inject } from "tsyringe"
 
@@ -44,8 +45,8 @@ export class VoiceStateUpdate {
 
             // Send DM to user with embed
             const embed = new EmbedBuilder()
-              .setTitle("Queue Locked")
-              .setDescription("The queue you tried to join is currently locked. Please try again later.")
+              .setTitle(events.voiceStateUpdate.queueLocked.title)
+              .setDescription(events.voiceStateUpdate.queueLocked.description)
               .setColor(Colors.Red)
 
             await this.dmManager.sendDm(

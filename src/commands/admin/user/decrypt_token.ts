@@ -3,16 +3,17 @@ import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { injectable } from "tsyringe"
 import { decryptTokenString } from "@utils/token"
 import logger from "@utils/logger"
+import { adminUserCommands } from "@config/messages"
 
 @Discord()
 @injectable()
 @SlashGroup("admin")
 export class AdminDecryptTokenCommand {
-  @Slash({ name: "decrypt-token", description: "Decrypt a token to view its contents", dmPermission: false })
+  @Slash({ name: "decrypt-token", description: adminUserCommands.decryptToken.description, dmPermission: false })
   async decryptToken(
     @SlashOption({
       name: "token",
-      description: "The encrypted token to decrypt",
+      description: adminUserCommands.decryptToken.optionToken,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
@@ -24,8 +25,8 @@ export class AdminDecryptTokenCommand {
 
       if (!tokenData) {
         const embed = new EmbedBuilder()
-          .setTitle("❌ Invalid Token")
-          .setDescription("The provided token could not be decrypted or is invalid")
+          .setTitle(adminUserCommands.decryptToken.invalidToken.title)
+          .setDescription(adminUserCommands.decryptToken.invalidToken.description)
           .setColor(Colors.Red)
 
         await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
@@ -33,23 +34,23 @@ export class AdminDecryptTokenCommand {
       }
 
       const embed = new EmbedBuilder()
-        .setTitle("🔓 Decrypted Token")
+        .setTitle(adminUserCommands.decryptToken.success.title)
         .addFields(
-          { name: "Server ID", value: tokenData.serverId, inline: true },
-          { name: "Version ID", value: tokenData.versionId, inline: true },
-          { name: "TU ID", value: tokenData.tuId || "Not set", inline: true },
-          { name: "Moodle ID", value: tokenData.moodleId || "Not set", inline: true },
-          { name: "Roles", value: tokenData.roles.join(", "), inline: false },
+          { name: adminUserCommands.decryptToken.success.fields.serverId, value: tokenData.serverId, inline: true },
+          { name: adminUserCommands.decryptToken.success.fields.versionId, value: tokenData.versionId, inline: true },
+          { name: adminUserCommands.decryptToken.success.fields.tuId, value: tokenData.tuId || adminUserCommands.decryptToken.success.notSet, inline: true },
+          { name: adminUserCommands.decryptToken.success.fields.moodleId, value: tokenData.moodleId || adminUserCommands.decryptToken.success.notSet, inline: true },
+          { name: adminUserCommands.decryptToken.success.fields.roles, value: tokenData.roles.join(", "), inline: false },
         )
         .setColor(Colors.Blue)
-        .setFooter({ text: "⚠️ Keep token information confidential" })
+        .setFooter({ text: adminUserCommands.decryptToken.success.footer })
 
       await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
       logger.info(`[AdminDecryptToken] Admin ${interaction.user.username} decrypted a token`)
     } catch (error) {
       const embed = new EmbedBuilder()
-        .setTitle("❌ Decryption Failed")
-        .setDescription("An error occurred while decrypting the token")
+        .setTitle(adminUserCommands.decryptToken.failure.title)
+        .setDescription(adminUserCommands.decryptToken.failure.description)
         .setColor(Colors.Red)
 
       await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })

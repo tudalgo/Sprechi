@@ -12,6 +12,7 @@ import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { RoomManager } from "@managers/RoomManager"
 import { inject, injectable } from "tsyringe"
 import logger from "@utils/logger"
+import { tutorVoiceCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -21,11 +22,11 @@ export class TutorVoiceKick {
     @inject(RoomManager) private roomManager: RoomManager,
   ) { }
 
-  @Slash({ name: "kick", description: "Kick a user from the current voice channel", dmPermission: false })
+  @Slash({ name: "kick", description: tutorVoiceCommands.kick.description, dmPermission: false })
   async kick(
     @SlashOption({
       name: "user",
-      description: "The user to kick",
+      description: tutorVoiceCommands.kick.optionUser,
       required: true,
       type: ApplicationCommandOptionType.User,
     })
@@ -43,8 +44,8 @@ export class TutorVoiceKick {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
-            .setDescription("You must be in a voice channel to use this command.")
+            .setTitle(tutorVoiceCommands.kick.errors.title)
+            .setDescription(tutorVoiceCommands.kick.errors.missingVoiceChannel)
             .setColor(Colors.Red),
         ],
         flags: MessageFlags.Ephemeral,
@@ -57,8 +58,8 @@ export class TutorVoiceKick {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
-            .setDescription("The specified user is not in your voice channel.")
+            .setTitle(tutorVoiceCommands.kick.errors.title)
+            .setDescription(tutorVoiceCommands.kick.errors.userNotInChannel)
             .setColor(Colors.Red),
         ],
         flags: MessageFlags.Ephemeral,
@@ -71,8 +72,8 @@ export class TutorVoiceKick {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
-            .setDescription("This command can only be used in a temporary Tutor voice channel.")
+            .setTitle(tutorVoiceCommands.kick.errors.title)
+            .setDescription(tutorVoiceCommands.kick.errors.nonEphemeralChannel)
             .setColor(Colors.Red),
         ],
         flags: MessageFlags.Ephemeral,
@@ -88,8 +89,8 @@ export class TutorVoiceKick {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("User Kicked")
-            .setDescription(`Kicked **${user.displayName}** from **${channel.name}**.`)
+            .setTitle(tutorVoiceCommands.kick.success.title)
+            .setDescription(tutorVoiceCommands.kick.success.description(user.displayName, channel.name))
             .setColor(Colors.Green),
         ],
       })
@@ -98,8 +99,8 @@ export class TutorVoiceKick {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
-            .setDescription("Failed to kick the user.")
+            .setTitle(tutorVoiceCommands.kick.errors.title)
+            .setDescription(tutorVoiceCommands.kick.errors.description)
             .setColor(Colors.Red),
         ],
       })

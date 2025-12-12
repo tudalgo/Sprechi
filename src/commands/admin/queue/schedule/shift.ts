@@ -7,6 +7,7 @@ import {
 import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { inject, injectable } from "tsyringe"
+import { adminQueueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -16,18 +17,18 @@ export class AdminQueueScheduleShiftCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "schedule-shift", description: "Set start/end time shift", dmPermission: false })
+  @Slash({ name: "schedule-shift", description: adminQueueCommands.schedule.shift.description, dmPermission: false })
   async shift(
     @SlashOption({
       name: "name",
-      description: "The name of the queue",
+      description: adminQueueCommands.schedule.shift.optionName,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
     name: string,
     @SlashOption({
       name: "minutes",
-      description: "Shift in minutes (positive = earlier, negative = later)",
+      description: adminQueueCommands.schedule.shift.optionMinutes,
       required: true,
       type: ApplicationCommandOptionType.Integer,
     })
@@ -44,8 +45,8 @@ export class AdminQueueScheduleShiftCommand {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Schedule Shift Set")
-            .setDescription(`Set schedule shift for queue **${name}** to **${minutes} minutes**.`)
+            .setTitle(adminQueueCommands.schedule.shift.success.title)
+            .setDescription(adminQueueCommands.schedule.shift.success.description(name, minutes))
             .setColor(Colors.Green),
         ],
       })
@@ -54,7 +55,7 @@ export class AdminQueueScheduleShiftCommand {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(adminQueueCommands.schedule.shift.errors.title)
             .setDescription(message)
             .setColor(Colors.Red),
         ],

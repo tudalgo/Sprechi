@@ -10,6 +10,7 @@ import { RoomManager } from "@managers/RoomManager"
 import { QueueError } from "@errors/QueueErrors"
 import logger from "@utils/logger"
 import { inject, injectable } from "tsyringe"
+import { tutorQueueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -21,7 +22,7 @@ export class TutorQueueNext {
     @inject(RoomManager) private roomManager: RoomManager,
   ) { }
 
-  @Slash({ name: "next", description: "Pick the next student from the queue", dmPermission: false })
+  @Slash({ name: "next", description: tutorQueueCommands.next.description, dmPermission: false })
   @SlashGroup("queue", "tutor")
   async next(interaction: CommandInteraction): Promise<void> {
     logger.info(`Command 'tutor queue next' triggered by ${interaction.user.username} (${interaction.user.id})`)
@@ -41,8 +42,8 @@ export class TutorQueueNext {
 
       if (members.length === 0) {
         const embed = new EmbedBuilder()
-          .setTitle(`Queue: ${queue.name}`)
-          .setDescription("The queue is empty.")
+          .setTitle(tutorQueueCommands.next.emptyQueue.title(queue.name))
+          .setDescription(tutorQueueCommands.next.emptyQueue.description)
           .setColor(Colors.Blue)
 
         await interaction.editReply({ embeds: [embed] })
@@ -67,7 +68,7 @@ export class TutorQueueNext {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(tutorQueueCommands.next.errors.title)
             .setDescription(message)
             .setColor(Colors.Red),
         ],

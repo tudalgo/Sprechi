@@ -16,6 +16,7 @@ import {
 } from "../../errors/QueueErrors"
 import logger from "@utils/logger"
 import { inject, injectable } from "tsyringe"
+import { queueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -25,11 +26,11 @@ export class QueueJoin {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "join", description: "Join a queue", dmPermission: false })
+  @Slash({ name: "join", description: queueCommands.join.description, dmPermission: false })
   async join(
     @SlashOption({
       name: "name",
-      description: "The name of the queue to join",
+      description: queueCommands.join.optionName,
       required: false,
       type: ApplicationCommandOptionType.String,
     })
@@ -49,25 +50,25 @@ export class QueueJoin {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Joined Queue")
-            .setDescription(`You have joined the queue **${queue.name}**.`)
+            .setTitle(queueCommands.join.success.title)
+            .setDescription(queueCommands.join.success.description(queue.name))
             .setColor(Colors.Green),
         ],
         flags: MessageFlags.Ephemeral,
       })
     } catch (error: unknown) {
-      let errorMessage = "Failed to join queue."
+      let errorMessage = queueCommands.join.errors.default
       if (error instanceof QueueNotFoundError) {
-        errorMessage = `Queue **${name}** not found.`
+        errorMessage = queueCommands.join.errors.notFound(name ?? "default")
         logger.warn(`Failed to join queue: Queue '${name}' not found in guild '${interaction.guild.id}'`)
       } else if (error instanceof QueueLockedError) {
-        errorMessage = `Queue **${name}** is locked.`
+        errorMessage = queueCommands.join.errors.locked(name ?? "default")
         logger.warn(`Failed to join queue: Queue '${name}' is locked in guild '${interaction.guild.id}'`)
       } else if (error instanceof AlreadyInQueueError) {
-        errorMessage = `You are already in queue **${name}**.`
+        errorMessage = queueCommands.join.errors.alreadyInQueue(name ?? "default")
         logger.warn(`Failed to join queue: User ${interaction.user.username} already in queue '${name}' in guild '${interaction.guild.id}'`)
       } else if (error instanceof TutorCannotJoinQueueError) {
-        errorMessage = "You cannot join a queue while you have an active tutor session."
+        errorMessage = queueCommands.join.errors.tutorSessionConflict
         logger.warn(`Failed to join queue: Tutor ${interaction.user.username} has active session in guild '${interaction.guild.id}'`)
       } else if (error instanceof QueueError) {
         errorMessage = error.message
@@ -79,7 +80,7 @@ export class QueueJoin {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(queueCommands.join.errors.title)
             .setDescription(errorMessage)
             .setColor(Colors.Red),
         ],

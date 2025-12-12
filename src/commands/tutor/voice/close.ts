@@ -10,6 +10,7 @@ import { Discord, Slash, SlashGroup } from "discordx"
 import { RoomManager } from "@managers/RoomManager"
 import { inject, injectable } from "tsyringe"
 import logger from "@utils/logger"
+import { tutorVoiceCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -20,7 +21,7 @@ export class TutorVoiceClose {
     @inject(RoomManager) private roomManager: RoomManager,
   ) { }
 
-  @Slash({ name: "close", description: "Close the current temporary voice channel", dmPermission: false })
+  @Slash({ name: "close", description: tutorVoiceCommands.close.description, dmPermission: false })
   async close(interaction: CommandInteraction): Promise<void> {
     logger.info(`Command 'tutor voice close' triggered by ${interaction.user.username} (${interaction.user.id})`)
 
@@ -33,8 +34,8 @@ export class TutorVoiceClose {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
-            .setDescription("You must be in a voice channel to use this command.")
+            .setTitle(tutorVoiceCommands.close.errors.title)
+            .setDescription(tutorVoiceCommands.close.errors.missingVoiceChannel)
             .setColor(Colors.Red),
         ],
         flags: MessageFlags.Ephemeral,
@@ -47,8 +48,8 @@ export class TutorVoiceClose {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
-            .setDescription("This command can only be used in a temporary Tutor voice channel.")
+            .setTitle(tutorVoiceCommands.close.errors.title)
+            .setDescription(tutorVoiceCommands.close.errors.nonEphemeralChannel)
             .setColor(Colors.Red),
         ],
         flags: MessageFlags.Ephemeral,
@@ -65,8 +66,8 @@ export class TutorVoiceClose {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Channel Closed")
-            .setDescription(`Voice channel **${channel.name}** has been closed.`)
+            .setTitle(tutorVoiceCommands.close.success.title)
+            .setDescription(tutorVoiceCommands.close.success.description(channel.name))
             .setColor(Colors.Green),
         ],
       })
@@ -75,8 +76,8 @@ export class TutorVoiceClose {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
-            .setDescription("Failed to close the channel.")
+            .setTitle(tutorVoiceCommands.close.errors.title)
+            .setDescription(tutorVoiceCommands.close.errors.description)
             .setColor(Colors.Red),
         ],
       })

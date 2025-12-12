@@ -14,6 +14,7 @@ import {
 } from "../../errors/QueueErrors"
 import logger from "@utils/logger"
 import { inject, injectable } from "tsyringe"
+import { queueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -23,11 +24,11 @@ export class QueueLeave {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "leave", description: "Leave a queue", dmPermission: false })
+  @Slash({ name: "leave", description: queueCommands.leave.description, dmPermission: false })
   async leave(
     @SlashOption({
       name: "name",
-      description: "The name of the queue to leave",
+      description: queueCommands.leave.optionName,
       required: false,
       type: ApplicationCommandOptionType.String,
     })
@@ -58,19 +59,19 @@ export class QueueLeave {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Left Queue")
-            .setDescription(`You have left the queue **${queueName}**.\nYou have 1 minute to rejoin to keep your position.`)
+            .setTitle(queueCommands.leave.success.title)
+            .setDescription(queueCommands.leave.success.description(queueName!))
             .setColor(Colors.Yellow),
         ],
         flags: MessageFlags.Ephemeral,
       })
     } catch (error: unknown) {
-      let errorMessage = "Failed to leave queue."
+      let errorMessage = queueCommands.leave.errors.default
       if (error instanceof QueueNotFoundError) {
-        errorMessage = `Queue **${name}** not found.`
+        errorMessage = queueCommands.leave.errors.notFound(name ?? "default")
         logger.warn(`Failed to leave queue: Queue '${name}' not found in guild '${interaction.guild.id}'`)
       } else if (error instanceof NotInQueueError) {
-        errorMessage = `You are not in queue **${name ?? "any queue"}**.`
+        errorMessage = queueCommands.leave.errors.notInQueue(name ?? null)
         logger.warn(`Failed to leave queue: User ${interaction.user.username} not in queue '${name ?? "any"}' in guild '${interaction.guild.id}'`)
       } else if (error instanceof QueueError) {
         errorMessage = error.message
@@ -82,7 +83,7 @@ export class QueueLeave {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(queueCommands.leave.errors.title)
             .setDescription(errorMessage)
             .setColor(Colors.Red),
         ],

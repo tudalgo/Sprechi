@@ -10,6 +10,7 @@ import { QueueManager } from "@managers/QueueManager"
 import { QueueError } from "@errors/QueueErrors"
 import logger from "@utils/logger"
 import { inject, injectable } from "tsyringe"
+import { tutorQueueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -19,11 +20,11 @@ export class TutorQueueList {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "list", description: "List members in the active session's queue", dmPermission: false })
+  @Slash({ name: "list", description: tutorQueueCommands.list.description, dmPermission: false })
   async list(
     @SlashOption({
       name: "max_entries",
-      description: "Maximum number of entries to list (default: 5)",
+      description: tutorQueueCommands.list.optionMaxEntries,
       required: false,
       type: ApplicationCommandOptionType.Integer,
     })
@@ -56,7 +57,7 @@ export class TutorQueueList {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(tutorQueueCommands.list.errors.title)
             .setDescription(message)
             .setColor(Colors.Red),
         ],

@@ -7,6 +7,7 @@ import {
 import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
 import { QueueManager } from "@managers/QueueManager"
 import { inject, injectable } from "tsyringe"
+import { adminQueueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -16,11 +17,11 @@ export class AdminQueueLockCommand {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "lock", description: "Lock a queue", dmPermission: false })
+  @Slash({ name: "lock", description: adminQueueCommands.lock.description, dmPermission: false })
   async lock(
     @SlashOption({
       name: "name",
-      description: "The name of the queue to lock",
+      description: adminQueueCommands.lock.optionName,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
@@ -38,8 +39,8 @@ export class AdminQueueLockCommand {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Queue Locked")
-            .setDescription(`Queue **${name}** has been locked.`)
+            .setTitle(adminQueueCommands.lock.success.title)
+            .setDescription(adminQueueCommands.lock.success.description(name))
             .setColor(Colors.Red),
         ],
       })
@@ -48,7 +49,7 @@ export class AdminQueueLockCommand {
       await interaction.editReply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(adminQueueCommands.lock.errors.title)
             .setDescription(message)
             .setColor(Colors.Red),
         ],

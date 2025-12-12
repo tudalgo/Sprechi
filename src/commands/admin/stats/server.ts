@@ -6,6 +6,7 @@ import { Chart, registerables, ChartItem } from "chart.js"
 import db from "@db"
 
 Chart.register(...registerables)
+import { adminStatsCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -16,7 +17,7 @@ export class AdminStatsServer {
   async server(
     @SlashOption({
       name: "show-empty-days",
-      description: "Whether or not to show empty days in graph",
+      description: adminStatsCommands.server.optionShowEmptyDays,
       type: ApplicationCommandOptionType.Boolean,
       required: false,
     })
@@ -111,7 +112,7 @@ export class AdminStatsServer {
         }),
         datasets: [
           {
-            label: "Member Join Count",
+            label: adminStatsCommands.server.datasets.memberJoinCount,
             data: days.map(d => d.y),
             fill: true,
             borderColor: "rgba(0, 162, 255, 1)",
@@ -119,7 +120,7 @@ export class AdminStatsServer {
             tension: 0.1,
           },
           {
-            label: "Member Verify Count",
+            label: adminStatsCommands.server.datasets.memberVerifyCount,
             data: days.map(d => d.z),
             fill: true,
             borderColor: "rgba(162, 162, 162, 1)",
@@ -175,15 +176,15 @@ export class AdminStatsServer {
     const attachment = new AttachmentBuilder(buffer, { name: "graph.png" })
 
     const embed = new EmbedBuilder()
-      .setTitle("Server Stats")
-      .setDescription("Server Information")
+      .setTitle(adminStatsCommands.server.embed.title)
+      .setDescription(adminStatsCommands.server.embed.description)
       .addFields([
-        { name: "❯ Members: ", value: `${guild.memberCount}`, inline: true },
-        { name: "❯ Verified Members: ", value: `${verifiedMemberCount}`, inline: true },
-        { name: "❯ Unverified Members: ", value: `${guild.memberCount - verifiedMemberCount}`, inline: true },
-        { name: "❯ Channels: ", value: `${guild.channels.cache.size}`, inline: true },
-        { name: "❯ Owner: ", value: `<@${guild.ownerId}>`, inline: true },
-        { name: "❯ Created at: ", value: `<t:${Math.round(guild.createdAt.getTime() / 1000)}:f>`, inline: true },
+        { name: adminStatsCommands.server.embed.fields.members, value: `${guild.memberCount}`, inline: true },
+        { name: adminStatsCommands.server.embed.fields.verifiedMembers, value: `${verifiedMemberCount}`, inline: true },
+        { name: adminStatsCommands.server.embed.fields.unverifiedMembers, value: `${guild.memberCount - verifiedMemberCount}`, inline: true },
+        { name: adminStatsCommands.server.embed.fields.channels, value: `${guild.channels.cache.size}`, inline: true },
+        { name: adminStatsCommands.server.embed.fields.owner, value: `<@${guild.ownerId}>`, inline: true },
+        { name: adminStatsCommands.server.embed.fields.createdAt, value: `<t:${Math.round(guild.createdAt.getTime() / 1000)}:f>`, inline: true },
       ])
       .setImage("attachment://graph.png")
       .setColor("#0099ff")

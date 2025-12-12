@@ -9,6 +9,7 @@ import {
   WrongServerError,
   UserNotInGuildError,
 } from "@errors/UserErrors"
+import { verifyCommand } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -17,11 +18,11 @@ export class VerifyCommand {
     @inject(UserManager) private userManager: UserManager,
   ) { }
 
-  @Slash({ name: "verify", description: "Verify your account with a token", dmPermission: false })
+  @Slash({ name: "verify", description: verifyCommand.description, dmPermission: false })
   async verify(
     @SlashOption({
       name: "token",
-      description: "Your verification token",
+      description: verifyCommand.optionToken,
       required: true,
       type: ApplicationCommandOptionType.String,
     })
@@ -37,27 +38,27 @@ export class VerifyCommand {
       const roleNames = await this.userManager.verifyUser(member, token)
 
       const embed = new EmbedBuilder()
-        .setTitle("✅ Verification Successful")
-        .setDescription(`You have been verified and granted the following roles:\n${roleNames.map(r => `• ${r}`).join("\n")}`)
+        .setTitle(verifyCommand.success.title)
+        .setDescription(verifyCommand.success.description(roleNames))
         .setColor(Colors.Green)
 
       await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
       logger.info(`[VerifyCommand] User ${interaction.user.username} verified successfully via command`)
     } catch (error) {
-      let description = "An unknown error occurred during verification"
+      let description = verifyCommand.errors.default
 
       if (error instanceof InvalidTokenError) {
-        description = "❌ Invalid token. Please check your token and try again."
+        description = verifyCommand.errors.invalidToken
       } else if (error instanceof TokenAlreadyUsedError) {
-        description = "❌ This token has already been used by another user."
+        description = verifyCommand.errors.tokenAlreadyUsed
       } else if (error instanceof WrongServerError) {
-        description = "❌ This token is for a different server."
+        description = verifyCommand.errors.wrongServer
       } else if (error instanceof UserNotInGuildError) {
-        description = "❌ You must be a member of this server to verify."
+        description = verifyCommand.errors.userNotInGuild
       }
 
       const embed = new EmbedBuilder()
-        .setTitle("Verification Failed")
+        .setTitle(verifyCommand.errors.title)
         .setDescription(description)
         .setColor(Colors.Red)
 

@@ -9,6 +9,7 @@ import { QueueManager } from "@managers/QueueManager"
 import { QueueError } from "@errors/QueueErrors"
 import logger from "@utils/logger"
 import { inject, injectable } from "tsyringe"
+import { tutorQueueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -18,7 +19,7 @@ export class TutorQueueSummary {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "summary", description: "Show summary of the active session's queue", dmPermission: false })
+  @Slash({ name: "summary", description: tutorQueueCommands.summary.description, dmPermission: false })
   async summary(interaction: CommandInteraction): Promise<void> {
     logger.info(`Command 'tutor queue summary' triggered by ${interaction.user.username} (${interaction.user.id})`)
 
@@ -45,7 +46,7 @@ export class TutorQueueSummary {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(tutorQueueCommands.summary.errors.title)
             .setDescription(message)
             .setColor(Colors.Red),
         ],

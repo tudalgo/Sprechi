@@ -3,6 +3,7 @@ import { GuildMember, EmbedBuilder, Colors } from "discord.js"
 import logger from "@utils/logger"
 import { injectable, inject } from "tsyringe"
 import { UserManager } from "@managers/UserManager"
+import { events } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -23,17 +24,11 @@ export class GuildMemberAddEvent {
     // Send welcome message
     try {
       const embed = new EmbedBuilder()
-        .setTitle(`Welcome to ${member.guild.name}! 🎉`)
-        .setDescription(
-          "To get full access to the server, you need to verify your account.\n\n"
-          + "**How to verify:**\n"
-          + "• If you have a verification token, simply paste it in this DM\n"
-          + "• Alternatively, use the `/verify` command in the server with your token\n\n"
-          + "Once verified, you'll receive your roles automatically!",
-        )
+        .setTitle(events.guildMemberAdd.dm.title(member.guild.name))
+        .setDescription(events.guildMemberAdd.dm.description)
         .setColor(Colors.Blue)
         .setThumbnail(member.guild.iconURL() || "")
-        .setFooter({ text: "Need help? Contact a server admin." })
+        .setFooter({ text: events.guildMemberAdd.dm.footer })
 
       await member.send({ embeds: [embed] })
       logger.info(`[GuildMemberAdd] Sent welcome message to ${member.user.username} (${member.user.id})`)

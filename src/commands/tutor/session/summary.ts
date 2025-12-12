@@ -12,6 +12,7 @@ import { sessionStudents } from "@db/schema"
 import { eq, sql } from "drizzle-orm"
 import logger from "@utils/logger"
 import { inject, injectable } from "tsyringe"
+import { tutorSessionCommands } from "@config/messages"
 
 @Discord()
 @injectable()
@@ -21,7 +22,7 @@ export class TutorSessionSummary {
     @inject(QueueManager) private queueManager: QueueManager,
   ) { }
 
-  @Slash({ name: "summary", description: "Get summary of the current session", dmPermission: false })
+  @Slash({ name: "summary", description: tutorSessionCommands.summary.description, dmPermission: false })
   async summary(interaction: CommandInteraction): Promise<void> {
     if (!interaction.guild) return
 
@@ -45,12 +46,12 @@ export class TutorSessionSummary {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Session Summary")
+            .setTitle(tutorSessionCommands.summary.embed.title)
             .addFields(
-              { name: "Queue", value: queue.name, inline: true },
-              { name: "Started", value: `<t:${Math.floor(startTime.getTime() / 1000)}:R>`, inline: true },
-              { name: "Duration", value: `${durationMinutes} minutes`, inline: true },
-              { name: "Students Helped", value: String(studentCount?.count ?? 0), inline: true },
+              { name: tutorSessionCommands.summary.embed.fields.queue, value: queue.name, inline: true },
+              { name: tutorSessionCommands.summary.embed.fields.started, value: `<t:${Math.floor(startTime.getTime() / 1000)}:R>`, inline: true },
+              { name: tutorSessionCommands.summary.embed.fields.duration, value: `${durationMinutes} minutes`, inline: true },
+              { name: tutorSessionCommands.summary.embed.fields.studentsHelped, value: String(studentCount?.count ?? 0), inline: true },
             )
             .setColor(Colors.Blue),
         ],
@@ -63,7 +64,7 @@ export class TutorSessionSummary {
       await interaction.reply({
         embeds: [
           new EmbedBuilder()
-            .setTitle("Error")
+            .setTitle(tutorSessionCommands.summary.errors.title)
             .setDescription(message)
             .setColor(Colors.Red),
         ],
