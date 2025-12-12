@@ -16,3 +16,6 @@ build
 node_modules
 coverage
 .vitest
+
+# misc
+.DS_Store
