@@ -1,99 +1,210 @@
-<div>
-  <p align="center">
-    <a href="https://discordx.js.org" target="_blank" rel="nofollow">
-      <img src="https://discordx.js.org/discordx.svg" width="546" />
-    </a>
-  </p>
-  <p align="center">
-    <a href="https://discordx.js.org/discord"
-      ><img
-        src="https://img.shields.io/discord/874802018361950248?color=5865F2&logo=discord&logoColor=white"
-        alt="Discord server"
-    /></a>
-    <a href="https://www.npmjs.com/package/discordx"
-      ><img
-        src="https://img.shields.io/npm/v/discordx.svg?maxAge=3600"
-        alt="NPM version"
-    /></a>
-    <a href="https://www.npmjs.com/package/discordx"
-      ><img
-        src="https://img.shields.io/npm/dt/discordx.svg?maxAge=3600"
-        alt="NPM downloads"
-    /></a>
-    <a href="https://github.com/discordx-ts/discordx/actions"
-      ><img
-        src="https://github.com/discordx-ts/discordx/workflows/Build/badge.svg"
-        alt="Build status"
-    /></a>
-    <a href="https://www.paypal.me/vijayxmeena"
-      ><img
-        src="https://img.shields.io/badge/donate-paypal-F96854.svg"
-        alt="paypal"
-    /></a>
-  </p>
-  <p align="center">
-    <b> Create a discord bot with TypeScript and Decorators! </b>
-  </p>
-</div>
+# Sprechi-v2
 
-# 📖 Introduction
+<p align="center">
+  <a href="https://github.com/tudalgo/Sprechi/actions/workflows/test.yml">
+    <img src="https://github.com/tudalgo/Sprechi/actions/workflows/test.yml/badge.svg" alt="Test" />
+  </a>
+  <a href="https://github.com/tudalgo/Sprechi/actions/workflows/lint.yml">
+    <img src="https://github.com/tudalgo/Sprechi/actions/workflows/lint.yml/badge.svg" alt="Lint" />
+  </a>
+  <a href="https://github.com/tudalgo/Sprechi/actions/workflows/build-container.yml">
+    <img src="https://github.com/tudalgo/Sprechi/actions/workflows/build-container.yml/badge.svg" alt="Build Container" />
+  </a>
+  <img src="https://img.shields.io/github/package-json/engines/node/tudalgo/Sprechi?logo=nodedotjs&logoColor=white" alt="Node.js" />
+  <img src="https://img.shields.io/github/package-json/packageManager/tudalgo/Sprechi?logo=pnpm&logoColor=white" alt="pnpm" />
+  <a href="LICENSE">
+    <img src="https://img.shields.io/badge/license-AGPL--3.0--only-blue" alt="License" />
+  </a>
+</p>
 
-A blank template with one command and one event, This is a useful template if you want to quickly spin up a project.
+A Discord bot for managing and scheduling tutoring sessions. Sprechi handles student verification, session scheduling, queue management, and ephemeral voice channel creation for tutoring sessions.
 
-# 🏗 Development
+## Features
 
+- **Student Verification**: Token-based verification system for authenticating students
+- **Queue Management**: Automated queue system for students waiting for help
+- **Session Scheduling**: Schedule and manage tutoring sessions with auto-lock functionality
+- **Voice Rooms**: Dynamic voice channel creation for tutor-student interactions
+- **Statistics**: Comprehensive server and session statistics
+- **DM Support**: Students can verify and receive notifications via direct messages
+
+## Prerequisites
+
+- Node.js >= 24.0.0
+- pnpm >= 10.24.0
+- PostgreSQL database
+- Discord Bot Token
+
+## Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/tudalgo/Sprechi.git
+   cd Sprechi
+   ```
+
+2. **Install dependencies**
+   ```bash
+   pnpm install
+   ```
+
+3. **Configure environment variables**
+   
+   Create a `.env` file in the root directory:
+   ```env
+   # Discord
+   DISCORD_TOKEN=your_discord_bot_token
+   
+   # Database
+   DATABASE_URL=postgresql://user:password@localhost:5432/sprechi
+   
+   # Encryption (for token generation)
+   ENCRYPTION_KEY=your_secret_encryption_key
+   
+   # Environment
+   NODE_ENV=development
+   ```
+
+4. **Initialize the database**
+   ```bash
+   pnpm db:generate
+   pnpm db:migrate
+   ```
+
+5. **Generate verification tokens** (if needed)
+   ```bash
+   pnpm generate-tokens
+   ```
+
+## Development
+
+Start the development server with hot reload:
+
+```bash
+pnpm dev
 ```
-npm install
-npm run dev
+
+This runs the bot with debug logging enabled and automatic restart on file changes.
+
+### Available Scripts
+
+- `pnpm dev` - Start development server with hot reload
+- `pnpm build` - Compile TypeScript to JavaScript
+- `pnpm start` - Run the production build
+- `pnpm preview` - Run production build with dev environment variables
+- `pnpm lint` - Run ESLint
+- `pnpm lint:fix` - Fix ESLint errors automatically
+- `pnpm typecheck` - Run TypeScript type checking
+- `pnpm test` - Run tests in watch mode
+- `pnpm test:coverage` - Run tests with coverage report
+- `pnpm db:generate` - Generate database migration files
+- `pnpm db:migrate` - Apply database migrations
+
+## Testing
+
+The project uses Vitest for testing with comprehensive coverage requirements.
+
+```bash
+# Run tests in watch mode
+pnpm test
+
+# Run tests with coverage
+pnpm test:coverage
+
+# Run tests with coverage UI
+pnpm test:coverage:ui
 ```
 
-If you want to use [Nodemon](https://nodemon.io/) to auto-reload while in development:
+Test files follow the same structure as source files, mirroring the `src/` directory in `tests/`.
 
+## Docker
+
+Build and run the bot using Docker:
+
+```bash
+# Build the image
+docker build -t sprechi-v2 .
+
+# Run the container
+docker run -d \
+  --name sprechi \
+  -e DISCORD_TOKEN=your_token \
+  -e DATABASE_URL=your_db_url \
+  sprechi-v2
 ```
-npm run watch
-```
 
-# 💻 Production
+Or use Docker Compose:
 
-```
-npm install --production
-npm run build
-npm run start
-```
-
-# 🐋 Docker
-
-To start your application:
-
-```
+```bash
 docker-compose up -d
 ```
 
-To shut down your application:
+## Project Structure
 
 ```
-docker-compose down
+sprechi-v2/
+├── src/
+│   ├── commands/        # Discord slash commands
+│   │   ├── admin/       # Admin-only commands
+│   │   ├── queue/       # Student queue commands
+│   │   ├── tutor/       # Tutor commands
+│   │   └── verify.ts    # Verification command
+│   ├── managers/        # Business logic layer
+│   │   ├── QueueManager.ts
+│   │   ├── RoomManager.ts
+│   │   ├── SessionManager.ts
+│   │   ├── UserManager.ts
+│   │   └── ...
+│   ├── events/          # Discord event handlers
+│   ├── db/              # Database schema and configuration
+│   ├── utils/           # Utility functions
+│   └── main.ts          # Application entry point
+├── tests/               # Test files (mirrors src structure)
+├── .github/workflows/   # CI/CD workflows
+└── drizzle/            # Database migrations
 ```
 
-To view your application's logs:
+### Architecture Principles
 
-```
-docker-compose logs
-```
+- **Commands**: Handle Discord interactions and delegate to Managers
+- **Managers**: Contain all business logic and database operations
+- **Dependency Injection**: Managers are injected into Commands/Events via constructors
+- **Type Safety**: Strict TypeScript with Drizzle ORM for type-safe database queries
 
-For the full command list please view the [Docker Documentation](https://docs.docker.com/engine/reference/commandline/cli/).
+## Contributing
 
-# 📜 Documentation
+1. Follow the existing code style and conventions
+2. Run `pnpm lint:fix` before committing
+3. Add tests for new features
+4. Update documentation as needed
+5. Keep business logic in Managers, not Commands
 
-- [discordx.js.org](https://discordx.js.org)
-- [Tutorials (dev.to)](https://dev.to/vijayymmeena/series/14317)
+### Code Quality Standards
 
-# ☎️ Need help?
+- **Type Safety**: Avoid `any`, use explicit types or `unknown` with type guards
+- **Error Handling**: Use custom error classes from the `errors/` directory
+- **Testing**: All new code must include corresponding tests
+- **Logging**: Use the logger utility (`src/utils/logger.ts`)
 
-- [Check frequently asked questions](https://discordx.js.org/docs/faq)
-- [Check examples](https://github.com/discordx-ts/discordx/tree/main/packages/discordx/examples)
-- Ask in the community [Discord server](https://discordx.js.org/discord)
+## License
 
-# 💖 Thank you
+This project is licensed under the AGPL-3.0-only License - see the [LICENSE](LICENSE) file for details.
 
-You can support [discordx](https://www.npmjs.com/package/discordx) by giving it a [GitHub](https://github.com/discordx-ts/discordx) star.
+## Technology Stack
+
+- **Framework**: [DiscordX](https://discordx.js.org/) (Discord.js wrapper with decorators)
+- **Database**: [Drizzle ORM](https://orm.drizzle.team/) with PostgreSQL
+- **Runtime**: Node.js with TypeScript
+- **Package Manager**: pnpm
+- **Testing**: Vitest
+- **Container**: Docker with multi-stage builds
+
+## Additional Resources
+
+- [DiscordX Documentation](https://discordx.js.org)
+- [Discord.js Guide](https://discordjs.guide/)
+- [Drizzle ORM Docs](https://orm.drizzle.team/docs/overview)
+
+---
+
+For detailed architecture information and development guidelines, see [agents.md](agents.md).
