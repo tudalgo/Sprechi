@@ -7,7 +7,7 @@ import { adminUserCommands } from "@config/messages"
 
 @Discord()
 @injectable()
-@SlashGroup("admin")
+@SlashGroup("user", "admin")
 export class AdminDecryptTokenCommand {
   @Slash({ name: "decrypt-token", description: adminUserCommands.decryptToken.description, dmPermission: false })
   async decryptToken(

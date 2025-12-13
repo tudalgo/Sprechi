@@ -385,6 +385,7 @@ export const adminStatsCommands = {
 // =============================================================================
 
 export const adminUserCommands = {
+  groupDescription: "Manage users",
   decryptToken: {
     description: "Decrypt a token to view its contents",
     optionToken: "The encrypted token to decrypt",

@@ -8,13 +8,14 @@ import { adminUserCommands } from "@config/messages"
 
 @Discord()
 @injectable()
-@SlashGroup("admin")
+@SlashGroup({ name: "user", description: adminUserCommands.groupDescription, root: "admin" })
+@SlashGroup("user", "admin")
 export class AdminMemberLookupCommand {
   constructor(
     @inject(UserManager) private userManager: UserManager,
   ) { }
 
-  @Slash({ name: "member-lookup", description: adminUserCommands.memberLookup.description, dmPermission: false })
+  @Slash({ name: "lookup", description: adminUserCommands.memberLookup.description, dmPermission: false })
   async memberLookup(
     @SlashOption({
       name: "user",

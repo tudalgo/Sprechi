@@ -14,13 +14,13 @@ export enum IdType {
 
 @Discord()
 @injectable()
-@SlashGroup("admin")
+@SlashGroup("user", "admin")
 export class AdminSearchCommand {
   constructor(
     @inject(UserManager) private userManager: UserManager,
   ) { }
 
-  @Slash({ name: "user-search", description: adminUserCommands.search.description, dmPermission: false })
+  @Slash({ name: "search", description: adminUserCommands.search.description, dmPermission: false })
   async search(
     @SlashChoice({ name: adminUserCommands.search.choices.discordId, value: IdType.Discord })
     @SlashChoice({ name: adminUserCommands.search.choices.tuId, value: IdType.TU })
