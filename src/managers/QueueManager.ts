@@ -341,7 +341,7 @@ export class QueueManager {
     }
 
     // Create ephemeral channel
-    const channelName = `Session-${interaction.user.displayName}`
+    const channelName = `${interaction.user.displayName}-${queue.name}`
     const channel = await roomManager.createEphemeralChannel(
       interaction.guild!,
       channelName,
