@@ -622,7 +622,7 @@ describe("QueueManager", () => {
       send: vi.fn(),
     }
       ; (bot.channels.fetch as any).mockResolvedValue(mockChannel)
-      ; (bot.users.fetch as any).mockResolvedValue({ send: vi.fn() })
+    ; (bot.users.fetch as any).mockResolvedValue({ send: vi.fn() })
 
     await queueManager.joinQueue("guild-123", "test-queue", "user-123")
 
@@ -897,7 +897,7 @@ describe("QueueManager", () => {
       const mockMember = { roles: { remove: vi.fn() } }
       const mockGuild = { members: { fetch: vi.fn().mockResolvedValue(mockMember) } }
         ; (bot.guilds.fetch as any).mockResolvedValue(mockGuild)
-        ; (bot.channels.fetch as any).mockResolvedValue({ send: vi.fn() }) // for logToChannel
+      ; (bot.channels.fetch as any).mockResolvedValue({ send: vi.fn() }) // for logToChannel
 
       await queueManager.endSession("guild-123", "tutor-123")
 
@@ -1518,8 +1518,8 @@ describe("QueueManager", () => {
       const setLockSpy = vi.spyOn(queueManager, "setQueueLockState").mockResolvedValue(undefined)
       // Mock getQueueByName for setQueueLockState
       vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
-        // Mock db update for setQueueLockState
-        ; (db.update as any).mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
+      // Mock db update for setQueueLockState
+      ; (db.update as any).mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
 
       await queueManager.checkSchedules()
 
@@ -1551,7 +1551,7 @@ describe("QueueManager", () => {
 
       const setLockSpy = vi.spyOn(queueManager, "setQueueLockState").mockResolvedValue(undefined)
       vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
-        ; (db.update as any).mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
+      ; (db.update as any).mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
 
       await queueManager.checkSchedules()
 
@@ -1583,7 +1583,7 @@ describe("QueueManager", () => {
 
       const setLockSpy = vi.spyOn(queueManager, "setQueueLockState").mockResolvedValue(undefined)
       vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
-        ; (db.update as any).mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
+      ; (db.update as any).mockReturnValue({ set: vi.fn().mockReturnValue({ where: vi.fn() }) })
 
       await queueManager.checkSchedules()
 
