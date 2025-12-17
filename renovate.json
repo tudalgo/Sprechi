@@ -1,9 +1,41 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:base"
+  "postUpdateOptions": [
+    "pnpmDedupe"
   ],
+  "extends": [
+    "config:base",
+    ":pinDigestsDisabled"
+  ],
+  "node": {
+    "enabled": true
+  },
   "packageRules": [
+    {
+      "description": "Auto-update pnpm package manager",
+      "matchManagers": [
+        "npm"
+      ],
+      "matchDepTypes": [
+        "packageManager"
+      ],
+      "automerge": true,
+      "commitMessagePrefix": "chore(deps):",
+      "commitMessageTopic": "pnpm"
+    },
+    {
+      "description": "Update Node.js engine version",
+      "matchDepNames": [
+        "node"
+      ],
+      "matchManagers": [
+        "npm"
+      ],
+      "rangeStrategy": "bump",
+      "automerge": false,
+      "commitMessagePrefix": "chore(deps):",
+      "commitMessageTopic": "Node.js engine"
+    },
     {
       "description": "Group all non-major devDependencies updates together",
       "matchDepTypes": [
@@ -40,5 +72,5 @@
       "automerge": false
     }
   ],
-  "rangeStrategy": "pin"
+  "rangeStrategy": "bump"
 }
