@@ -38,12 +38,12 @@ export const adminCommands = {
         configureSettings: {
           name: "3️⃣ Configure Queue Settings",
           value:
-            "`/admin queue waiting-room [name] [channel]`\nSet a voice channel as a waiting room for automatic queue joining.\n\n`/admin queue log-channel-public [name] [channel]`\nSet a channel for public queue activity logs.\n\n`/admin queue log-channel-private [name] [channel]`\nSet a channel for private tutor session logs.",
+            "`/admin queue waiting-room [name] [channel]`\nSet a voice channel as a waiting room for automatic queue joining.\n\n`/admin queue set-public-log-channel [name] [channel]`\nSet a channel for public queue activity logs.\n\n`/admin queue set-private-log-channel [name] [channel]`\nSet a channel for private tutor session logs.",
         },
         scheduleAutoLock: {
           name: "4️⃣ Schedule & Auto-Lock",
           value:
-            "`/admin queue schedule add [name] [day] [start] [end]`\nAdd schedule times for when the queue should be unlocked.\n\n`/admin queue auto-lock [name] [enabled]`\nEnable automatic queue locking based on schedule.\n\n`/admin queue schedule shift [name] [minutes]`\nAdjust schedule times by a specified number of minutes.",
+            "`/admin queue schedule-add [name] [day] [start] [end]`\nAdd schedule times for when the queue should be unlocked.\n• **day**: Day of the week (e.g., Monday, Tuesday)\n• **start/end**: Time in 24-hour format HH:mm (e.g., 09:00, 17:30)\n\n`/admin queue auto-lock [name] [enabled]`\nEnable automatic queue locking based on schedule.\n\n`/admin queue schedule-shift [name] [minutes]`\nAdjust schedule times by a specified number of minutes.",
         },
         viewStats: {
           name: "5️⃣ View Statistics",
