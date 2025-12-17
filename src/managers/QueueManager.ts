@@ -785,6 +785,33 @@ export class QueueManager {
     const lockStateStr = isLocked ? "locked" : "unlocked"
     logger.info(`[Set Lock State] Queue "${queueName}" in guild ${guildId} set to ${lockStateStr}.`)
 
+    // Update waiting room permissions if waiting room exists
+    if (queue.waitingRoomId) {
+      try {
+        const verifiedRoleId = await this.guildManager.getRole(guildId, InternalRole.Verified)
+        if (verifiedRoleId) {
+          const guild = await bot.guilds.fetch(guildId)
+          const waitingRoomChannel = await guild.channels.fetch(queue.waitingRoomId)
+
+          if (waitingRoomChannel && waitingRoomChannel.isVoiceBased()) {
+            if (isLocked) {
+              // Deny Connect permission for verified role when locking
+              await waitingRoomChannel.permissionOverwrites.edit(verifiedRoleId, {
+                Connect: false,
+              })
+              logger.info(`[Set Lock State] Denied Connect permission for verified role in waiting room ${queue.waitingRoomId}`)
+            } else {
+              // Remove permission override when unlocking to restore default permissions
+              await waitingRoomChannel.permissionOverwrites.delete(verifiedRoleId)
+              logger.info(`[Set Lock State] Removed permission override for verified role in waiting room ${queue.waitingRoomId}`)
+            }
+          }
+        }
+      } catch (error) {
+        logger.error(`Failed to update waiting room permissions for queue "${queueName}":`, error)
+      }
+    }
+
     // Log to public log channel with appropriate color (Red for locked, Green for unlocked)
     await this.logToPublicChannel(
       queue,
