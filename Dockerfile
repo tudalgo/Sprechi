@@ -1,24 +1,47 @@
-FROM node:22 AS build
+# Build stage
+FROM node:24-alpine AS builder
 
-# Install system dependencies for `canvas`
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libcairo2-dev \
-    libpango1.0-dev \
-    libjpeg-dev \
-    libgif-dev \
-    librsvg2-dev \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+# Enable pnpm
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
 
 WORKDIR /app
 
-COPY package*.json ./
+# Copy configuration files
+COPY package.json pnpm-lock.yaml ./
 
-RUN npm install
+# Install dependencies with frozen lockfile
+RUN pnpm install --frozen-lockfile
 
+# Copy source code
 COPY . .
 
-RUN npm run build
+# Build the application
+RUN pnpm run build
 
-# Run the app
-CMD [ "node", "dist/index.js" ]
+# Prune development dependencies
+RUN pnpm prune --prod
+
+# Production stage
+FROM node:24-alpine AS runner
+
+# Install dumb-init for signal handling
+RUN apk add --no-cache dumb-init
+
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+# Don't run as root
+USER node
+
+# Copy necessary files from builder
+COPY --from=builder --chown=node:node /app/package.json ./
+COPY --from=builder --chown=node:node /app/node_modules/ ./node_modules
+COPY --from=builder --chown=node:node /app/build ./build
+
+# Basic signal handling via dumb-init
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+
+CMD ["node", "build/src/main.js"]

@@ -1,63 +1,59 @@
-import { ApplicationCommandOptionType, Message, VoiceChannel } from "discord.js";
-import { Command } from "../../../../typings";
-import { GuildModel } from "../../../models/guilds";
+import {
+  ApplicationCommandOptionType,
+  CommandInteraction,
+  EmbedBuilder,
+  Colors,
+} from "discord.js"
+import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
+import { QueueManager } from "@managers/QueueManager"
+import { inject, injectable } from "tsyringe"
+import { adminQueueCommands } from "@config/messages"
 
-const command: Command = {
-    name: "lock",
-    description: "Locks the Queue and disables the /queue join command",
-    options: [
-        {
-            name: "queue",
-            description: "The Queue",
-            type: ApplicationCommandOptionType.String,
-            required: true,
-        },
-    ],
-    execute: async (client, interaction, args) => {
-        if (!interaction) {
-            return;
-        }
-        if (interaction instanceof Message) {
-            client.utils.embeds.SimpleEmbed(interaction, "Slash Only Command", "This Command is Slash only but you Called it with The Prefix. use the slash Command instead.");
-            return;
-        }
+@Discord()
+@injectable()
+@SlashGroup("queue", "admin")
+export class AdminQueueLockCommand {
+  constructor(
+    @inject(QueueManager) private queueManager: QueueManager,
+  ) { }
 
-        await interaction.deferReply();
+  @Slash({ name: "lock", description: adminQueueCommands.lock.description, dmPermission: false })
+  async lock(
+    @SlashOption({
+      name: "name",
+      description: adminQueueCommands.lock.optionName,
+      required: true,
+      type: ApplicationCommandOptionType.String,
+    })
+    name: string,
+    interaction: CommandInteraction,
+  ): Promise<void> {
+    if (!interaction.guildId) return
 
-        const g = interaction.guild!;
-        const guildData = (await GuildModel.findById(g.id));
-        if (!guildData) {
-            return await client.utils.embeds.SimpleEmbed(interaction, { title: "Coaching System", text: "Guild Data Could not be found.", empheral: true });
-        }
+    await interaction.deferReply()
 
-        const queueName = interaction.options.getString("queue", true);
-        const queueData = guildData.queues.find(x => x.name.toLowerCase() === queueName.toLowerCase());
-        if (!queueData) {
-            return await client.utils.embeds.SimpleEmbed(interaction, { title: "Coaching System", text: `Queue ${queueName} could not be fould.`, empheral: true });
-        }
+    try {
+      await this.queueManager.setScheduleEnabled(interaction.guildId, name, false)
+      await this.queueManager.setQueueLockState(interaction.guildId, name, true)
 
-        // Lock
-        await queueData.lock();
-        try {
-            queueData.getWaitingRooms(guildData).forEach(async x => await x.lock(await g.channels.fetch(x._id) as VoiceChannel, (await guildData.getVerifiedRole(client, g))?.id || undefined));
-        } catch (error) {
-            return await client.utils.embeds.SimpleEmbed(interaction, {
-                title: "Coaching System - Error",
-                text: `:x: Queue ${queueData.name}-could not be locked:\n${error}`,
-                empheral: true,
-            });
-        }
-
-        await client.utils.embeds.SimpleEmbed(interaction, {
-            title: "Coaching System",
-            text: `Queue ${queueData.name}-was locked.`,
-            empheral: true,
-        });
-        // client.utils.embeds.SimpleEmbed(interaction, "TODO", `Command \`${path.relative(process.cwd(), __filename)}\` is not Implemented Yet.`);
-    },
-};
-
-/**
- * Exporting the Command using CommonJS
- */
-module.exports = command;
+      await interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle(adminQueueCommands.lock.success.title)
+            .setDescription(adminQueueCommands.lock.success.description(name))
+            .setColor(Colors.Red),
+        ],
+      })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "An error occurred."
+      await interaction.editReply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle(adminQueueCommands.lock.errors.title)
+            .setDescription(message)
+            .setColor(Colors.Red),
+        ],
+      })
+    }
+  }
+}

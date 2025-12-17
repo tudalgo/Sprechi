@@ -1,36 +1,60 @@
-import { Message } from "discord.js";
-import { Command } from "../../../typings";
-import { GuildModel } from "../../models/guilds";
+import {
+  CommandInteraction,
+  EmbedBuilder,
+  Colors,
+  MessageFlags,
+} from "discord.js"
+import { Discord, Slash, SlashGroup } from "discordx"
+import { QueueManager } from "@managers/QueueManager"
+import logger from "@utils/logger"
+import { inject, injectable } from "tsyringe"
+import { queueCommands } from "@config/messages"
 
-const command: Command = {
-    name: "list",
-    description: "lists all available queues",
-    aliases: ["l"],
-    cooldown: 3000,
-    category: "Miscellaneous",
-    guildOnly: true,
-    execute: async (client, interaction, args) => {
-        if (!interaction) {
-            return;
-        }
-        if (interaction instanceof Message) {
-            client.utils.embeds.SimpleEmbed(interaction, "Slash Only Command", "This Command is Slash only but you Called it with The Prefix. use the slash Command instead.");
-            return;
-        }
+@Discord()
+@injectable()
+@SlashGroup({ name: "queue", description: queueCommands.list.groupDescription })
+export class QueueList {
+  constructor(
+    @inject(QueueManager) private queueManager: QueueManager,
+  ) { }
 
-        const g = interaction.guild!;
-        const guildData = (await GuildModel.findById(g.id));
-        if (!guildData) {
-            return await client.utils.embeds.SimpleEmbed(interaction, { title: "Coaching System", text: "Guild Data Could not be found.", empheral: true });
-        }
+  @Slash({ name: "list", description: queueCommands.list.description, dmPermission: false })
+  @SlashGroup("queue")
+  async list(interaction: CommandInteraction): Promise<void> {
+    if (!interaction.guild) return
 
-        return await client.utils.embeds.SimpleEmbed(interaction, { title: "Queue List", fields: guildData.queues.map(x => { return { name: x.name + (x.locked ? " (locked)" : ""), value: x.description ?? "", inline: false }; }) });
+    logger.info(`Command 'list queues' triggered by ${interaction.user.username} (${interaction.user.id})`)
+    const queues = await this.queueManager.listQueues(interaction.guild.id)
+    logger.info(`Listed ${queues.length} queues for guild '${interaction.guild.name}' (${interaction.guild.id})`)
 
-        // client.utils.embeds.SimpleEmbed(interaction, "TODO", `Command \`${path.relative(process.cwd(), __filename)}\` is not Implemented Yet.`)
-    },
-};
+    if (queues.length === 0) {
+      await interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle(queueCommands.list.emptyState.title)
+            .setDescription(queueCommands.list.emptyState.description)
+            .setColor(Colors.Yellow),
+        ],
+        flags: MessageFlags.Ephemeral,
+      })
+      return
+    }
 
-/**
- * Exporting the Command using CommonJS
- */
-module.exports = command;
+    const embed = new EmbedBuilder()
+      .setTitle(queueCommands.list.listTitle)
+      .setColor(Colors.Blue)
+      .setDescription(
+        queues
+          .map(
+            q =>
+              queueCommands.list.queueEntry(q.name, q.isLocked, q.description, q.memberCount),
+          )
+          .join("\n\n"),
+      )
+
+    await interaction.reply({
+      embeds: [embed],
+      flags: MessageFlags.Ephemeral,
+    })
+  }
+}

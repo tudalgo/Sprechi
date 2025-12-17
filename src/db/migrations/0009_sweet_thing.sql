@@ -1,0 +1,2 @@
+ALTER TABLE "users" ALTER COLUMN "roles" SET DEFAULT '{}'::"public"."internal_role"[];--> statement-breakpoint
+ALTER TABLE "users" ALTER COLUMN "roles" SET DATA TYPE "public"."internal_role"[] USING "roles"::"public"."internal_role"[];

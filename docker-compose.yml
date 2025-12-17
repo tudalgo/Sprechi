@@ -1,28 +1,7 @@
-version: '3.8'
+version: "3"
 services:
-  db:
-    image: mongo
-    container_name: sprechi-mongodb
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=$MONGODB_USER
-      - MONGO_INITDB_ROOT_PASSWORD=$MONGODB_PASSWORD
-      - MONGO_INITDB_DATABASE=$MONGODB_DBNAME
-    restart: unless-stopped
-    #healthcheck:
-    #  test: echo 'db.runCommand({serverStatus:1}).ok' | mongo admin -u $MONGO_INITDB_ROOT_USERNAME -p $MONGO_INITDB_ROOT_PASSWORD --quiet | grep 1
-    #  interval: 10s
-    #  timeout: 10s
-    #  retries: 5
-    #  start_period: 20s
-        
-  sprechi:
+  app:
     build: .
-    image: rubot:latest
-    container_name: sprechi
+    command: node build/main.js
     environment:
-      - TZ=Europe/Berlin
-      - MONGODB_CONNECTION_URL=mongodb://${MONGODB_USER}:${MONGODB_PASSWORD}@db:27017/${MONGODB_DBNAME}?authSource=admin
-    restart: unless-stopped
-    #depends_on:
-    #  db:
-    #    condition: service_healthy
+      - BOT_TOKEN=${BOT_TOKEN}

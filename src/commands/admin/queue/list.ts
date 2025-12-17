@@ -1,80 +1,60 @@
-import { ApplicationCommandOptionType, EmbedField, GuildMember, Message } from "discord.js";
-import { Command } from "../../../../typings";
-import { GuildModel } from "../../../models/guilds";
-
-const command: Command = {
-    name: "list",
-    description: "Lists The first X entries of the Coaching Queue (default: 5)",
-    aliases: ["s", "begin", "b"],
-    options: [
-        {
-            name: "queue",
-            description: "The Queue",
-            type: ApplicationCommandOptionType.String,
-            required: true,
-        },
-        {
-            name: "amount",
-            description: "The Amount of Entries to display (this option will soon be replaced with navigation buttons)",
-            type: ApplicationCommandOptionType.Integer,
-            required: false,
-        },
-    ],
-    execute: async (client, interaction, args) => {
-        if (!interaction) {
-            return;
-        }
-        if (interaction instanceof Message) {
-            client.utils.embeds.SimpleEmbed(interaction, "Slash Only Command", "This Command is Slash only but you Called it with The Prefix. use the slash Command instead.");
-            return;
-        }
-
-        const g = interaction.guild!;
-        const guildData = (await GuildModel.findById(g.id));
-        if (!guildData) {
-            return await client.utils.embeds.SimpleEmbed(interaction, { title: "Coaching System", text: "Guild Data Could not be found.", empheral: true });
-        }
-
-        const queue = interaction.options.getString("queue", true);
-        const queueData = guildData.queues.find(x => x.name.toLowerCase() === queue.toLowerCase());
-        if (!queueData) {
-            return await client.utils.embeds.SimpleEmbed(interaction, { title: "Coaching System", text: "Queue Could not be Found.", empheral: true });
-        }
-
-        // await g.members.fetch();
-
-        const fields: EmbedField[] = [];
-        for (const e of queueData.getSortedEntries(10)) {
-            const position = queueData.getPosition(e.discord_id) + 1;
-            const joined_at = `<t:${Math.round((+e.joinedAt) / 1000)}:f>`;
-            const intent = e.intent;
-            let member: GuildMember | null;
-            try {
-                member = await g.members.fetch(e.discord_id);
-            } catch (error) {
-                member = null;
-            }
-            fields.push({
-                name: member?.displayName ?? "unknown", value:
-                `-Mention: ${member ?? "unknown"}`
-                    + `\n-Position: ${position}`
-                    + `\n-joined at: ${joined_at}`
-                    + (intent ? `\n-intent: ${intent}` : ""),
-                inline: false,
-            });
-        }
-
-        await client.utils.embeds.SimpleEmbed(interaction, {
-            title: "Queue Information",
-            text: fields && fields.length ? `Queue Entries of ${queueData.name}` : `Queue ${queueData.name} is empty`,
-            empheral: true,
-            fields,
-        });
-        // client.utils.embeds.SimpleEmbed(interaction, "TODO", `Command \`${path.relative(process.cwd(), __filename)}\` is not Implemented Yet.`);
-    },
-};
+import { Discord, Slash, SlashOption, SlashGroup } from "discordx"
+import { ApplicationCommandOptionType, CommandInteraction, EmbedBuilder, Colors } from "discord.js"
+import { injectable, inject } from "tsyringe"
+import { QueueManager } from "@managers/QueueManager"
+import logger from "@utils/logger"
+import { adminQueueCommands } from "@config/messages"
 
 /**
- * Exporting the Command using CommonJS
+ * Command to list users in a specific queue (Admin).
  */
-module.exports = command;
+@Discord()
+@injectable()
+@SlashGroup("queue", "admin")
+export class AdminQueueList {
+  constructor(
+    @inject(QueueManager) private queueManager: QueueManager,
+  ) { }
+
+  @Slash({ name: "list", description: adminQueueCommands.list.description, dmPermission: false })
+  async list(
+    @SlashOption({
+      description: adminQueueCommands.list.optionName,
+      name: "name",
+      required: true,
+      type: ApplicationCommandOptionType.String,
+    })
+    queueName: string,
+    @SlashOption({
+      description: adminQueueCommands.list.optionMaxEntries,
+      name: "max_entries",
+      required: false,
+      type: ApplicationCommandOptionType.Integer,
+    })
+    maxEntries: number | undefined,
+    interaction: CommandInteraction,
+  ) {
+    if (!interaction.guild) return
+
+    try {
+      const limit = maxEntries ?? 5
+      const embed = await this.queueManager.getQueueListEmbed(interaction.guild.id, queueName, limit)
+
+      await interaction.reply({
+        embeds: [embed],
+      })
+      logger.info(`Admin ${interaction.user.username} listed members for queue '${queueName}'`)
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "An error occurred."
+      logger.warn(`Failed to list queue members for admin ${interaction.user.username}: ${message}`)
+      await interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle(adminQueueCommands.list.errors.title)
+            .setDescription(message)
+            .setColor(Colors.Red),
+        ],
+      })
+    }
+  }
+}

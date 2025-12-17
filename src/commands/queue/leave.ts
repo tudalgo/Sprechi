@@ -1,67 +1,94 @@
-import { Message } from "discord.js";
-import { Command } from "../../../typings";
-import { GuildModel } from "../../models/guilds";
-import QueueInfoService from "../../service/queue-info/QueueInfoService";
-import { QueueEventType } from "../../models/events";
+import {
+  ApplicationCommandOptionType,
+  CommandInteraction,
+  EmbedBuilder,
+  Colors,
+  MessageFlags,
+} from "discord.js"
+import { Discord, Slash, SlashGroup, SlashOption } from "discordx"
+import { QueueManager } from "@managers/QueueManager"
+import {
+  QueueNotFoundError,
+  NotInQueueError,
+  QueueError,
+} from "../../errors/QueueErrors"
+import logger from "@utils/logger"
+import { inject, injectable } from "tsyringe"
+import { queueCommands } from "@config/messages"
 
-const command: Command = {
-    name: "leave",
-    description: "Leave the current Queue",
-    aliases: ["broadcast"],
-    cooldown: 3000,
-    guildOnly: true,
-    execute: async (client, interaction, args) => {
-        if (!interaction) {
-            return;
+@Discord()
+@injectable()
+@SlashGroup("queue")
+export class QueueLeave {
+  constructor(
+    @inject(QueueManager) private queueManager: QueueManager,
+  ) { }
+
+  @Slash({ name: "leave", description: queueCommands.leave.description, dmPermission: false })
+  async leave(
+    @SlashOption({
+      name: "name",
+      description: queueCommands.leave.optionName,
+      required: false,
+      type: ApplicationCommandOptionType.String,
+    })
+    name: string | undefined,
+    interaction: CommandInteraction,
+  ): Promise<void> {
+    logger.info(`Command 'leave queue' triggered by ${interaction.user.username} (${interaction.user.id}) for queue '${name ?? "auto-detect"}'`)
+
+    if (!interaction.guild) return
+
+    try {
+      let queueName = name
+      if (!queueName) {
+        const currentQueue = await this.queueManager.getQueueByUser(interaction.guild.id, interaction.user.id)
+        if (currentQueue) {
+          queueName = currentQueue.name
+        } else {
+          // If not in any queue, try to resolve default queue to show correct error
+          const queue = await this.queueManager.resolveQueue(interaction.guild.id)
+          queueName = queue.name
         }
-        if (interaction instanceof Message) {
-            client.utils.embeds.SimpleEmbed(interaction, "Slash Only Command", "This Command is Slash only but you Called it with The Prefix. use the slash Command instead.");
-            return;
-        }
+      }
 
-        const g = interaction.guild!;
-        const guildData = (await GuildModel.findById(g.id));
-        if (!guildData) {
-            return await client.utils.embeds.SimpleEmbed(interaction, { title: "Coaching System", text: "Guild Data Could not be found.", empheral: true });
-        }
+      await this.queueManager.leaveQueue(interaction.guild.id, queueName!, interaction.user.id)
 
-        const user = client.utils.general.getUser(interaction);
-        const queueData = guildData.queues.find(x => x.contains(user.id));
-        if (!queueData) {
-            return await client.utils.embeds.SimpleEmbed(interaction, { title: "Coaching System", text: "You are currently not in a queue.", empheral: true });
-        }
+      logger.info(`User ${interaction.user.username} (${interaction.user.id}) left queue '${queueName}' in guild '${interaction.guild.name}' (${interaction.guild.id})`)
 
-        const leave_msg = queueData.getLeaveMessage(user.id);
-        await queueData.leave(user.id);
+      await interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle(queueCommands.leave.success.title)
+            .setDescription(queueCommands.leave.success.description(queueName!))
+            .setColor(Colors.Yellow),
+        ],
+        flags: MessageFlags.Ephemeral,
+      })
+    } catch (error: unknown) {
+      let errorMessage = queueCommands.leave.errors.default
+      if (error instanceof QueueNotFoundError) {
+        errorMessage = queueCommands.leave.errors.notFound(name ?? "default")
+        logger.warn(`Failed to leave queue: Queue '${name}' not found in guild '${interaction.guild.id}'`)
+      } else if (error instanceof NotInQueueError) {
+        errorMessage = queueCommands.leave.errors.notInQueue(name ?? null)
+        logger.warn(`Failed to leave queue: User ${interaction.user.username} not in queue '${name ?? "any"}' in guild '${interaction.guild.id}'`)
+      } else if (error instanceof QueueError) {
+        errorMessage = error.message
+        logger.warn(`Failed to leave queue '${name}': ${error.message}`)
+      } else {
+        logger.error(`Error leaving queue '${name}':`, error)
+      }
 
-
-        if (client.queue_stays.get(user.id)?.get(queueData._id!.toHexString()) === client.utils.general.QueueStayOptions.PENDING) {
-            client.queue_stays.get(user.id)!.set(queueData._id!.toHexString(), client.utils.general.QueueStayOptions.LEFT);
-        }
-
-        try {
-            const member = g.members.resolve(user);
-            const vcData = await guildData.voice_channels.id(member?.voice.channelId);
-            if (vcData?.queue?.equals(queueData._id!)) {
-                await member!.voice.disconnect();
-            }
-            const roles = await g.roles.fetch();
-            const waiting_role = roles.find(x => x.name.toLowerCase() === queueData.name.toLowerCase() + "-waiting");
-
-            if (waiting_role && member && member.roles.cache.has(waiting_role.id)) {
-                await member.roles.remove(waiting_role);
-            }
-
-            await QueueInfoService.logQueueActivity(g, user, queueData, QueueEventType.LEAVE);
-        } catch (error) {
-            console.log(error);
-        }
-        await client.utils.embeds.SimpleEmbed(interaction, { title: "Coaching System", text: leave_msg, empheral: true });
-        // client.utils.embeds.SimpleEmbed(interaction, "TODO", `Command \`${path.relative(process.cwd(), __filename)}\` is not Implemented Yet.`);
-    },
-};
-
-/**
- * Exporting the Command using CommonJS
- */
-module.exports = command;
+      await interaction.reply({
+        embeds: [
+          new EmbedBuilder()
+            .setTitle(queueCommands.leave.errors.title)
+            .setDescription(errorMessage)
+            .setColor(Colors.Red),
+        ],
+        flags: MessageFlags.Ephemeral,
+      })
+    }
+  }
+}

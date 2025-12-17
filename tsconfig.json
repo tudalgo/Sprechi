@@ -1,39 +1,51 @@
 {
-    "compilerOptions": {
-        "target": "ES2022",
-        "module": "commonjs",
-        // "moduleResolution": "node",
-        "strict": true,
-        // "lib": [
-        //     "es6",
-        //     "dom"
-        // ],
-        "sourceMap": true,
-        "types": [
-            // add node as an option
-            "node",
-            //"reflect-metadata",
-            "jest"
-        ],
-        "skipLibCheck": true,
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "noEmitHelpers": true,
-        "importHelpers": true,
-        "experimentalDecorators": true,
-        "emitDecoratorMetadata": true,
-        "resolveJsonModule": true,
-        "outDir": "dist",
-        "allowJs": true,
-        "typeRoots": [
-            "node_modules/@types",
-            "typings/index.d.ts"
-        ]
-    },
-    "exclude": [],
-    "include": [
-        "src/**/*",
-        "typings/index.d.ts",
-        "typings/decs.d.ts"
-    ]
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "outDir": "build",
+    "rootDir": ".",
+    "strict": true,
+    "moduleResolution": "Node",
+    "allowSyntheticDefaultImports": true,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": false,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@db": [
+        "src/db"
+      ],
+      "@db/*": [
+        "src/db/*"
+      ],
+      "@utils/*": [
+        "src/utils/*"
+      ],
+      "@managers/*": [
+        "src/managers/*"
+      ],
+      "@errors/*": [
+        "src/errors/*"
+      ],
+      "@commands/*": [
+        "src/commands/*"
+      ],
+      "@config/*": [
+        "src/config/*"
+      ],
+      "@events/*": [
+        "src/events/*"
+      ],
+      "@/*": [
+        "src/*"
+      ],
+    }
+  },
+  "exclude": [
+    "build",
+    "node_modules",
+    "drizzle.config.ts",
+    "eslint.config.ts",
+  ]
 }

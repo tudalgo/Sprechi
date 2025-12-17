@@ -1,40 +1,69 @@
-import { ApplicationCommandOptionType, Message } from "discord.js";
-import { Command } from "../../typings";
+import { CommandInteraction, EmbedBuilder, MessageFlags, Colors, ApplicationCommandOptionType } from "discord.js"
+import { Discord, Slash, SlashOption } from "discordx"
+import { injectable, inject } from "tsyringe"
+import { UserManager } from "@managers/UserManager"
+import logger from "@utils/logger"
+import {
+  InvalidTokenError,
+  TokenAlreadyUsedError,
+  WrongServerError,
+  UserNotInGuildError,
+} from "@errors/UserErrors"
+import { verifyCommand } from "@config/messages"
 
-/**
- * The Command Definition
- */
-const command: Command = {
-    name: "verify",
-    aliases: ["v"],
-    invisible: false,
-    guildOnly: true,
-    description: "Verifies the User with a given Token String",
-    category: "Moderation",
-    options: [{
-        name: "token-string",
-        description: "The Token String",
-        type: ApplicationCommandOptionType.String,
-        required: true,
-    }],
-    async execute(client, interaction, args) {
+@Discord()
+@injectable()
+export class VerifyCommand {
+  constructor(
+    @inject(UserManager) private userManager: UserManager,
+  ) { }
 
-        if (!interaction) {
-            return;
-        }
+  @Slash({ name: "verify", description: verifyCommand.description, dmPermission: false })
+  async verify(
+    @SlashOption({
+      name: "token",
+      description: verifyCommand.optionToken,
+      required: true,
+      type: ApplicationCommandOptionType.String,
+    })
+    token: string,
+    interaction: CommandInteraction,
+  ): Promise<void> {
+    try {
+      if (!interaction.guild) {
+        return
+      }
 
-        // Check Token
-        let token: string;
-        if (interaction instanceof Message) {
-            token = args[0];
-        } else {
-            token = interaction.options.getString("token-string", true);
-        }
-        return await client.utils.general.verifyUser(interaction, token);
-    },
-};
+      const member = await interaction.guild.members.fetch(interaction.user.id)
+      const roleNames = await this.userManager.verifyUser(member, token)
 
-/**
- * Exporting the Command using CommonJS
- */
-module.exports = command;
+      const embed = new EmbedBuilder()
+        .setTitle(verifyCommand.success.title)
+        .setDescription(verifyCommand.success.description(roleNames))
+        .setColor(Colors.Green)
+
+      await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
+      logger.info(`[VerifyCommand] User ${interaction.user.username} verified successfully via command`)
+    } catch (error) {
+      let description = verifyCommand.errors.default
+
+      if (error instanceof InvalidTokenError) {
+        description = verifyCommand.errors.invalidToken
+      } else if (error instanceof TokenAlreadyUsedError) {
+        description = verifyCommand.errors.tokenAlreadyUsed
+      } else if (error instanceof WrongServerError) {
+        description = verifyCommand.errors.wrongServer
+      } else if (error instanceof UserNotInGuildError) {
+        description = verifyCommand.errors.userNotInGuild
+      }
+
+      const embed = new EmbedBuilder()
+        .setTitle(verifyCommand.errors.title)
+        .setDescription(description)
+        .setColor(Colors.Red)
+
+      await interaction.reply({ embeds: [embed], flags: MessageFlags.Ephemeral })
+      logger.error(`[VerifyCommand] Verification failed for ${interaction.user.username}:`, error)
+    }
+  }
+}

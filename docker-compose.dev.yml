@@ -1,0 +1,7 @@
+services:
+  dev_db:
+    image: postgres:18
+    env_file:
+      - .env.dev
+    ports:
+      - "5433:5432"

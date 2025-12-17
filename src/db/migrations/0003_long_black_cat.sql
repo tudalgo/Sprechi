@@ -1,0 +1,1 @@
+ALTER TABLE "sessions" ADD COLUMN "students_helped" integer DEFAULT 0 NOT NULL;

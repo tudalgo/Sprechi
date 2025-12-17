@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "build",
+    "node_modules",
+    "drizzle.config.ts",
+    "eslint.config.ts",
+    "src/dev.ts",
+    "src/apply-migration.ts",
+    "src/scripts/**/*",
+    "tests/**/*"
+  ]
+}
