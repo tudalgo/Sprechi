@@ -2,8 +2,11 @@ import { IntentsBitField, Partials, type Interaction, type Message } from "disco
 import { Client } from "discordx"
 
 export const bot = new Client({
-  // To use only guild command
-  botGuilds: [client => client.guilds.cache.map(guild => guild.id)],
+  // Use guild commands in development for instant updates
+  // Use global commands in production for availability across all guilds
+  ...(process.env.NODE_ENV !== "production" && {
+    botGuilds: [client => client.guilds.cache.map(guild => guild.id)],
+  }),
 
   // Discord intents
   intents: [
