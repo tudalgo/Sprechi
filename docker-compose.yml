@@ -1,6 +1,6 @@
 services:
-  app:
-    image: sprechi:latest
+  sprechi:
+    image: ghcr.io/tudalgo/sprechi:lastest
     container_name: sprechi
     env_file:
       - .env
