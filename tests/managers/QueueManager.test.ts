@@ -1277,7 +1277,7 @@ describe("QueueManager", () => {
       })
     })
 
-    it("should remove permission override for verified role in waiting room when unlocking", async () => {
+    it("should set Connect permission to true for verified role in waiting room when unlocking", async () => {
       const mockQueue = {
         id: "queue-123",
         isLocked: true,
@@ -1296,7 +1296,7 @@ describe("QueueManager", () => {
 
       // Mock Discord channel
       const mockPermissionOverwrites = {
-        delete: vi.fn().mockResolvedValue(undefined),
+        edit: vi.fn().mockResolvedValue(undefined),
       }
       const mockChannel = {
         isVoiceBased: () => true,
@@ -1314,7 +1314,9 @@ describe("QueueManager", () => {
       expect(mockGuildManager.getRole).toHaveBeenCalledWith("guild-123", InternalRole.Verified)
       expect(bot.guilds.fetch).toHaveBeenCalledWith("guild-123")
       expect(mockGuild.channels.fetch).toHaveBeenCalledWith("waiting-room-123")
-      expect(mockPermissionOverwrites.delete).toHaveBeenCalledWith("verified-role-123")
+      expect(mockPermissionOverwrites.edit).toHaveBeenCalledWith("verified-role-123", {
+        Connect: true,
+      })
     })
 
     it("should work normally when queue has no waiting room", async () => {
