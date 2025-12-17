@@ -62,8 +62,8 @@ describe("AdminHelp", () => {
     const configField = fields.find((f: any) => f.name === "3️⃣ Configure Queue Settings")
     expect(configField).toBeDefined()
     expect(configField.value).toContain("/admin queue waiting-room")
-    expect(configField.value).toContain("/admin queue log-channel-public")
-    expect(configField.value).toContain("/admin queue log-channel-private")
+    expect(configField.value).toContain("/admin queue set-public-log-channel")
+    expect(configField.value).toContain("/admin queue set-private-log-channel")
   })
 
   it("should contain schedule and auto-lock commands", async () => {
@@ -74,9 +74,9 @@ describe("AdminHelp", () => {
 
     const scheduleField = fields.find((f: any) => f.name === "4️⃣ Schedule & Auto-Lock")
     expect(scheduleField).toBeDefined()
-    expect(scheduleField.value).toContain("/admin queue schedule add")
+    expect(scheduleField.value).toContain("/admin queue schedule-add")
     expect(scheduleField.value).toContain("/admin queue auto-lock")
-    expect(scheduleField.value).toContain("/admin queue schedule shift")
+    expect(scheduleField.value).toContain("/admin queue schedule-shift")
   })
 
   it("should contain statistics commands", async () => {
