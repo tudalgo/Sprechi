@@ -4,10 +4,10 @@
     "pnpmDedupe"
   ],
   "extends": [
-    "config:base",
+    "config:recommended",
     ":pinDigestsDisabled"
   ],
-  "node": {
+  "travis": {
     "enabled": true
   },
   "packageRules": [
