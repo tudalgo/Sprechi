@@ -10,8 +10,6 @@
   <a href="https://github.com/tudalgo/Sprechi/actions/workflows/build-container.yml">
     <img src="https://github.com/tudalgo/Sprechi/actions/workflows/build-container.yml/badge.svg" alt="Build Container" />
   </a>
-  <img src="https://img.shields.io/github/package-json/engines/node/tudalgo/Sprechi?logo=nodedotjs&logoColor=white" alt="Node.js" />
-  <img src="https://img.shields.io/github/package-json/packageManager/tudalgo/Sprechi?logo=pnpm&logoColor=white" alt="pnpm" />
   <a href="LICENSE">
     <img src="https://img.shields.io/badge/license-AGPL--3.0--only-blue" alt="License" />
   </a>
