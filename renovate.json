@@ -5,11 +5,37 @@
   ],
   "packageRules": [
     {
+      "description": "Group all non-major devDependencies updates together",
+      "matchDepTypes": [
+        "devDependencies"
+      ],
       "matchUpdateTypes": [
         "minor",
         "patch",
         "pin",
         "digest"
+      ],
+      "groupName": "devDependencies (non-major)",
+      "automerge": false
+    },
+    {
+      "description": "Group all non-major production dependencies updates together",
+      "matchDepTypes": [
+        "dependencies"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "groupName": "dependencies (non-major)",
+      "automerge": false
+    },
+    {
+      "description": "Keep major updates as separate PRs for careful review",
+      "matchUpdateTypes": [
+        "major"
       ],
       "automerge": false
     }
