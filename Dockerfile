@@ -40,6 +40,7 @@ USER node
 COPY --from=builder --chown=node:node /app/package.json ./
 COPY --from=builder --chown=node:node /app/node_modules/ ./node_modules
 COPY --from=builder --chown=node:node /app/build ./build
+COPY --from=builder --chown=node:node /app/src/db/migrations ./src/db/migrations
 
 # Basic signal handling via dumb-init
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
