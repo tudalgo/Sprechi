@@ -802,7 +802,9 @@ export class QueueManager {
               logger.info(`[Set Lock State] Denied Connect permission for verified role in waiting room ${queue.waitingRoomId}`)
             } else {
               // Remove permission override when unlocking to restore default permissions
-              await waitingRoomChannel.permissionOverwrites.delete(verifiedRoleId)
+              await waitingRoomChannel.permissionOverwrites.edit(verifiedRoleId, {
+                Connect: true,
+              })
               logger.info(`[Set Lock State] Removed permission override for verified role in waiting room ${queue.waitingRoomId}`)
             }
           }
