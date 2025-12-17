@@ -1234,6 +1234,205 @@ describe("QueueManager", () => {
       await expect(queueManager.setQueueLockState("guild-123", "test-queue", true))
         .rejects.toThrow("Queue \"test-queue\" not found")
     })
+
+    it("should deny Connect permission for verified role in waiting room when locking", async () => {
+      const mockQueue = {
+        id: "queue-123",
+        isLocked: false,
+        name: "test-queue",
+        waitingRoomId: "waiting-room-123",
+      }
+      vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+
+      // Mock update
+      const whereUpdateMock = vi.fn().mockResolvedValue([])
+      const setMock = vi.fn().mockReturnValue({ where: whereUpdateMock });
+      (db.update as any).mockReturnValue({ set: setMock })
+
+      // Mock GuildManager to return verified role
+      mockGuildManager.getRole.mockResolvedValue("verified-role-123")
+
+      // Mock Discord channel
+      const mockPermissionOverwrites = {
+        edit: vi.fn().mockResolvedValue(undefined),
+      }
+      const mockChannel = {
+        isVoiceBased: () => true,
+        permissionOverwrites: mockPermissionOverwrites,
+      }
+      const mockGuild = {
+        channels: {
+          fetch: vi.fn().mockResolvedValue(mockChannel),
+        },
+      };
+      (bot.guilds.fetch as any).mockResolvedValue(mockGuild)
+
+      await queueManager.setQueueLockState("guild-123", "test-queue", true)
+
+      expect(mockGuildManager.getRole).toHaveBeenCalledWith("guild-123", InternalRole.Verified)
+      expect(bot.guilds.fetch).toHaveBeenCalledWith("guild-123")
+      expect(mockGuild.channels.fetch).toHaveBeenCalledWith("waiting-room-123")
+      expect(mockPermissionOverwrites.edit).toHaveBeenCalledWith("verified-role-123", {
+        Connect: false,
+      })
+    })
+
+    it("should remove permission override for verified role in waiting room when unlocking", async () => {
+      const mockQueue = {
+        id: "queue-123",
+        isLocked: true,
+        name: "test-queue",
+        waitingRoomId: "waiting-room-123",
+      }
+      vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+
+      // Mock update
+      const whereUpdateMock = vi.fn().mockResolvedValue([])
+      const setMock = vi.fn().mockReturnValue({ where: whereUpdateMock });
+      (db.update as any).mockReturnValue({ set: setMock })
+
+      // Mock GuildManager to return verified role
+      mockGuildManager.getRole.mockResolvedValue("verified-role-123")
+
+      // Mock Discord channel
+      const mockPermissionOverwrites = {
+        delete: vi.fn().mockResolvedValue(undefined),
+      }
+      const mockChannel = {
+        isVoiceBased: () => true,
+        permissionOverwrites: mockPermissionOverwrites,
+      }
+      const mockGuild = {
+        channels: {
+          fetch: vi.fn().mockResolvedValue(mockChannel),
+        },
+      };
+      (bot.guilds.fetch as any).mockResolvedValue(mockGuild)
+
+      await queueManager.setQueueLockState("guild-123", "test-queue", false)
+
+      expect(mockGuildManager.getRole).toHaveBeenCalledWith("guild-123", InternalRole.Verified)
+      expect(bot.guilds.fetch).toHaveBeenCalledWith("guild-123")
+      expect(mockGuild.channels.fetch).toHaveBeenCalledWith("waiting-room-123")
+      expect(mockPermissionOverwrites.delete).toHaveBeenCalledWith("verified-role-123")
+    })
+
+    it("should work normally when queue has no waiting room", async () => {
+      const mockQueue = {
+        id: "queue-123",
+        isLocked: false,
+        name: "test-queue",
+        waitingRoomId: null,
+      }
+      vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+
+      // Mock update
+      const whereUpdateMock = vi.fn().mockResolvedValue([])
+      const setMock = vi.fn().mockReturnValue({ where: whereUpdateMock });
+      (db.update as any).mockReturnValue({ set: setMock })
+
+      await queueManager.setQueueLockState("guild-123", "test-queue", true)
+
+      expect(db.update).toHaveBeenCalledWith(queues)
+      expect(setMock).toHaveBeenCalledWith({ isLocked: true })
+      // Should not try to fetch guild or channels
+      expect(mockGuildManager.getRole).not.toHaveBeenCalled()
+      expect(bot.guilds.fetch).not.toHaveBeenCalled()
+    })
+
+    it("should work normally when verified role is not configured", async () => {
+      const mockQueue = {
+        id: "queue-123",
+        isLocked: false,
+        name: "test-queue",
+        waitingRoomId: "waiting-room-123",
+      }
+      vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+
+      // Mock update
+      const whereUpdateMock = vi.fn().mockResolvedValue([])
+      const setMock = vi.fn().mockReturnValue({ where: whereUpdateMock });
+      (db.update as any).mockReturnValue({ set: setMock })
+
+      // Mock GuildManager to return null (no verified role)
+      mockGuildManager.getRole.mockResolvedValue(null)
+
+      await queueManager.setQueueLockState("guild-123", "test-queue", true)
+
+      expect(db.update).toHaveBeenCalledWith(queues)
+      expect(setMock).toHaveBeenCalledWith({ isLocked: true })
+      expect(mockGuildManager.getRole).toHaveBeenCalledWith("guild-123", InternalRole.Verified)
+      // Should not try to fetch guild or channels since no verified role
+      expect(bot.guilds.fetch).not.toHaveBeenCalled()
+    })
+
+    it("should not throw if waiting room permission update fails", async () => {
+      const mockQueue = {
+        id: "queue-123",
+        isLocked: false,
+        name: "test-queue",
+        waitingRoomId: "waiting-room-123",
+      }
+      vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+
+      // Mock update
+      const whereUpdateMock = vi.fn().mockResolvedValue([])
+      const setMock = vi.fn().mockReturnValue({ where: whereUpdateMock });
+      (db.update as any).mockReturnValue({ set: setMock })
+
+      // Mock GuildManager to return verified role
+      mockGuildManager.getRole.mockResolvedValue("verified-role-123")
+
+      // Mock Discord to throw error
+      const mockGuildsFetch = vi.fn().mockRejectedValue(new Error("Guild fetch failed"));
+      (bot.guilds.fetch as any) = mockGuildsFetch
+
+      // Should not throw
+      await expect(queueManager.setQueueLockState("guild-123", "test-queue", true))
+        .resolves.not.toThrow()
+
+      // Queue should still be locked in database
+      expect(db.update).toHaveBeenCalledWith(queues)
+      expect(setMock).toHaveBeenCalledWith({ isLocked: true })
+    })
+
+    it("should skip permission update if channel is not voice-based", async () => {
+      const mockQueue = {
+        id: "queue-123",
+        isLocked: false,
+        name: "test-queue",
+        waitingRoomId: "waiting-room-123",
+      }
+      vi.spyOn(queueManager, "getQueueByName").mockResolvedValue(mockQueue as any)
+
+      // Mock update
+      const whereUpdateMock = vi.fn().mockResolvedValue([])
+      const setMock = vi.fn().mockReturnValue({ where: whereUpdateMock });
+      (db.update as any).mockReturnValue({ set: setMock })
+
+      // Mock GuildManager to return verified role
+      mockGuildManager.getRole.mockResolvedValue("verified-role-123")
+
+      // Mock Discord channel that is not voice-based
+      const mockPermissionOverwrites = {
+        edit: vi.fn(),
+      }
+      const mockChannel = {
+        isVoiceBased: () => false,
+        permissionOverwrites: mockPermissionOverwrites,
+      }
+      const mockGuild = {
+        channels: {
+          fetch: vi.fn().mockResolvedValue(mockChannel),
+        },
+      };
+      (bot.guilds.fetch as any).mockResolvedValue(mockGuild)
+
+      await queueManager.setQueueLockState("guild-123", "test-queue", true)
+
+      // Should not try to edit permissions
+      expect(mockPermissionOverwrites.edit).not.toHaveBeenCalled()
+    })
   })
   describe("Scheduling", () => {
     it("should add a schedule", async () => {
