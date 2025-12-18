@@ -19,7 +19,8 @@ export const managers = {
       sessionTerminatedAdmin: (tutorId: string) => `Session for <@${tutorId}> was forcefully terminated by admin.`,
       sessionTerminatedAll: (tutorId: string) =>
         `Session for <@${tutorId}> was forcefully terminated by admin (Terminate All).`,
-      queueLockState: (queueName: string, lockState: string) => `Queue **${queueName}** is now **${lockState}**.`,
+      queueLockStatePublic: (queueName: string, lockState: string) => `Die **${queueName}**-Warteschlange ist jetzt **${lockState === "locked" ? "gesperrt" : "entsperrt"}**. Eine Übersicht der Sprechstundenzeiten befindet sich in den Pins.\n---\nThe **${queueName}**-queue is now **${lockState}**. A list of available tutoring times can be found in the pinned messages.`,
+      queueLockStatePrivate: (queueName: string, lockState: string) => `Queue **${queueName}** is now **${lockState}**.`,
     },
     dms: {
       joinedQueue: {
