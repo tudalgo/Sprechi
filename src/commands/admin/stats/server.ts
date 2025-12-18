@@ -144,6 +144,14 @@ export class AdminStatsServer {
         },
         scales: {
           x: {
+            title: {
+              display: true,
+              text: "Date",
+              color: "#ffffff",
+              font: {
+                size: 14,
+              },
+            },
             grid: {
               color: "#ffffff",
             },
@@ -155,6 +163,14 @@ export class AdminStatsServer {
             },
           },
           y: {
+            title: {
+              display: true,
+              text: "Count",
+              color: "#ffffff",
+              font: {
+                size: 14,
+              },
+            },
             grid: {
               color: "#ffffff",
             },
