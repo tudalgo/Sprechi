@@ -26,8 +26,12 @@ RUN pnpm prune --prod
 # Production stage
 FROM node:24.12.0-alpine AS runner
 
-# Install dumb-init for signal handling and tzdata for timezone support
-RUN apk add --no-cache dumb-init tzdata
+# Install dumb-init for signal handling, tzdata for timezone support, and fonts for canvas rendering
+RUN apk add --no-cache \
+    dumb-init \
+    tzdata \
+    fontconfig \
+    ttf-dejavu
 ENV NODE_ENV=production
 
 WORKDIR /app
