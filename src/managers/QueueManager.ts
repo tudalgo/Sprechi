@@ -817,12 +817,12 @@ export class QueueManager {
     // Log to public log channel with appropriate color (Red for locked, Green for unlocked)
     await this.logToPublicChannel(
       queue,
-      managers.queue.logs.queueLockState(queueName, lockStateStr),
+      managers.queue.logs.queueLockStatePublic(queueName, lockStateStr),
       isLocked ? Colors.Red : Colors.Green,
     )
     await this.logToChannel(
       queue,
-      managers.queue.logs.queueLockState(queueName, lockStateStr),
+      managers.queue.logs.queueLockStatePrivate(queueName, lockStateStr),
     )
   }
 
