@@ -101,6 +101,21 @@ export class AdminStatsSessions {
           },
           legend: { display: false },
         },
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: "Queue Name",
+            },
+          },
+          y: {
+            title: {
+              display: true,
+              text: "Number of Students",
+            },
+            beginAtZero: true,
+          },
+        },
       },
     })
 
@@ -132,7 +147,17 @@ export class AdminStatsSessions {
           },
         },
         scales: {
+          x: {
+            title: {
+              display: true,
+              text: "Hour of Day",
+            },
+          },
           y: {
+            title: {
+              display: true,
+              text: "Number of Students",
+            },
             beginAtZero: true,
             ticks: {
               stepSize: 1,
