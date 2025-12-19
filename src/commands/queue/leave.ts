@@ -60,7 +60,7 @@ export class QueueLeave {
         embeds: [
           new EmbedBuilder()
             .setTitle(queueCommands.leave.success.title)
-            .setDescription(queueCommands.leave.success.description(queueName!))
+            .setDescription(queueCommands.leave.success.description(queueName))
             .setColor(Colors.Yellow),
         ],
         flags: MessageFlags.Ephemeral,
