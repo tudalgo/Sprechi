@@ -151,6 +151,12 @@ export class QueueManager {
 
       const member = await this.getQueueMember(queue.id, userId)
 
+      // If member not found in queue, skip sending DM
+      if (!member) {
+        logger.warn(`Member ${userId} not found in queue ${queue.id} when trying to send join DM`)
+        return
+      }
+
       const embed = new EmbedBuilder()
         .setTitle(managers.queue.dms.joinedQueue.title(queue.name))
         .setDescription(managers.queue.dms.joinedQueue.description(queue.name, position, Math.floor(member.joinedAt.getTime() / 1000)))
