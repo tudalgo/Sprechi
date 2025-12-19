@@ -16,11 +16,16 @@ export function encryptText(text: string, secret?: string): string {
  * Decrypts a given text using AES decryption
  * @param text the text to decrypt
  * @param secret The encryption secret (defaults to env variable)
- * @returns the decrypted text
+ * @returns the decrypted text, or an empty string if decryption fails
  */
 export function decryptText(text: string, secret?: string): string {
-  const encryptionSecret = secret ?? process.env.TOKEN_ENCRYPTION_SECRET ?? ""
-  return CryptoJS.AES.decrypt(text, encryptionSecret).toString(CryptoJS.enc.Utf8)
+  try {
+    const encryptionSecret = secret ?? process.env.TOKEN_ENCRYPTION_SECRET ?? ""
+    return CryptoJS.AES.decrypt(text, encryptionSecret).toString(CryptoJS.enc.Utf8)
+  } catch {
+    // Return empty string when decryption fails (e.g., wrong secret, malformed data)
+    return ""
+  }
 }
 
 export interface TokenData {
