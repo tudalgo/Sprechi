@@ -34,8 +34,10 @@ export const managers = {
       },
       leftQueue: {
         title: "Left Queue",
-        description: (queueName: string) =>
-          `You have left the queue **${queueName}**.\n\nYou have **1 minute** to rejoin without losing your spot.`,
+        description: (queueName: string) => {
+          const rejoinTime = Math.floor(Date.now() / 1000) + 60
+          return `You have left the queue **${queueName}**.\n\nYou have **1 minute** until <t:${rejoinTime}:R> to rejoin without losing your spot.`
+        },
         button: "Rejoin Queue",
       },
       picked: {

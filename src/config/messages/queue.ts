@@ -2,6 +2,8 @@
  * Queue command messages
  */
 
+import { managers } from "./managers"
+
 export const queueCommands = {
   join: {
     description: "Join a queue",
@@ -23,9 +25,8 @@ export const queueCommands = {
     description: "Leave a queue",
     optionName: "The name of the queue to leave",
     success: {
-      title: "Left Queue",
-      description: (queueName: string) =>
-        `You have left the queue **${queueName}**.\nYou have 1 minute to rejoin to keep your position.`,
+      title: managers.queue.dms.leftQueue.title,
+      description: managers.queue.dms.leftQueue.description,
     },
     errors: {
       default: "Failed to leave queue.",
