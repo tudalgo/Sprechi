@@ -9,16 +9,16 @@
 export const managers = {
   queue: {
     logs: {
-      userRejoined: (userId: string) => `User <@${userId}> rejoined the queue (restored position).`,
-      userJoined: (userId: string) => `User <@${userId}> joined the queue.`,
-      userLeftGracePeriod: (userId: string) => `User <@${userId}> left the queue (grace period started).`,
-      userLeft: (userId: string) => `User <@${userId}> left the queue.`,
-      userPicked: (userId: string, tutorId: string) => `User <@${userId}> was picked by <@${tutorId}>.`,
-      tutorStarted: (tutorId: string) => `Tutor <@${tutorId}> started a session.`,
-      tutorEnded: (tutorId: string) => `Tutor <@${tutorId}> ended their session.`,
-      sessionTerminatedAdmin: (tutorId: string) => `Session for <@${tutorId}> was forcefully terminated by admin.`,
-      sessionTerminatedAll: (tutorId: string) =>
-        `Session for <@${tutorId}> was forcefully terminated by admin (Terminate All).`,
+      userRejoined: (username: string, userId: string) => `User **${username}** (<@${userId}>) rejoined the queue (restored position).`,
+      userJoined: (username: string, userId: string) => `User **${username}** (<@${userId}>) joined the queue.`,
+      userLeftGracePeriod: (username: string, userId: string) => `User **${username}** (<@${userId}>) left the queue (grace period started).`,
+      userLeft: (username: string, userId: string) => `User **${username}** (<@${userId}>) left the queue.`,
+      userPicked: (studentUsername: string, studentId: string, tutorUsername: string, tutorId: string) => `User **${studentUsername}** (<@${studentId}>) was picked by **${tutorUsername}** (<@${tutorId}>).`,
+      tutorStarted: (tutorUsername: string, tutorId: string) => `Tutor **${tutorUsername}** (<@${tutorId}>) started a session.`,
+      tutorEnded: (tutorUsername: string, tutorId: string) => `Tutor **${tutorUsername}** (<@${tutorId}>) ended their session.`,
+      sessionTerminatedAdmin: (tutorUsername: string, tutorId: string) => `Session for **${tutorUsername}** (<@${tutorId}>) was forcefully terminated by admin.`,
+      sessionTerminatedAll: (tutorUsername: string, tutorId: string) =>
+        `Session for **${tutorUsername}** (<@${tutorId}>) was forcefully terminated by admin (Terminate All).`,
       queueLockStatePublic: (queueName: string, lockState: string) => `Die **${queueName}**-Warteschlange ist jetzt **${lockState === "locked" ? "gesperrt" : "entsperrt"}**. Eine Übersicht der Sprechstundenzeiten befindet sich in den Pins.\n---\nThe **${queueName}**-queue is now **${lockState}**. A list of available tutoring times can be found in the pinned messages.`,
       queueLockStatePrivate: (queueName: string, lockState: string) => `Queue **${queueName}** is now **${lockState}**.`,
     },
