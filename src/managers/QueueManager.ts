@@ -122,7 +122,8 @@ export class QueueManager {
           .set({ leftAt: null })
           .where(eq(queueMembers.id, existingMember.id))
 
-        await this.logToChannel(queue, managers.queue.logs.userRejoined(userId))
+        const username = await this.getUsernameById(userId)
+        await this.logToChannel(queue, managers.queue.logs.userRejoined(username, userId))
         await this.sendJoinDm(queue, userId)
         logger.info(`[Rejoin Queue] User ${userId} rejoined queue "${queue.name}" (${queue.id}) in guild ${guildId} (restored position).`)
         return
@@ -137,7 +138,8 @@ export class QueueManager {
       userId,
     })
 
-    await this.logToChannel(queue, managers.queue.logs.userJoined(userId))
+    const username = await this.getUsernameById(userId)
+    await this.logToChannel(queue, managers.queue.logs.userJoined(username, userId))
     await this.sendJoinDm(queue, userId)
     logger.info(`[Join Queue] User ${userId} joined queue "${queue.name}" (${queue.id}) in guild ${guildId}.`)
   }
@@ -191,7 +193,8 @@ export class QueueManager {
       .set({ leftAt: new Date() })
       .where(eq(queueMembers.id, member.id))
 
-    await this.logToChannel(queue, managers.queue.logs.userLeftGracePeriod(userId))
+    const username = await this.getUsernameById(userId)
+    await this.logToChannel(queue, managers.queue.logs.userLeftGracePeriod(username, userId))
     logger.info(`[Leave Queue] User ${userId} left queue "${queue.name}" (${queue.id}) in guild ${guildId}`)
 
     // Remove from waiting room voice channel
@@ -241,7 +244,8 @@ export class QueueManager {
           if (diff >= 60000) {
             await db.delete(queueMembers).where(eq(queueMembers.id, member.id))
 
-            await this.logToChannel(queue, managers.queue.logs.userLeft(userId))
+            const username = await this.getUsernameById(userId)
+            await this.logToChannel(queue, managers.queue.logs.userLeft(username, userId))
           }
         }
       } catch (error) {
@@ -283,7 +287,9 @@ export class QueueManager {
       channelId,
     })
 
-    await this.logToChannel(queue, managers.queue.logs.userPicked(userId, tutorId))
+    const studentUsername = await this.getUsernameById(userId)
+    const tutorUsername = await this.getUsernameById(tutorId)
+    await this.logToChannel(queue, managers.queue.logs.userPicked(studentUsername, userId, tutorUsername, tutorId))
     logger.info(`[Pick Student] Tutor ${tutorId} picked student ${userId} from queue "${queue.name}" (${queue.id}). Session: ${sessionId}`)
 
     // DM Student
@@ -451,7 +457,8 @@ export class QueueManager {
       tutorId,
     })
 
-    await this.logToChannel(queue, managers.queue.logs.tutorStarted(tutorId))
+    const tutorUsername = await this.getUsernameById(tutorId)
+    await this.logToChannel(queue, managers.queue.logs.tutorStarted(tutorUsername, tutorId))
     logger.info(`[Create Session] Tutor ${tutorId} started session on queue "${queueName}" in guild ${guildId}.`)
 
     // Assign active_session role
@@ -481,7 +488,8 @@ export class QueueManager {
       .returning()
 
     if (result.length > 0) {
-      await this.logToChannel(queue, managers.queue.logs.tutorEnded(tutorId))
+      const tutorUsername = await this.getUsernameById(tutorId)
+      await this.logToChannel(queue, managers.queue.logs.tutorEnded(tutorUsername, tutorId))
       logger.info(`[End Session] Tutor ${tutorId} ended session in guild ${guildId}.`)
 
       // Remove active_session role
@@ -570,6 +578,19 @@ export class QueueManager {
       }
     } catch (error) {
       logger.error(`Failed to log to channel ${queue.privateLogChannelId}:`, error)
+    }
+  }
+
+  /**
+   * Fetch username from Discord API, with fallback to userId if fetch fails
+   */
+  private async getUsernameById(userId: string): Promise<string> {
+    try {
+      const user = await bot.users.fetch(userId)
+      return user.username
+    } catch (error) {
+      logger.warn(`Failed to fetch username for user ${userId}:`, error)
+      return userId // Fallback to user ID if fetch fails
     }
   }
 
@@ -705,7 +726,8 @@ export class QueueManager {
 
     // Log for each session
     for (const { session, queue } of activeSessions) {
-      await this.logToChannel(queue, managers.queue.logs.sessionTerminatedAdmin(session.tutorId))
+      const tutorUsername = await this.getUsernameById(session.tutorId)
+      await this.logToChannel(queue, managers.queue.logs.sessionTerminatedAdmin(tutorUsername, session.tutorId))
       logger.info(`[Terminate Session] Session ${session.id} for tutor ${session.tutorId} terminated by admin in guild ${guildId}.`)
 
       // Remove active_session role
@@ -749,7 +771,8 @@ export class QueueManager {
 
     // Log for each session
     for (const { session, queue } of activeSessions) {
-      await this.logToChannel(queue, managers.queue.logs.sessionTerminatedAll(session.tutorId))
+      const tutorUsername = await this.getUsernameById(session.tutorId)
+      await this.logToChannel(queue, managers.queue.logs.sessionTerminatedAll(tutorUsername, session.tutorId))
       logger.info(`[Terminate All Sessions] Session ${session.id} for tutor ${session.tutorId} terminated by admin in guild ${guildId}.`)
 
       // Remove active_session role
