@@ -11,7 +11,6 @@ import { adminQueueCommands } from "@config/messages"
 
 @Discord()
 @injectable()
-@SlashGroup("admin")
 @SlashGroup("queue", "admin")
 export class AdminQueueAutoLockCommand {
   constructor(
