@@ -1,5 +1,5 @@
 # Build stage
-FROM node:24.12.0-alpine AS builder
+FROM node:24.13.0-alpine AS builder
 
 # Enable pnpm
 ENV PNPM_HOME="/pnpm"
@@ -24,7 +24,7 @@ RUN pnpm run build
 RUN pnpm prune --prod
 
 # Production stage
-FROM node:24.12.0-alpine AS runner
+FROM node:24.13.0-alpine AS runner
 
 # Install dumb-init for signal handling, tzdata for timezone support, and fonts for canvas rendering
 RUN apk add --no-cache \
