@@ -1,5 +1,5 @@
 import db, { InternalRole } from "@db"
-import { queues, queueMembers, sessions, sessionStudents, queueSchedules } from "@db/schema"
+import { queues, queueMembers, sessions, sessionStudents, queueSchedules, guilds } from "@db/schema"
 import logger from "@utils/logger"
 import { eq, and, sql, isNull } from "drizzle-orm"
 import {
@@ -1014,6 +1014,82 @@ export class QueueManager {
       }
     } catch (error) {
       logger.error("Error in checkSchedules:", error)
+    }
+  }
+
+  // Session Cleanup Schedule Methods
+
+  async setSessionCleanupSchedule(guildId: string, dayOfWeek: number, time: string) {
+    // Validate day
+    if (dayOfWeek < 0 || dayOfWeek > 6) {
+      throw new InvalidQueueScheduleDayError(String(dayOfWeek))
+    }
+
+    // Validate time format
+    this.validateTimeFormat(time)
+
+    await db.update(guilds)
+      .set({
+        sessionCleanupDay: dayOfWeek,
+        sessionCleanupTime: time,
+        updatedAt: new Date(),
+      })
+      .where(eq(guilds.id, guildId))
+
+    logger.info(`[Set Session Cleanup Schedule] Set cleanup for guild ${guildId} on day ${dayOfWeek} at ${time}.`)
+  }
+
+  async disableSessionCleanupSchedule(guildId: string) {
+    await db.update(guilds)
+      .set({
+        sessionCleanupDay: null,
+        sessionCleanupTime: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(guilds.id, guildId))
+
+    logger.info(`[Disable Session Cleanup Schedule] Disabled cleanup for guild ${guildId}.`)
+  }
+
+  async getSessionCleanupSchedule(guildId: string): Promise<{ day: number, time: string } | null> {
+    const [guild] = await db.select({
+      day: guilds.sessionCleanupDay,
+      time: guilds.sessionCleanupTime,
+    })
+      .from(guilds)
+      .where(eq(guilds.id, guildId))
+
+    if (!guild || guild.day === null || guild.time === null) {
+      return null
+    }
+
+    return { day: guild.day, time: guild.time }
+  }
+
+  async checkSessionCleanup() {
+    try {
+      // Get all guilds with session cleanup configured
+      const configuredGuilds = await db.select()
+        .from(guilds)
+        .where(and(
+          sql`${guilds.sessionCleanupDay} IS NOT NULL`,
+          sql`${guilds.sessionCleanupTime} IS NOT NULL`,
+        ))
+
+      const now = new Date()
+      const currentDay = now.getDay()
+      const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+
+      for (const guild of configuredGuilds) {
+        if (guild.sessionCleanupDay === currentDay && guild.sessionCleanupTime === currentTime) {
+          const count = await this.terminateAllSessions(guild.id)
+          if (count > 0) {
+            logger.info(`[Session Cleanup] Terminated ${count} session(s) in guild ${guild.id} (scheduled cleanup).`)
+          }
+        }
+      }
+    } catch (error) {
+      logger.error("Error in checkSessionCleanup:", error)
     }
   }
 }

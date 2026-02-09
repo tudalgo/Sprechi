@@ -24,11 +24,17 @@ export class ReadyEvent {
       this.queueManager.checkSchedules().catch((err) => {
         logger.error("Error in schedule checker:", err)
       })
+      this.queueManager.checkSessionCleanup().catch((err) => {
+        logger.error("Error in session cleanup checker:", err)
+      })
     }, 60000)
 
     // Initial check
     this.queueManager.checkSchedules().catch((err) => {
       logger.error("Error in initial schedule check:", err)
+    })
+    this.queueManager.checkSessionCleanup().catch((err) => {
+      logger.error("Error in initial session cleanup check:", err)
     })
   }
 }

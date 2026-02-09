@@ -324,6 +324,26 @@ export const adminSessionCommands = {
       description: (count: number, userId: string) => `Successfully terminated **${count}** session(s) for <@${userId}>.`,
     },
   },
+  sessionCleanup: {
+    description: "Configure weekly session cleanup schedule",
+    optionDay: "Day of the week (e.g., Sunday)",
+    optionTime: "Time in 24-hour format (HH:mm)",
+    optionDisable: "Disable the cleanup schedule",
+    success: {
+      title: "Session Cleanup Scheduled",
+      description: (day: string, time: string) =>
+        `Sessions will be automatically terminated every **${day}** at **${time}**.`,
+    },
+    disabled: {
+      title: "Session Cleanup Disabled",
+      description: "Automatic session cleanup has been disabled.",
+    },
+    errors: {
+      title: "Error",
+      default: "An error occurred.",
+      missingArgs: "Please provide both **day** and **time** to set a cleanup schedule, or use **disable** to turn it off.",
+    },
+  },
 }
 
 // =============================================================================
