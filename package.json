@@ -48,7 +48,7 @@
     "chokidar": "^5.0.0",
     "drizzle-kit": "^0.31.9",
     "eslint": "^10.0.0",
-    "eslint-import-resolver-typescript": "^3.8.3",
+    "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
     "globals": "^17.3.0",
     "prettier": "^3.8.1",
