@@ -7,6 +7,9 @@ import globals from "globals"
 
 export default defineConfig([
   {
+    ignores: ["build/**", "coverage/**", "node_modules/**", "*.config.ts"],
+  },
+  {
     settings: {
       "import/resolver": {
         typescript: {
@@ -20,6 +23,10 @@ export default defineConfig([
       sourceType: "module",
       globals: {
         ...globals.node,
+      },
+      parserOptions: {
+        project: true,
+        tsconfigRootDir: import.meta.dirname,
       },
     },
     plugins: {
