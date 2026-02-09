@@ -17,6 +17,8 @@ export const guilds = pgTable("guilds", {
   memberCount: integer("member_count").default(0).notNull(),
   welcomeText: text("welcome_text"),
   welcomeTitle: text("welcome_title"),
+  sessionCleanupDay: integer("session_cleanup_day"), // 0=Sunday, 6=Saturday - null means disabled
+  sessionCleanupTime: text("session_cleanup_time"), // HH:mm format - null means disabled
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, table => [

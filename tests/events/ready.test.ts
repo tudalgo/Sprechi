@@ -44,33 +44,40 @@ describe("ReadyEvent", () => {
 
   it("should sync guilds and check schedules on ready", async () => {
     mockQueueManager.checkSchedules.mockResolvedValue(undefined)
+    mockQueueManager.checkSessionCleanup.mockResolvedValue(undefined)
 
     await readyEvent.onReady([mockClient])
 
     expect(mockGuildManager.syncAllGuilds).toHaveBeenCalled()
     expect(mockQueueManager.checkSchedules).toHaveBeenCalled()
+    expect(mockQueueManager.checkSessionCleanup).toHaveBeenCalled()
   })
 
   it("should set up schedule checking interval", async () => {
     mockQueueManager.checkSchedules.mockResolvedValue(undefined)
+    mockQueueManager.checkSessionCleanup.mockResolvedValue(undefined)
 
     await readyEvent.onReady([mockClient])
 
     // Should call checkSchedules initially
     expect(mockQueueManager.checkSchedules).toHaveBeenCalledTimes(1)
+    expect(mockQueueManager.checkSessionCleanup).toHaveBeenCalledTimes(1)
 
     // Clear mock call history but keep the timer
     mockQueueManager.checkSchedules.mockClear()
+    mockQueueManager.checkSessionCleanup.mockClear()
 
     // Advance timers to trigger interval (every minute = 60000ms)
     await vi.advanceTimersByTimeAsync(60000)
 
     // Should be called once by the interval
     expect(mockQueueManager.checkSchedules).toHaveBeenCalledTimes(1)
+    expect(mockQueueManager.checkSessionCleanup).toHaveBeenCalledTimes(1)
   })
 
   it("should handle errors from checkSchedules gracefully", async () => {
     mockQueueManager.checkSchedules.mockRejectedValue(new Error("Schedule check failed"))
+    mockQueueManager.checkSessionCleanup.mockResolvedValue(undefined)
 
     // Should not throw - errors should be caught and logged
     await expect(readyEvent.onReady([mockClient])).resolves.not.toThrow()

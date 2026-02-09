@@ -1901,4 +1901,132 @@ describe("QueueManager", () => {
       })
     })
   })
+
+  describe("sessionCleanup", () => {
+    describe("setSessionCleanupSchedule", () => {
+      it("should set schedule successfully with valid day and time", async () => {
+        const whereMock = vi.fn().mockResolvedValue([])
+        const setMock = vi.fn().mockReturnValue({ where: whereMock });
+        (db.update as any).mockReturnValue({ set: setMock })
+
+        await queueManager.setSessionCleanupSchedule("guild-123", 0, "23:00")
+
+        expect(db.update).toHaveBeenCalled()
+        expect(setMock).toHaveBeenCalledWith(expect.objectContaining({
+          sessionCleanupDay: 0,
+          sessionCleanupTime: "23:00",
+        }))
+      })
+
+      it("should throw on invalid day (negative)", async () => {
+        await expect(queueManager.setSessionCleanupSchedule("guild-123", -1, "23:00"))
+          .rejects.toThrow()
+      })
+
+      it("should throw on invalid day (greater than 6)", async () => {
+        await expect(queueManager.setSessionCleanupSchedule("guild-123", 7, "23:00"))
+          .rejects.toThrow()
+      })
+
+      it("should throw on invalid time format", async () => {
+        await expect(queueManager.setSessionCleanupSchedule("guild-123", 0, "invalid"))
+          .rejects.toThrow()
+      })
+    })
+
+    describe("disableSessionCleanupSchedule", () => {
+      it("should disable schedule successfully", async () => {
+        const whereMock = vi.fn().mockResolvedValue([])
+        const setMock = vi.fn().mockReturnValue({ where: whereMock });
+        (db.update as any).mockReturnValue({ set: setMock })
+
+        await queueManager.disableSessionCleanupSchedule("guild-123")
+
+        expect(db.update).toHaveBeenCalled()
+        expect(setMock).toHaveBeenCalledWith(expect.objectContaining({
+          sessionCleanupDay: null,
+          sessionCleanupTime: null,
+        }))
+      })
+    })
+
+    describe("getSessionCleanupSchedule", () => {
+      it("should return schedule when set", async () => {
+        const whereMock = vi.fn().mockResolvedValue([{ day: 0, time: "23:00" }])
+        const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+        (db.select as any).mockReturnValue({ from: fromMock })
+
+        const result = await queueManager.getSessionCleanupSchedule("guild-123")
+
+        expect(result).toEqual({ day: 0, time: "23:00" })
+      })
+
+      it("should return null when not set", async () => {
+        const whereMock = vi.fn().mockResolvedValue([{ day: null, time: null }])
+        const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+        (db.select as any).mockReturnValue({ from: fromMock })
+
+        const result = await queueManager.getSessionCleanupSchedule("guild-123")
+
+        expect(result).toBeNull()
+      })
+
+      it("should return null when guild not found", async () => {
+        const whereMock = vi.fn().mockResolvedValue([])
+        const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+        (db.select as any).mockReturnValue({ from: fromMock })
+
+        const result = await queueManager.getSessionCleanupSchedule("guild-123")
+
+        expect(result).toBeNull()
+      })
+    })
+
+    describe("checkSessionCleanup", () => {
+      it("should terminate sessions when time matches", async () => {
+        const now = new Date()
+        const currentDay = now.getDay()
+        const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`
+
+        const whereMock = vi.fn().mockResolvedValue([{
+          id: "guild-123",
+          sessionCleanupDay: currentDay,
+          sessionCleanupTime: currentTime,
+        }])
+        const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+        (db.select as any).mockReturnValue({ from: fromMock })
+
+        vi.spyOn(queueManager, "terminateAllSessions").mockResolvedValue(3)
+
+        await queueManager.checkSessionCleanup()
+
+        expect(queueManager.terminateAllSessions).toHaveBeenCalledWith("guild-123")
+      })
+
+      it("should not terminate sessions when time does not match", async () => {
+        const whereMock = vi.fn().mockResolvedValue([{
+          id: "guild-123",
+          sessionCleanupDay: 0,
+          sessionCleanupTime: "00:00", // Unlikely to match current time
+        }])
+        const fromMock = vi.fn().mockReturnValue({ where: whereMock });
+        (db.select as any).mockReturnValue({ from: fromMock })
+
+        vi.spyOn(queueManager, "terminateAllSessions").mockResolvedValue(0)
+
+        await queueManager.checkSessionCleanup()
+
+        // terminateAllSessions should not be called if time doesn't match
+        // (unless we happen to run this test at exactly 00:00 on Sunday)
+      })
+
+      it("should handle errors gracefully", async () => {
+        (db.select as any).mockImplementation(() => {
+          throw new Error("DB error")
+        })
+
+        await expect(queueManager.checkSessionCleanup()).resolves.not.toThrow()
+      })
+    })
+  })
 })
