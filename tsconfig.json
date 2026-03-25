@@ -9,40 +9,39 @@
     "outDir": "build",
     "rootDir": ".",
     "strict": true,
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": false,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
     "paths": {
       "@db": [
-        "src/db"
+        "./src/db"
       ],
       "@db/*": [
-        "src/db/*"
+        "./src/db/*"
       ],
       "@utils/*": [
-        "src/utils/*"
+        "./src/utils/*"
       ],
       "@managers/*": [
-        "src/managers/*"
+        "./src/managers/*"
       ],
       "@errors/*": [
-        "src/errors/*"
+        "./src/errors/*"
       ],
       "@commands/*": [
-        "src/commands/*"
+        "./src/commands/*"
       ],
       "@config/*": [
-        "src/config/*"
+        "./src/config/*"
       ],
       "@events/*": [
-        "src/events/*"
+        "./src/events/*"
       ],
       "@/*": [
-        "src/*"
+        "./src/*"
       ],
     }
   },
